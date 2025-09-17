@@ -1,7 +1,6 @@
 import { supabase } from './supabase';
 export class AuthService {
-    // Sign up with email and password
-    static async signUp(email, password, userData = {}) {
+    static async signUp(email, password, userData) {
         try {
             const { data, error } = await supabase.auth.signUp({
                 email,
@@ -9,19 +8,14 @@ export class AuthService {
                 options: {
                     data: {
                         name: userData.name,
-                        role: userData.role || 'INQUILINO',
-                        plan: userData.plan || 'standard',
-                        city: userData.city,
-                        noiseLevel: userData.noiseLevel,
-                        maxDistanceKm: userData.maxDistanceKm,
-                        about: userData.about,
-                        tags: userData.tags || []
+                        role: userData.role,
+                        plan: 'FREE'
                     }
                 }
             });
             if (error)
                 throw error;
-            // Create user profile in our custom User table
+            // Create user profile in database
             if (data.user) {
                 const { error: profileError } = await supabase
                     .from('User')
@@ -29,26 +23,20 @@ export class AuthService {
                     id: data.user.id,
                     email: data.user.email,
                     name: userData.name,
-                    role: userData.role || 'INQUILINO',
-                    plan: userData.plan || 'standard',
-                    city: userData.city,
-                    noiseLevel: userData.noiseLevel,
-                    maxDistanceKm: userData.maxDistanceKm,
-                    about: userData.about,
-                    tags: userData.tags || []
+                    role: userData.role,
+                    plan: 'FREE'
                 });
                 if (profileError) {
-                    console.error('Error creating user profile:', profileError);
+                    console.error('Profile creation error:', profileError);
                 }
             }
-            return { user: data.user, session: data.session };
+            return data;
         }
         catch (error) {
             console.error('Sign up error:', error);
             throw error;
         }
     }
-    // Sign in with email and password
     static async signIn(email, password) {
         try {
             const { data, error } = await supabase.auth.signInWithPassword({
@@ -57,14 +45,13 @@ export class AuthService {
             });
             if (error)
                 throw error;
-            return { user: data.user, session: data.session };
+            return data;
         }
         catch (error) {
             console.error('Sign in error:', error);
             throw error;
         }
     }
-    // Sign in with Google
     static async signInWithGoogle() {
         try {
             const { data, error } = await supabase.auth.signInWithOAuth({
@@ -82,7 +69,6 @@ export class AuthService {
             throw error;
         }
     }
-    // Sign out
     static async signOut() {
         try {
             const { error } = await supabase.auth.signOut();
@@ -94,8 +80,7 @@ export class AuthService {
             throw error;
         }
     }
-    // Get current session
-    static async getSession() {
+    static async getCurrentSession() {
         try {
             const { data: { session }, error } = await supabase.auth.getSession();
             if (error)
@@ -107,96 +92,70 @@ export class AuthService {
             return null;
         }
     }
-    // Get current user
     static async getCurrentUser() {
         try {
-            const { data: { user }, error } = await supabase.auth.getUser();
-            if (error)
-                throw error;
-            if (!user)
+            const session = await this.getCurrentSession();
+            if (!session?.user)
                 return null;
-            // Get user profile from our custom User table
-            const { data: profile, error: profileError } = await supabase
+            // Get user profile from database
+            const { data: profile, error } = await supabase
                 .from('User')
                 .select('*')
-                .eq('id', user.id)
+                .eq('id', session.user.id)
                 .single();
-            if (profileError) {
-                console.error('Error fetching user profile:', profileError);
-                return null;
+            if (error) {
+                console.error('Get user profile error:', error);
+                // Return basic user info from auth if profile doesn't exist
+                return {
+                    id: session.user.id,
+                    email: session.user.email,
+                    name: session.user.user_metadata?.name || session.user.email,
+                    role: session.user.user_metadata?.role || 'INQUILINO',
+                    plan: 'FREE'
+                };
             }
-            return {
-                id: profile.id,
-                email: profile.email,
-                name: profile.name,
-                image: profile.image,
-                role: profile.role,
-                plan: profile.plan,
-                city: profile.city,
-                noiseLevel: profile.noiseLevel,
-                maxDistanceKm: profile.maxDistanceKm,
-                about: profile.about,
-                tags: profile.tags
-            };
+            return profile;
         }
         catch (error) {
             console.error('Get current user error:', error);
             return null;
         }
     }
-    // Update user profile
     static async updateProfile(updates) {
         try {
-            const { data: { user }, error: authError } = await supabase.auth.getUser();
-            if (authError)
-                throw authError;
-            if (!user)
+            const session = await this.getCurrentSession();
+            if (!session?.user)
                 throw new Error('No authenticated user');
-            const { error } = await supabase
+            const { data, error } = await supabase
                 .from('User')
                 .update(updates)
-                .eq('id', user.id);
+                .eq('id', session.user.id)
+                .select()
+                .single();
             if (error)
                 throw error;
-            return true;
+            return data;
         }
         catch (error) {
             console.error('Update profile error:', error);
             throw error;
         }
     }
-    // Listen to auth state changes
-    static onAuthStateChange(callback) {
-        return supabase.auth.onAuthStateChange(callback);
-    }
-    // Reset password
     static async resetPassword(email) {
         try {
-            const { error } = await supabase.auth.resetPasswordForEmail(email, {
-                redirectTo: `${window.location.origin}/auth/reset-password`
+            const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+                redirectTo: `${window.location.origin}/reset-password`
             });
             if (error)
                 throw error;
-            return true;
+            return data;
         }
         catch (error) {
             console.error('Reset password error:', error);
             throw error;
         }
     }
-    // Update password
-    static async updatePassword(newPassword) {
-        try {
-            const { error } = await supabase.auth.updateUser({
-                password: newPassword
-            });
-            if (error)
-                throw error;
-            return true;
-        }
-        catch (error) {
-            console.error('Update password error:', error);
-            throw error;
-        }
+    static onAuthStateChange(callback) {
+        return supabase.auth.onAuthStateChange(callback);
     }
 }

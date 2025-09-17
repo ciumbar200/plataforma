@@ -1,23 +1,17 @@
 import { supabase } from './supabase'
-import type { User, Session } from '@supabase/supabase-js'
 
 export interface AuthUser {
   id: string
   email: string
   name?: string
-  image?: string
   role: 'ADMIN' | 'INQUILINO' | 'PROPIETARIO'
   plan: string
-  city?: string
-  noiseLevel?: number
-  maxDistanceKm?: number
-  about?: string
-  tags: string[]
+  image?: string
+  videoUrl?: string
 }
 
 export class AuthService {
-  // Sign up with email and password
-  static async signUp(email: string, password: string, userData: Partial<AuthUser> = {}) {
+  static async signUp(email: string, password: string, userData: { name: string; role: 'INQUILINO' | 'PROPIETARIO' }) {
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -25,20 +19,15 @@ export class AuthService {
         options: {
           data: {
             name: userData.name,
-            role: userData.role || 'INQUILINO',
-            plan: userData.plan || 'standard',
-            city: userData.city,
-            noiseLevel: userData.noiseLevel,
-            maxDistanceKm: userData.maxDistanceKm,
-            about: userData.about,
-            tags: userData.tags || []
+            role: userData.role,
+            plan: 'FREE'
           }
         }
       })
 
       if (error) throw error
 
-      // Create user profile in our custom User table
+      // Create user profile in database
       if (data.user) {
         const { error: profileError } = await supabase
           .from('User')
@@ -46,28 +35,22 @@ export class AuthService {
             id: data.user.id,
             email: data.user.email!,
             name: userData.name,
-            role: userData.role || 'INQUILINO',
-            plan: userData.plan || 'standard',
-            city: userData.city,
-            noiseLevel: userData.noiseLevel,
-            maxDistanceKm: userData.maxDistanceKm,
-            about: userData.about,
-            tags: userData.tags || []
+            role: userData.role,
+            plan: 'FREE'
           })
 
         if (profileError) {
-          console.error('Error creating user profile:', profileError)
+          console.error('Profile creation error:', profileError)
         }
       }
 
-      return { user: data.user, session: data.session }
+      return data
     } catch (error) {
       console.error('Sign up error:', error)
       throw error
     }
   }
 
-  // Sign in with email and password
   static async signIn(email: string, password: string) {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -76,14 +59,13 @@ export class AuthService {
       })
 
       if (error) throw error
-      return { user: data.user, session: data.session }
+      return data
     } catch (error) {
       console.error('Sign in error:', error)
       throw error
     }
   }
 
-  // Sign in with Google
   static async signInWithGoogle() {
     try {
       const { data, error } = await supabase.auth.signInWithOAuth({
@@ -101,7 +83,6 @@ export class AuthService {
     }
   }
 
-  // Sign out
   static async signOut() {
     try {
       const { error } = await supabase.auth.signOut()
@@ -112,8 +93,7 @@ export class AuthService {
     }
   }
 
-  // Get current session
-  static async getSession() {
+  static async getCurrentSession() {
     try {
       const { data: { session }, error } = await supabase.auth.getSession()
       if (error) throw error
@@ -124,95 +104,72 @@ export class AuthService {
     }
   }
 
-  // Get current user
   static async getCurrentUser(): Promise<AuthUser | null> {
     try {
-      const { data: { user }, error } = await supabase.auth.getUser()
-      if (error) throw error
-      
-      if (!user) return null
+      const session = await this.getCurrentSession()
+      if (!session?.user) return null
 
-      // Get user profile from our custom User table
-      const { data: profile, error: profileError } = await supabase
+      // Get user profile from database
+      const { data: profile, error } = await supabase
         .from('User')
         .select('*')
-        .eq('id', user.id)
+        .eq('id', session.user.id)
         .single()
 
-      if (profileError) {
-        console.error('Error fetching user profile:', profileError)
-        return null
+      if (error) {
+        console.error('Get user profile error:', error)
+        // Return basic user info from auth if profile doesn't exist
+        return {
+          id: session.user.id,
+          email: session.user.email!,
+          name: session.user.user_metadata?.name || session.user.email,
+          role: session.user.user_metadata?.role || 'INQUILINO',
+          plan: 'FREE'
+        }
       }
 
-      return {
-        id: profile.id,
-        email: profile.email,
-        name: profile.name,
-        image: profile.image,
-        role: profile.role,
-        plan: profile.plan,
-        city: profile.city,
-        noiseLevel: profile.noiseLevel,
-        maxDistanceKm: profile.maxDistanceKm,
-        about: profile.about,
-        tags: profile.tags
-      }
+      return profile as AuthUser
     } catch (error) {
       console.error('Get current user error:', error)
       return null
     }
   }
 
-  // Update user profile
   static async updateProfile(updates: Partial<AuthUser>) {
     try {
-      const { data: { user }, error: authError } = await supabase.auth.getUser()
-      if (authError) throw authError
-      if (!user) throw new Error('No authenticated user')
+      const session = await this.getCurrentSession()
+      if (!session?.user) throw new Error('No authenticated user')
 
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('User')
         .update(updates)
-        .eq('id', user.id)
+        .eq('id', session.user.id)
+        .select()
+        .single()
 
       if (error) throw error
-      return true
+      return data
     } catch (error) {
       console.error('Update profile error:', error)
       throw error
     }
   }
 
-  // Listen to auth state changes
-  static onAuthStateChange(callback: (event: string, session: Session | null) => void) {
-    return supabase.auth.onAuthStateChange(callback)
-  }
-
-  // Reset password
   static async resetPassword(email: string) {
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/reset-password`
+      const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`
       })
+
       if (error) throw error
-      return true
+      return data
     } catch (error) {
       console.error('Reset password error:', error)
       throw error
     }
   }
 
-  // Update password
-  static async updatePassword(newPassword: string) {
-    try {
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword
-      })
-      if (error) throw error
-      return true
-    } catch (error) {
-      console.error('Update password error:', error)
-      throw error
-    }
+  static onAuthStateChange(callback: (event: string, session: any) => void) {
+    return supabase.auth.onAuthStateChange(callback)
   }
 }
