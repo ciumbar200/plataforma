@@ -1,0 +1,8 @@
+export const env = {
+  DATABASE_URL: process.env.DATABASE_URL!,
+  JWT_SECRET: process.env.JWT_SECRET!,
+  CLIENT_ORIGIN: process.env.CLIENT_ORIGIN!,
+  GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID!,
+  GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET!,
+  OAUTH_REDIRECT_URI: process.env.OAUTH_REDIRECT_URI!,
+};
