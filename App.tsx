@@ -164,7 +164,8 @@ const App: React.FC = () => {
     const handleUpdateUser = async (updatedUser: User) => {
         if (!currentUser) return;
         
-        const { id, ...updateData } = updatedUser; // Supabase requires 'id' not to be in the update payload
+        // Destructure to remove properties that are calculated or not meant to be updated by the user.
+        const { id, compatibility, email, role, isBanned, ...updateData } = updatedUser; 
 
         const { data, error } = await supabase
             .from('profiles')
@@ -175,7 +176,7 @@ const App: React.FC = () => {
 
         if (error) {
             console.error("Error updating user:", error);
-            alert("Error al actualizar el perfil.");
+            alert(`Error al actualizar el perfil: ${error.message}`);
         } else {
             setCurrentUser(data as User);
             setUsers(prev => prev.map(u => u.id === id ? (data as User) : u));
