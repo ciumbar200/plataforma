@@ -1,411 +1,166 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { supabase, getUserProfile } from './lib/supabaseClient';
 
-// --- TYPES ---
-import { User, UserRole, Property, Notification, SavedSearch, RentalGoal, PropertyType, BlogPost } from './types';
-
-// --- CONSTANTS ---
-import { showNotification, sendEmail, addToFluentCRM } from './constants';
-
-// --- PAGES ---
+import React, { useState, useEffect } from 'react';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import OwnerLandingPage from './pages/OwnerLandingPage';
+import TenantDashboard from './dashboards/TenantDashboard';
+import OwnerDashboard from './dashboards/OwnerDashboard';
+import AdminDashboard from './dashboards/AdminDashboard';
 import AccountLayout from './pages/account/AccountLayout';
 import BlogPage from './pages/BlogPage';
 import AboutPage from './pages/AboutPage';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 import TermsPage from './pages/TermsPage';
 import ContactPage from './pages/ContactPage';
+import { User, Property, BlogPost, SavedSearch, UserRole, RentalGoal, PropertyType, Notification, NotificationType, OwnerStats } from './types';
+import { supabase } from './lib/supabaseClient';
+import { Session } from '@supabase/supabase-js';
 
-// --- DASHBOARDS ---
-import AdminDashboard from './dashboards/AdminDashboard';
-import OwnerDashboard from './dashboards/OwnerDashboard';
-import TenantDashboard from './dashboards/TenantDashboard';
+// --- MOCK DATA ---
 
-// --- COMPONENTS ---
-import { BellIcon, MoonIcon } from './components/icons';
-import ProfileDropdown from './dashboards/components/ProfileDropdown';
-import NotificationsPopover from './dashboards/components/NotificationsPopover';
+const MOCK_USERS: User[] = [
+  { id: '1', name: 'Elena Rodriguez', email: 'elena@example.com', age: 28, profilePicture: 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?q=80&w=200&h=200&fit=crop', city: 'Madrid', locality: 'Centro', interests: ['Yoga', 'Cocina Vegana', 'Viajar', 'Fotografía'], noiseLevel: 'Bajo', compatibility: 0, role: UserRole.INQUILINO, rentalGoal: RentalGoal.FIND_ROOM_WITH_ROOMMATES, bio: 'Busco un lugar tranquilo para vivir y compartir buenas conversaciones. Me encanta el arte y salir a tomar fotos por la ciudad.', lifestyle: ['Creativo', 'Tranquilo'], commuteDistance: 30, isBanned: false },
+  { id: '2', name: 'Carlos Pérez', email: 'carlos@example.com', age: 31, profilePicture: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=200&h=200&fit=crop', city: 'Madrid', locality: 'Chamberí', interests: ['Senderismo', 'Música Indie', 'Videojuegos', 'Cine'], noiseLevel: 'Medio', compatibility: 0, role: UserRole.INQUILINO, rentalGoal: RentalGoal.FIND_ROOMMATES_AND_APARTMENT, bio: 'Ingeniero de software. En mi tiempo libre me gusta desconectar en la naturaleza o jugar a la PS5. Busco compis para compartir piso y alguna cerveza.', lifestyle: ['Nocturno', 'Intelectual'], commuteDistance: 20, isBanned: false },
+  { id: '3', name: 'Ana García', email: 'ana@example.com', age: 26, profilePicture: 'https://images.unsplash.com/photo-1525134479668-1bee5c7c6845?q=80&w=200&h=200&fit=crop', city: 'Barcelona', locality: 'Gràcia', interests: ['Lectura', 'Teatro', 'Museos', 'Brunch'], noiseLevel: 'Bajo', compatibility: 0, role: UserRole.INQUILINO, rentalGoal: RentalGoal.BOTH, bio: 'Soy periodista y me encanta la vida cultural de la ciudad. Busco un hogar acogedor con gente respetuosa y con quien poder charlar de vez en cuando.', lifestyle: ['Diurno', 'Social'], commuteDistance: 45, isBanned: false },
+  { id: '4', name: 'Javier Moreno', email: 'javier.owner@example.com', age: 42, profilePicture: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=200&h=200&fit=crop', city: 'Valencia', locality: 'Ruzafa', role: UserRole.PROPIETARIO, interests: [], noiseLevel: 'Medio', compatibility: 0, age: 42, bio: 'Propietario de varios inmuebles en Valencia. Busco inquilinos responsables y a largo plazo.' },
+  { id: '5', name: 'Admin', email: 'admin@moon.com', age: 35, profilePicture: 'https://i.pravatar.cc/200?u=admin', city: 'Madrid', role: UserRole.ADMIN, interests: [], noiseLevel: 'Medio', compatibility: 0, bio: 'Administrador del sistema.' },
+];
+
+const MOCK_PROPERTIES: Property[] = [
+    { id: 1, owner_id: '4', title: 'Piso luminoso en Chamberí', address: 'Calle de Almagro, 20', city: 'Madrid', locality: 'Chamberí', postalCode: '28010', propertyType: PropertyType.FLAT, imageUrls: ['https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=800', 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=800'], price: 1400, visibility: 'Pública', views: 2345, compatibleCandidates: 12, availableFrom: '2024-08-01', lat: 40.430, lng: -3.693, status: 'approved', features: { wifi: true, airConditioning: true, heating: true, kitchen: true, elevator: true, furnished: true } },
+    { id: 2, owner_id: '4', title: 'Habitación con balcón en Gràcia', address: 'Carrer de Verdi, 50', city: 'Barcelona', locality: 'Gràcia', postalCode: '08012', propertyType: PropertyType.ROOM, imageUrls: ['https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=800'], price: 550, visibility: 'Pública', views: 5870, compatibleCandidates: 34, availableFrom: '2024-09-01', lat: 41.403, lng: 2.154, status: 'approved', features: { wifi: true, furnished: true, kitchen: true, washingMachine: true, balcony: true } },
+    { id: 3, owner_id: '4', title: 'Estudio moderno en Ruzafa', address: 'Carrer de Sueca, 30', city: 'Valencia', locality: 'Ruzafa', postalCode: '46004', propertyType: PropertyType.STUDIO, imageUrls: ['https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?q=80&w=800'], price: 800, visibility: 'Pública', views: 1230, compatibleCandidates: 8, availableFrom: '2024-08-15', lat: 39.462, lng: -0.373, status: 'pending', conditions: 'Estancia mínima de 1 año. Se requiere un mes de fianza.' },
+];
+
+const MOCK_BLOG_POSTS: BlogPost[] = [
+    { id: 1, slug: '10-consejos-convivencia', title: '10 consejos para una convivencia feliz con tus compañeros de piso', excerpt: 'Descubre las claves para evitar conflictos y disfrutar de una experiencia increíble compartiendo piso.', imageUrl: 'https://images.unsplash.com/photo-1543269865-cbf427effbad?q=80&w=800', content: '<h2>Introducción</h2><p>Vivir con compañeros de piso puede ser una de las experiencias más enriquecedoras de tu vida, pero también puede presentar desafíos...</p>', author: 'El equipo de MoOn', authorImageUrl: 'https://i.pravatar.cc/100?u=moon', publish_date: '2024-07-20T10:00:00Z' },
+    { id: 2, slug: 'decorar-habitacion-pequena', title: 'Cómo decorar una habitación pequeña para que parezca más grande', excerpt: 'Aprovecha cada rincón de tu espacio con estos trucos de decoración inteligentes y económicos.', imageUrl: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=800', content: '<h2>El poder de los colores claros</h2><p>Pintar las paredes de colores claros como el blanco, beige o gris pálido es el truco más antiguo y efectivo...</p>', author: 'Ana García', authorImageUrl: MOCK_USERS[2].profilePicture, publish_date: '2024-07-15T10:00:00Z' },
+];
+
+const MOCK_NOTIFICATIONS: Notification[] = [
+    { id: 1, userId: '1', type: NotificationType.NEW_MATCH, message: '¡Has hecho match con Carlos Pérez!', timestamp: new Date().toISOString(), read: false },
+    { id: 2, userId: '4', type: NotificationType.PROPERTY_INQUIRY, message: 'Elena Rodríguez está interesada en tu "Piso luminoso en Chamberí".', timestamp: new Date(Date.now() - 3600000).toISOString(), read: false },
+    { id: 3, userId: '1', type: NotificationType.SYSTEM_ALERT, message: 'Hemos actualizado nuestra Política de Privacidad. Revísala.', timestamp: new Date(Date.now() - 86400000).toISOString(), read: true },
+];
+
+// --- APP COMPONENT ---
+
+type ViewState = 
+    | { view: 'home' }
+    | { view: 'owner_landing' }
+    | { view: 'login'; registrationData?: any; registrationRole: UserRole.INQUILINO | UserRole.PROPIETARIO }
+    | { view: 'tenant_dashboard' }
+    | { view: 'owner_dashboard' }
+    | { view: 'admin_dashboard' }
+    | { view: 'account_settings'; initialTab?: string }
+    | { view: 'blog' }
+    | { view: 'about' }
+    | { view: 'privacy' }
+    | { view: 'terms' }
+    | { view: 'contact' };
 
 const App: React.FC = () => {
-    // --- STATE MANAGEMENT ---
-    const [view, setView] = useState<'home' | 'login' | 'owner-landing' | 'dashboard' | 'account-settings' | 'blog' | 'about' | 'privacy' | 'terms' | 'contact'>('home');
-    
-    const [users, setUsers] = useState<User[]>([]);
-    const [properties, setProperties] = useState<Property[]>([]);
-    const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
+    const [session, setSession] = useState<Session | null>(null);
     const [currentUser, setCurrentUser] = useState<User | null>(null);
-    const [notifications, setNotifications] = useState<Notification[]>([]);
+    const [viewState, setViewState] = useState<ViewState>({ view: 'home' });
+
+    // Mock data state
+    const [users, setUsers] = useState<User[]>(MOCK_USERS);
+    const [properties, setProperties] = useState<Property[]>(MOCK_PROPERTIES);
+    const [blogPosts, setBlogPosts] = useState<BlogPost[]>(MOCK_BLOG_POSTS);
     const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([]);
     const [userMatches, setUserMatches] = useState<string[]>([]);
-    
-    // --- APP-WIDE STATE ---
-    const [loading, setLoading] = useState(true);
-    const [session, setSession] = useState<any | null>(null);
-    
-    // --- LOGIN/REGISTRATION FLOW STATE ---
-    const [initialLoginData, setInitialLoginData] = useState<Partial<User> & { propertyType?: PropertyType } | null>(null);
-    const [registrationRole, setRegistrationRole] = useState<UserRole.INQUILINO | UserRole.PROPIETARIO>(UserRole.INQUILINO);
-    const [accountSettingsTab, setAccountSettingsTab] = useState('overview');
-    
-    // --- UI STATE ---
-    const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
-    
-    // --- DATA FETCHING ---
-    const fetchData = useCallback(async () => {
-        setLoading(true);
-        try {
-            const [usersRes, propertiesRes, blogPostsRes] = await Promise.all([
-                supabase.from('profiles').select('*'),
-                supabase.from('properties').select('*'),
-                supabase.from('blog_posts').select('*').order('publish_date', { ascending: false }),
-            ]);
+    const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS);
 
-            if (usersRes.error) throw usersRes.error;
-            if (propertiesRes.error) throw propertiesRes.error;
-            if (blogPostsRes.error) throw blogPostsRes.error;
-
-            setUsers(usersRes.data as User[]);
-            setProperties(propertiesRes.data as Property[]);
-            setBlogPosts(blogPostsRes.data as BlogPost[]);
-
-        } catch (error: any) {
-            console.error("Error fetching initial data:", error.message);
-            // Here you could set an error state to show a message to the user
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
-
-    // --- AUTH & SESSION MANAGEMENT ---
     useEffect(() => {
-        const getSession = async () => {
-            const { data: { session } } = await (supabase.auth as any).getSession();
+        supabase.auth.getSession().then(({ data: { session } }) => {
             setSession(session);
-            if (session?.user) {
-                const profile = await getUserProfile(session.user.id);
-                setCurrentUser(profile);
-                if (profile && !profile.isBanned) {
-                    setView('dashboard');
-                }
-            }
-            setLoading(false);
-        };
-        
-        getSession();
+            const user = session?.user ? users.find(u => u.email === session.user.email) || null : null;
+            setCurrentUser(user);
+        });
 
-        const { data: { subscription } } = (supabase.auth as any).onAuthStateChange(
-            async (_event: any, session: any | null) => {
-                setSession(session);
-                if (session?.user) {
-                    const profile = await getUserProfile(session.user.id);
-                    setCurrentUser(profile);
-                    if (profile?.isBanned) {
-                        alert('Esta cuenta ha sido baneada.');
-                        await (supabase.auth as any).signOut();
-                    } else if (profile) {
-                         // Only fetch all data again if the user has changed
-                        if (currentUser?.id !== profile.id) {
-                            fetchData();
-                        }
-                        setView('dashboard');
-                    }
-                } else {
-                    setCurrentUser(null);
-                    setView('home');
-                }
-            }
-        );
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            setSession(session);
+            const user = session?.user ? users.find(u => u.email === session.user.email) || null : null;
+            setCurrentUser(user);
+        });
 
         return () => subscription.unsubscribe();
-    }, [fetchData, currentUser?.id]);
+    }, [users]);
     
     useEffect(() => {
-        // Initial data fetch when the app loads
-        fetchData();
-    }, [fetchData]);
-
-    // --- HANDLERS ---
-    const handleLogout = async () => {
-        setLoading(true);
-        await (supabase.auth as any).signOut();
-        setCurrentUser(null);
-        setView('home');
-        setLoading(false);
-    };
-
-    const handleBackToHome = () => setView('home');
-    const handleLoginClick = () => {
-        setRegistrationRole(UserRole.INQUILINO);
-        setInitialLoginData(null);
-        setView('login');
-    };
-    const handleOwnersClick = () => setView('owner-landing');
-    const handleBlogClick = () => setView('blog');
-    const handleAboutClick = () => setView('about');
-    const handlePrivacyClick = () => setView('privacy');
-    const handleTermsClick = () => setView('terms');
-    const handleContactClick = () => setView('contact');
-
-    const handleStartRegistration = (data: { rentalGoal: RentalGoal; city: string; locality: string; }) => {
-        setRegistrationRole(UserRole.INQUILINO);
-        setInitialLoginData(data);
-        setView('login');
-    };
-    
-    const handleStartOwnerPublication = (data: { propertyType: PropertyType; city: string; locality: string; }) => {
-        setRegistrationRole(UserRole.PROPIETARIO);
-        setInitialLoginData(data);
-        setView('login');
-    }
-    
-    const handleUpdateUser = async (updatedUser: User) => {
-        if (!currentUser) return;
-    
-        const { id, compatibility, email, role, isBanned, ...updateData } = updatedUser;
-    
-        // FIX: The database columns are snake_case (e.g., commute_distance), but the form sends camelCase (e.g., commuteDistance).
-        // This maps the property names correctly before sending them to Supabase.
-        const propertyMap: { [key: string]: string } = {
-            lastName: 'last_name',
-            rentalGoal: 'rental_goal',
-            profilePicture: 'profile_picture',
-            videoUrl: 'video_url',
-            noiseLevel: 'noise_level',
-            commuteDistance: 'commute_distance'
-        };
-    
-        Object.keys(propertyMap).forEach(key => {
-            if (key in updateData) {
-                (updateData as any)[propertyMap[key]] = (updateData as any)[key];
-                delete (updateData as any)[key];
+        if (currentUser) {
+            switch(currentUser.role) {
+                case UserRole.INQUILINO: setViewState({ view: 'tenant_dashboard' }); break;
+                case UserRole.PROPIETARIO: setViewState({ view: 'owner_dashboard' }); break;
+                case UserRole.ADMIN: setViewState({ view: 'admin_dashboard' }); break;
+                default: setViewState({ view: 'home' });
             }
-        });
-    
-        const { data, error } = await supabase
-            .from('profiles')
-            .update(updateData)
-            .eq('id', id)
-            .select()
-            .single();
-    
-        if (error) {
-            console.error("Error updating user:", error);
-            alert(`Error al actualizar el perfil: ${error.message}`);
         } else {
-            setCurrentUser(data as User);
-            setUsers(prev => prev.map(u => u.id === id ? (data as User) : u));
-            showNotification('Perfil Actualizado', { body: 'Tus cambios se han guardado correctamente.' });
-            setView('dashboard');
-        }
-    };
-
-    const handleSaveProperty = async (propertyData: Omit<Property, 'id' | 'views' | 'compatibleCandidates' | 'owner_id'> & { id?: number }) => {
-        if (!currentUser) return;
-        setLoading(true);
-        
-        try {
-            const { id, ...dataToSave } = propertyData;
-            const payload = { ...dataToSave, owner_id: currentUser.id };
-            
-            if (id) { // Update existing property
-                const { data, error } = await supabase.from('properties').update(payload).eq('id', id).select().single();
-                if (error) throw error;
-                setProperties(prev => prev.map(p => p.id === id ? (data as Property) : p));
-            } else { // Create new property
-                const { data, error } = await supabase.from('properties').insert(payload).select().single();
-                if (error) throw error;
-                setProperties(prev => [...prev, data as Property]);
-                
-                sendEmail(
-                    'hello@moonsharedliving.com', // Replace with your admin email
-                    `🔔 Propiedad Pendiente de Aprobación: ${data.title}`,
-                    `<p>Una nueva propiedad ha sido enviada y está pendiente de aprobación.</p><ul><li><strong>Título:</strong> ${data.title}</li><li><strong>Propietario:</strong> ${currentUser?.name}</li></ul>`
-                );
+            // Keep current view if not logged in, unless it's a protected view
+            if (['tenant_dashboard', 'owner_dashboard', 'admin_dashboard', 'account_settings'].includes(viewState.view)) {
+                 setViewState({ view: 'home' });
             }
-        } catch (error: any) {
-            console.error("Error saving property:", error.message);
-            alert("Error al guardar la propiedad.");
-        } finally {
-            setLoading(false);
         }
+    }, [currentUser]);
+
+    // --- Handlers ---
+    
+    const handleLogout = async () => {
+        await supabase.auth.signOut();
+        setCurrentUser(null);
+        setViewState({ view: 'home' });
     };
     
-    const handleGoToAccountSettings = (tab = 'overview') => {
-        setAccountSettingsTab(tab);
-        setView('account-settings');
-    };
-    
-    const handleAddMatch = (matchedUserId: string) => {
-        if (!userMatches.includes(matchedUserId)) {
-            setUserMatches(prev => [...prev, matchedUserId]);
-        }
+    const handleStartRegistration = (data: any) => {
+        const isTenant = 'rentalGoal' in data;
+        setViewState({ view: 'login', registrationData: data, registrationRole: isTenant ? UserRole.INQUILINO : UserRole.PROPIETARIO });
     };
 
-    // --- ADMIN HANDLERS (Example) ---
-    const handleUpdatePropertyStatus = async (propertyId: number, status: 'approved' | 'rejected') => {
-        const { data, error } = await supabase.from('properties').update({ status }).eq('id', propertyId).select().single();
-        if (error) console.error(error);
-        else setProperties(prev => prev.map(p => p.id === propertyId ? data as Property : p));
+    const handleSaveProperty = (propertyData: Omit<Property, 'id' | 'views' | 'compatibleCandidates' | 'owner_id'> & { id?: number }) => {
+        setProperties(prev => {
+            if (propertyData.id) {
+                return prev.map(p => p.id === propertyData.id ? { ...p, ...propertyData, price: Number(propertyData.price) } : p);
+            }
+            const newProperty: Property = {
+                ...propertyData,
+                id: Math.max(...prev.map(p => p.id)) + 1,
+                price: Number(propertyData.price),
+                owner_id: currentUser!.id,
+                views: 0,
+                compatibleCandidates: 0,
+            };
+            return [...prev, newProperty];
+        });
     };
-    
-    // ... other handlers (delete property, ban user, etc.) would be similar async functions ...
-    
-    // --- LOADING SCREEN ---
-    if (loading) {
-        return (
-            <div className="h-screen w-screen bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-900 flex flex-col justify-center items-center text-white gap-4">
-                <MoonIcon className="w-16 h-16 animate-pulse" />
-                <p className="text-xl font-semibold">Cargando MoOn...</p>
-            </div>
-        );
+
+    const handleUpdateUser = (updatedUser: User) => {
+        const updated = users.map(u => u.id === updatedUser.id ? updatedUser : u);
+        setUsers(updated);
+        if (currentUser && currentUser.id === updatedUser.id) {
+            setCurrentUser(updatedUser);
+        }
     }
 
-    // --- RENDER LOGIC ---
-    
-    const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-        if (!currentUser) return null;
-        
-        const userNotifications = notifications.filter(n => n.userId === currentUser.id);
-        const unreadCount = userNotifications.filter(n => !n.read).length;
-
-        if (currentUser.role === UserRole.ADMIN) {
-            return (
-                <div className="h-screen w-screen bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-900 text-white flex flex-col">
-                    {children}
-                </div>
-            );
-        }
-
-        return (
-             <div className="h-screen w-screen bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-900 text-white flex flex-col">
-                <header className="sticky top-0 z-40 bg-black/30 backdrop-blur-xl border-b border-white/20 text-white w-full">
-                    <div className="max-w-screen-2xl mx-auto px-6 h-16 flex justify-between items-center">
-                         <div className="flex items-center gap-2">
-                            <MoonIcon className="w-8 h-8 text-white" />
-                            <span className="text-xl font-bold">MoOn</span>
-                        </div>
-                        <div className="flex items-center gap-4">
-                            <div className="relative">
-                                <button onClick={() => setIsNotificationsOpen(prev => !prev)} className="relative text-white/80 hover:text-white transition-colors p-2">
-                                    <BellIcon className="w-6 h-6" />
-                                    {unreadCount > 0 && (
-                                        <span className="absolute top-1 right-1 block w-3 h-3 bg-red-500 rounded-full border-2 border-gray-800"></span>
-                                    )}
-                                </button>
-                                {isNotificationsOpen && (
-                                    <div className="absolute top-full right-0 mt-3 w-80 sm:w-96 z-50">
-                                        <NotificationsPopover
-                                            notifications={userNotifications}
-                                            onClose={() => setIsNotificationsOpen(false)}
-                                            onMarkAsRead={() => {}}
-                                            onMarkAllAsRead={() => {}}
-                                        />
-                                    </div>
-                                )}
-                            </div>
-                            <ProfileDropdown user={currentUser} onLogout={handleLogout} onAccountSettings={() => handleGoToAccountSettings('overview')} />
-                        </div>
-                    </div>
-                </header>
-                {children}
-            </div>
-        );
-    };
-
-    const renderDashboard = () => {
-        if (!currentUser) return <LoginPage onBack={handleBackToHome} registrationRole={registrationRole} />;
-        
-        const dashboardContent = () => {
-            switch (currentUser.role) {
-                case UserRole.ADMIN:
-                    return <AdminDashboard 
-                        users={users} 
-                        properties={properties}
-                        blogPosts={blogPosts}
-                        onUpdatePropertyStatus={handleUpdatePropertyStatus}
-                        onDeleteProperty={async (id) => { await supabase.from('properties').delete().eq('id', id); fetchData(); }}
-                        onSetUserBanStatus={async (id, status) => { await supabase.from('profiles').update({ is_banned: status }).eq('id', id); fetchData(); }}
-                        onSaveBlogPost={async (post) => { /* Implement save logic */ }}
-                        onDeleteBlogPost={async (id) => { await supabase.from('blog_posts').delete().eq('id', id); fetchData(); }}
-                        onLogout={handleLogout}
-                    />;
-                case UserRole.PROPIETARIO:
-                    return <OwnerDashboard 
-                        user={currentUser}
-                        properties={properties.filter(p => p.owner_id === currentUser.id)}
-                        onSaveProperty={handleSaveProperty}
-                        initialPropertyData={initialLoginData as any}
-                        onClearInitialPropertyData={() => setInitialLoginData(null)}
-                    />;
-                case UserRole.INQUILINO:
-                default:
-                    return <TenantDashboard 
-                        user={currentUser}
-                        allUsers={users}
-                        properties={properties.filter(p => p.status === 'approved')}
-                        onSendInterest={() => {}}
-                        savedSearches={savedSearches}
-                        onSaveSearch={() => {}}
-                        onDeleteSearch={() => {}}
-                        userMatches={userMatches}
-                        onAddMatch={handleAddMatch}
-                        onGoToAccountSettings={() => handleGoToAccountSettings('profile')}
-                    />;
-            }
-        };
-
-        return <DashboardLayout>{dashboardContent()}</DashboardLayout>;
-    };
-    
-    const pageHandlers = {
-        onLoginClick: handleLoginClick,
-        onHomeClick: handleBackToHome,
-        onBlogClick: handleBlogClick,
-        onAboutClick: handleAboutClick,
-        onPrivacyClick: handlePrivacyClick,
-        onTermsClick: handleTermsClick,
-        onContactClick: handleContactClick,
-    };
-
-    const renderContent = () => {
-        if (currentUser && view !== 'dashboard' && view !== 'account-settings') {
-             return renderDashboard();
-        }
-
-        switch (view) {
-            case 'home':
-                return <HomePage onStartRegistration={handleStartRegistration} onOwnersClick={handleOwnersClick} {...pageHandlers} />;
-            case 'owner-landing':
-                return <OwnerLandingPage onStartPublication={handleStartOwnerPublication} {...pageHandlers} />;
-            case 'login':
-                return <LoginPage onBack={handleBackToHome} initialData={initialLoginData} registrationRole={registrationRole} />;
-            case 'blog':
-                return <BlogPage posts={blogPosts} {...pageHandlers} />;
-            case 'about':
-                return <AboutPage {...pageHandlers} />;
-            case 'privacy':
-                return <PrivacyPolicyPage {...pageHandlers} />;
-            case 'terms':
-                return <TermsPage {...pageHandlers} />;
-            case 'contact':
-                return <ContactPage {...pageHandlers} />;
-            case 'dashboard':
-                return renderDashboard();
-            case 'account-settings':
-                if (!currentUser) {
-                  setView('login');
-                  return null;
-                }
-                return <AccountLayout user={currentUser} onUpdateUser={handleUpdateUser} onLogout={handleLogout} onBack={() => setView('dashboard')} initialTab={accountSettingsTab} {...pageHandlers} />;
-            default:
-                return <HomePage onStartRegistration={handleStartRegistration} onOwnersClick={handleOwnersClick} {...pageHandlers} />;
+    const renderView = () => {
+        switch (viewState.view) {
+            case 'home': return <HomePage onLoginClick={() => setViewState({ view: 'login', registrationRole: UserRole.INQUILINO })} onStartRegistration={handleStartRegistration} onOwnersClick={() => setViewState({ view: 'owner_landing' })} onBlogClick={() => setViewState({ view: 'blog' })} onAboutClick={() => setViewState({ view: 'about' })} onPrivacyClick={() => setViewState({ view: 'privacy' })} onTermsClick={() => setViewState({ view: 'terms' })} onContactClick={() => setViewState({ view: 'contact' })} />;
+            case 'owner_landing': return <OwnerLandingPage onStartPublication={handleStartRegistration} onHomeClick={() => setViewState({ view: 'home' })} onLoginClick={() => setViewState({ view: 'login', registrationRole: UserRole.PROPIETARIO })} onBlogClick={() => setViewState({ view: 'blog' })} onAboutClick={() => setViewState({ view: 'about' })} onPrivacyClick={() => setViewState({ view: 'privacy' })} onTermsClick={() => setViewState({ view: 'terms' })} onContactClick={() => setViewState({ view: 'contact' })} />;
+            case 'login': return <LoginPage onBack={() => setViewState({ view: 'home' })} initialData={viewState.registrationData} registrationRole={viewState.registrationRole} />;
+            case 'tenant_dashboard': return currentUser && <TenantDashboard user={currentUser} allUsers={users} properties={properties} onSendInterest={() => {}} savedSearches={savedSearches} onSaveSearch={() => {}} onDeleteSearch={() => {}} userMatches={userMatches} onAddMatch={() => {}} onGoToAccountSettings={() => setViewState({ view: 'account_settings', initialTab: 'profile' })}/>;
+            case 'owner_dashboard': return currentUser && <OwnerDashboard user={currentUser} properties={properties.filter(p => p.owner_id === currentUser?.id)} onSaveProperty={handleSaveProperty} initialPropertyData={null} onClearInitialPropertyData={()=>{}} />;
+            case 'admin_dashboard': return <AdminDashboard users={users} properties={properties} blogPosts={blogPosts} onUpdatePropertyStatus={()=>{}} onDeleteProperty={()=>{}} onSetUserBanStatus={()=>{}} onSaveBlogPost={()=>{}} onDeleteBlogPost={()=>{}} onLogout={handleLogout}/>;
+            case 'account_settings': return currentUser && <AccountLayout user={currentUser} onUpdateUser={handleUpdateUser} onLogout={handleLogout} onBack={() => setViewState({ view: currentUser.role === UserRole.INQUILINO ? 'tenant_dashboard' : 'owner_dashboard'})} onBlogClick={() => setViewState({ view: 'blog' })} onAboutClick={() => setViewState({ view: 'about' })} onPrivacyClick={() => setViewState({ view: 'privacy' })} onTermsClick={() => setViewState({ view: 'terms' })} onContactClick={() => setViewState({ view: 'contact' })} initialTab={viewState.initialTab} />;
+            case 'blog': return <BlogPage posts={blogPosts} onHomeClick={() => setViewState({ view: 'home' })} onLoginClick={() => setViewState({ view: 'login', registrationRole: UserRole.INQUILINO })} onAboutClick={() => setViewState({ view: 'about' })} onPrivacyClick={() => setViewState({ view: 'privacy' })} onTermsClick={() => setViewState({ view: 'terms' })} onContactClick={() => setViewState({ view: 'contact' })} />;
+            case 'about': return <AboutPage onHomeClick={() => setViewState({ view: 'home' })} onLoginClick={() => setViewState({ view: 'login', registrationRole: UserRole.INQUILINO })} onBlogClick={() => setViewState({ view: 'blog' })} onAboutClick={() => setViewState({ view: 'about' })} onPrivacyClick={() => setViewState({ view: 'privacy' })} onTermsClick={() => setViewState({ view: 'terms' })} onContactClick={() => setViewState({ view: 'contact' })} />;
+            case 'privacy': return <PrivacyPolicyPage onHomeClick={() => setViewState({ view: 'home' })} onLoginClick={() => setViewState({ view: 'login', registrationRole: UserRole.INQUILINO })} onBlogClick={() => setViewState({ view: 'blog' })} onAboutClick={() => setViewState({ view: 'about' })} onPrivacyClick={() => setViewState({ view: 'privacy' })} onTermsClick={() => setViewState({ view: 'terms' })} onContactClick={() => setViewState({ view: 'contact' })} />;
+            case 'terms': return <TermsPage onHomeClick={() => setViewState({ view: 'home' })} onLoginClick={() => setViewState({ view: 'login', registrationRole: UserRole.INQUILINO })} onBlogClick={() => setViewState({ view: 'blog' })} onAboutClick={() => setViewState({ view: 'about' })} onPrivacyClick={() => setViewState({ view: 'privacy' })} onTermsClick={() => setViewState({ view: 'terms' })} onContactClick={() => setViewState({ view: 'contact' })} />;
+            case 'contact': return <ContactPage onHomeClick={() => setViewState({ view: 'home' })} onLoginClick={() => setViewState({ view: 'login', registrationRole: UserRole.INQUILINO })} onBlogClick={() => setViewState({ view: 'blog' })} onAboutClick={() => setViewState({ view: 'about' })} onPrivacyClick={() => setViewState({ view: 'privacy' })} onTermsClick={() => setViewState({ view: 'terms' })} onContactClick={() => setViewState({ view: 'contact' })} />;
+            default: return <div>Cargando...</div>;
         }
     };
 
-    return <div className="h-screen w-screen font-sans bg-gray-900">{renderContent()}</div>;
+    return <div className="h-screen w-screen bg-gray-900">{renderView()}</div>;
 };
 
 export default App;
