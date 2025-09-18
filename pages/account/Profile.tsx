@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { User, RentalGoal } from '../../types';
 import GlassCard from '../../components/GlassCard';
@@ -40,16 +41,18 @@ const Profile: React.FC<ProfileProps> = ({ user, onSave }) => {
   };
 
   const handleInterestToggle = (interest: string) => {
-    const interests = formData.interests.includes(interest)
-      ? formData.interests.filter(i => i !== interest)
-      : [...formData.interests, interest];
+    const currentInterests = formData.interests || [];
+    const interests = currentInterests.includes(interest)
+      ? currentInterests.filter(i => i !== interest)
+      : [...currentInterests, interest];
     setFormData(prev => ({ ...prev, interests }));
   };
   
   const handleLifestyleToggle = (style: string) => {
-    const lifestyle = formData.lifestyle?.includes(style)
-      ? formData.lifestyle.filter(s => s !== style)
-      : [...(formData.lifestyle || []), style];
+    const currentLifestyle = formData.lifestyle || [];
+    const lifestyle = currentLifestyle.includes(style)
+      ? currentLifestyle.filter(s => s !== style)
+      : [...currentLifestyle, style];
     setFormData(prev => ({ ...prev, lifestyle }));
   };
 
@@ -136,7 +139,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onSave }) => {
                     <h3 className="text-lg font-semibold text-white/90 mb-3">Intereses</h3>
                     <div className="flex flex-wrap gap-2">
                         {ALL_INTERESTS.map(interest => (
-                            <button key={interest} type="button" onClick={() => handleInterestToggle(interest)} className={`px-3 py-1 text-sm rounded-full transition-colors border ${formData.interests.includes(interest) ? 'bg-indigo-500 border-indigo-400 text-white font-semibold' : 'bg-white/10 border-white/20 text-white/80 hover:bg-white/20'}`}>
+                            <button key={interest} type="button" onClick={() => handleInterestToggle(interest)} className={`px-3 py-1 text-sm rounded-full transition-colors border ${(formData.interests || []).includes(interest) ? 'bg-indigo-500 border-indigo-400 text-white font-semibold' : 'bg-white/10 border-white/20 text-white/80 hover:bg-white/20'}`}>
                                 {interest}
                             </button>
                         ))}
@@ -146,7 +149,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onSave }) => {
                     <h3 className="text-lg font-semibold text-white/90 mb-3">Estilo de vida</h3>
                     <div className="flex flex-wrap gap-2">
                         {ALL_LIFESTYLES.map(style => (
-                            <button key={style} type="button" onClick={() => handleLifestyleToggle(style)} className={`px-3 py-1 text-sm rounded-full transition-colors border ${formData.lifestyle?.includes(style) ? 'bg-purple-500 border-purple-400 text-white font-semibold' : 'bg-white/10 border-white/20 text-white/80 hover:bg-white/20'}`}>
+                            <button key={style} type="button" onClick={() => handleLifestyleToggle(style)} className={`px-3 py-1 text-sm rounded-full transition-colors border ${(formData.lifestyle || []).includes(style) ? 'bg-purple-500 border-purple-400 text-white font-semibold' : 'bg-white/10 border-white/20 text-white/80 hover:bg-white/20'}`}>
                                 {style}
                             </button>
                         ))}

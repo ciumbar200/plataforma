@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { User, RentalGoal } from '../../types';
 import GlassCard from '../../components/GlassCard';
@@ -70,7 +71,7 @@ const UserProfileCard: React.FC<UserProfileCardProps> = ({ user, onCompatibility
                     <div className="mb-3">
                         <h4 className="text-xs font-semibold text-white/60 mb-1">Intereses</h4>
                         <div className="flex flex-wrap gap-1.5">
-                            {user.interests.slice(0, 4).map(interest => (
+                            {(user.interests || []).slice(0, 4).map(interest => (
                                 <span key={interest} className="bg-white/10 text-xs text-white/80 px-2 py-1 rounded-full">{interest}</span>
                             ))}
                         </div>
