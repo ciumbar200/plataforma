@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 // FIX: Added PropertyType to the import to use in the component's props.
 import { User, RentalGoal, UserRole, PropertyType } from '../types';
@@ -123,6 +122,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onBack, initialData, registration
         const { error: profileError } = await supabase
             .from('profiles')
             .update({
+                name: formData.name,
                 last_name: formData.lastName,
                 phone: formData.phone,
                 city: formData.city,
