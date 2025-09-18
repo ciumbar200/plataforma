@@ -1,3 +1,4 @@
+
 import {
   User, UserRole, RentalGoal, Property, PropertyType, OwnerStats,
   Notification, NotificationType, SavedSearch, BlogPost
@@ -120,4 +121,45 @@ export const addToFluentCRM = async (user: { name: string; lastName?: string; em
   } catch (error) {
     console.error('Error al enviar el contacto a Fluent CRM:', error);
   }
+};
+
+// FIX: Added mock data to this file to resolve import errors.
+// --- MOCK DATA ---
+export const MOCK_USERS: User[] = [
+  {
+    id: '1', name: 'Elena García', email: 'elena@example.com', age: 28, city: 'Madrid', locality: 'Malasaña', profilePicture: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=200&h=200&fit=crop&crop=faces&facepad=4', interests: ['Yoga', 'Cocina Vegana', 'Viajar', 'Fotografía'], noiseLevel: 'Bajo', compatibility: 92, role: UserRole.INQUILINO, bio: 'Busco un espacio tranquilo y gente con buena energía para compartir piso. Soy diseñadora gráfica, me encanta el arte y los planes de día.', lifestyle: ['Diurno', 'Creativo', 'Tranquilo'], commuteDistance: 20, rentalGoal: RentalGoal.FIND_ROOM_WITH_ROOMMATES, isBanned: false,
+  },
+  {
+    id: '2', name: 'Javier Moreno', email: 'javier@example.com', age: 31, city: 'Madrid', locality: 'Chamberí', profilePicture: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=200&h=200&fit=crop&crop=faces&facepad=4', interests: ['Senderismo', 'Música Indie', 'Cine', 'Salir de tapas'], noiseLevel: 'Medio', compatibility: 85, role: UserRole.INQUILINO, bio: 'Soy desarrollador de software y en mi tiempo libre me gusta descubrir la sierra de Madrid. Busco buen rollo y gente independiente.', lifestyle: ['Diurno', 'Social'], commuteDistance: 30, rentalGoal: RentalGoal.FIND_ROOM_WITH_ROOMMATES, isBanned: false,
+  },
+  {
+    id: '3', name: 'Carlos Pérez', email: 'carlos@example.com', age: 34, city: 'Barcelona', locality: 'Gràcia', profilePicture: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=200&h=200&fit=crop&crop=faces&facepad=4', interests: ['Arte Urbano', 'Videojuegos', 'Música en vivo'], noiseLevel: 'Medio', compatibility: 78, role: UserRole.PROPIETARIO, bio: 'Alquilo una habitación en mi piso de Gràcia. Soy una persona tranquila y trabajo desde casa. Busco a alguien limpio y respetuoso.', lifestyle: ['Diurno', 'Tranquilo'], commuteDistance: 10, isBanned: false,
+  },
+  {
+    id: 'admin', name: 'Admin', email: 'admin@moon.com', age: 99, city: 'Internet', locality: 'The Cloud', profilePicture: 'https://placehold.co/100x100/7c3aed/ffffff?text=M', interests: [], noiseLevel: 'Medio', compatibility: 0, role: UserRole.ADMIN, bio: 'I am the administrator.', isBanned: false,
+  }
+];
+
+export const MOCK_PROPERTIES: Property[] = [
+    { id: 1, owner_id: '3', title: 'Habitación luminosa en Gràcia', address: 'Carrer de Verdi, 24', city: 'Barcelona', locality: 'Gràcia', postalCode: '08012', propertyType: PropertyType.ROOM, imageUrls: ['https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=800&auto=format&fit=crop'], price: 550, visibility: 'Pública', views: 1204, compatibleCandidates: 18, conditions: 'Estancia mínima 6 meses. No fumadores.', features: { wifi: true, kitchen: true, washingMachine: true, furnished: true }, availableFrom: '2024-08-01', lat: 41.4036, lng: 2.1545, status: 'approved'},
+    { id: 2, owner_id: '3', title: 'Ático con terraza en Chamberí', address: 'Calle de Ponzano, 50', city: 'Madrid', locality: 'Chamberí', postalCode: '28003', propertyType: PropertyType.APARTMENT, imageUrls: ['https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=800&auto=format&fit=crop'], price: 1400, visibility: 'Pública', views: 8560, compatibleCandidates: 120, conditions: 'Se requiere 2 meses de fianza.', features: { wifi: true, airConditioning: true, kitchen: true, washingMachine: true, elevator: true, balcony: true, petsAllowed: false }, availableFrom: '2024-09-01', lat: 40.4358, lng: -3.6974, status: 'approved'},
+    { id: 3, owner_id: '3', title: 'Piso por Aprobar', address: 'Calle Falsa, 123', city: 'Madrid', locality: 'Centro', postalCode: '28001', propertyType: PropertyType.FLAT, imageUrls: ['https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=800&auto=format&fit=crop'], price: 900, visibility: 'Pública', views: 0, compatibleCandidates: 0, availableFrom: '2024-08-15', lat: 40.4168, lng: -3.7038, status: 'pending'}
+];
+
+export const MOCK_NOTIFICATIONS: Notification[] = [
+    { id: 1, userId: '1', type: NotificationType.NEW_MATCH, message: '¡Tienes un nuevo match con Javier! Compatibilidad del 85%.', timestamp: '2024-07-25T10:30:00Z', read: false, relatedEntityId: 2 },
+    { id: 2, userId: '3', type: NotificationType.PROPERTY_INQUIRY, message: 'Elena está interesada en tu "Habitación luminosa en Gràcia".', timestamp: '2024-07-25T09:00:00Z', read: true, relatedEntityId: 1 },
+];
+
+export const MOCK_SAVED_SEARCHES: SavedSearch[] = [
+    { id: 1, userId: '1', name: 'Pisos en Malasaña', filters: { city: 'Madrid', locality: 'Malasaña', maxPrice: 600 } }
+];
+
+export const MOCK_BLOG_POSTS: BlogPost[] = [
+    { id: 1, slug: '5-consejos-para-una-convivencia-exitosa', title: '5 Consejos para una Convivencia Exitosa', excerpt: 'Descubre las claves para mantener la armonía en tu piso compartido. Desde la comunicación hasta la limpieza, te lo contamos todo.', imageUrl: 'https://images.unsplash.com/photo-1543269865-cbf427effbad?q=80&w=800&auto=format&fit=crop', content: '<h2>1. Comunicación Abierta y Honesta</h2><p>La base de cualquier buena relación, incluida la de compañeros de piso, es la comunicación...</p>', author: 'Laura Sánchez', authorImageUrl: 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?q=80&w=100&h=100&fit=crop', publish_date: '2024-07-15T12:00:00Z' },
+];
+
+export const MOCK_MATCHES: {[key: string]: string[]} = {
+    '1': ['2'],
+    '2': ['1']
 };
