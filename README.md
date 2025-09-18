@@ -1,46 +1,20 @@
-# MoOn Pro (v2) — React + Node/Express + PostgreSQL + Google/Email Auth (Vercel)
+<div align="center">
+<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+</div>
 
-## Roles
-- **ADMIN**, **INQUILINO**, **PROPIETARIO**
+# Run and deploy your AI Studio app
 
-## Funcionalidades
-- Panel Admin: Métricas, Usuarios, Roles, Propiedades (conteo), Blogs (CRUD), SMTP (config), Claves API (crear/revocar), Analíticas (same que métricas).
-- Inquilino: "Tinder" sin corazones para buscar compañero, % de match en verde, ver propiedades (públicas + privadas desbloqueadas por match), enviar interés.
-- Propietario: crear/gestionar propiedades, fotos por URL, visibilidad Pública vs Privada (MATCHED_ONLY), dashboard con ganancias estimadas, candidatos y aceptar/rechazar matches.
-- Todos: Perfil obligatorio con **foto** + **vídeo** + ciudad + nivel de ruido + distancia + sobre mí + intereses (nube). "Mi Cuenta" + planes (por defecto `standard`).
+This contains everything you need to run your app locally.
 
-## Backend (server)
-```bash
-cd server
-cp .env.example .env  # Rellena DATABASE_URL, JWT_SECRET, CLIENT_ORIGIN, GOOGLE_CLIENT_ID, ...
-npm i
-npx prisma generate
-npx prisma migrate dev
-npm run dev # http://localhost:3000
-```
+View your app in AI Studio: https://ai.studio/apps/drive/1g8cPNl2C6GZ1yDUZ3ow0zsIaiTMXKdGe
 
-## Frontend (web)
-```bash
-cd web
-cp .env.example .env   # VITE_API_URL=http://localhost:3000/api
-npm i
-npm run dev # http://localhost:5173
-```
+## Run Locally
 
-## Google OAuth
-- Crea credenciales tipo **Web** en Google Cloud Console.
-- Redirect local: `http://localhost:3000/api/auth/google/callback`
-- Producción: `https://TU-BACKEND.vercel.app/api/auth/google/callback`
+**Prerequisites:**  Node.js
 
-## Deploy en Vercel
-- Proyecto Backend -> root `server/` (variables: `DATABASE_URL`, `JWT_SECRET`, `CLIENT_ORIGIN`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `OAUTH_REDIRECT_URI`).
-- Proyecto Frontend -> root `web/` (`VITE_API_URL=https://TU-BACKEND.vercel.app/api`).
 
-## Mejoras sugeridas
-- Subidas directas a Cloudinary/S3 en lugar de URLs.
-- Emails transaccionales usando la configuración SMTP.
-- Verificación de email y reset de contraseña.
-- OpenAPI + Swagger para documentar la API.
-- Rate limiting y logs estructurados (pino).
-```
-
+1. Install dependencies:
+   `npm install`
+2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+3. Run the app:
+   `npm run dev`

@@ -1,0 +1,182 @@
+import React, { useState, useRef } from 'react';
+import { User, RentalGoal } from '../../types';
+import GlassCard from '../../components/GlassCard';
+import { CITIES_DATA } from '../../constants';
+import { CameraIcon } from '../../components/icons';
+
+interface ProfileProps {
+  user: User;
+  onSave: (updatedUser: User) => void;
+}
+
+const ALL_INTERESTS = ['Yoga', 'Cocina Vegana', 'Viajar', 'Fotografía', 'Senderismo', 'Música Indie', 'Música en vivo', 'Cine', 'Salir de tapas', 'Arte Urbano', 'Videojuegos', 'Lectura', 'Teatro', 'Museos', 'Brunch', 'Deportes', 'Series', 'Fitness', 'Cocinar'];
+const ALL_LIFESTYLES = ['Diurno', 'Nocturno', 'Deportista', 'Creativo', 'Social', 'Intelectual', 'Eco-friendly', 'Tranquilo'];
+
+const Profile: React.FC<ProfileProps> = ({ user, onSave }) => {
+  const [formData, setFormData] = useState(user);
+  const [localities, setLocalities] = useState<string[]>(CITIES_DATA[user.city || 'Madrid'] || []);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleProfilePictureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setFormData(prev => ({ ...prev, profilePicture: event.target?.result as string }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+  
+  const handleCityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const city = e.target.value;
+    const newLocalities = CITIES_DATA[city] || [];
+    setLocalities(newLocalities);
+    setFormData(prev => ({ ...prev, city, locality: newLocalities[0] || '' }));
+  };
+
+  const handleInterestToggle = (interest: string) => {
+    const interests = formData.interests.includes(interest)
+      ? formData.interests.filter(i => i !== interest)
+      : [...formData.interests, interest];
+    setFormData(prev => ({ ...prev, interests }));
+  };
+  
+  const handleLifestyleToggle = (style: string) => {
+    const lifestyle = formData.lifestyle?.includes(style)
+      ? formData.lifestyle.filter(s => s !== style)
+      : [...(formData.lifestyle || []), style];
+    setFormData(prev => ({ ...prev, lifestyle }));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave(formData);
+  };
+
+  return (
+    <GlassCard>
+      <h2 className="text-2xl font-bold mb-6">Editar Perfil</h2>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="flex justify-center">
+            <div className="relative">
+                <img src={formData.profilePicture} alt="Foto de perfil" className="w-40 h-40 rounded-full object-cover border-4 border-indigo-400" />
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  onChange={handleProfilePictureChange} 
+                  className="hidden" 
+                  accept="image/*" 
+                />
+                <button 
+                  type="button" 
+                  onClick={() => fileInputRef.current?.click()}
+                  className="absolute bottom-2 right-2 bg-slate-800/80 backdrop-blur-sm rounded-full p-3 text-white hover:bg-slate-700/80 transition-colors"
+                  aria-label="Cambiar foto de perfil"
+                >
+                  <CameraIcon className="w-5 h-5" />
+                </button>
+            </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+           <div>
+            <label htmlFor="name" className="block text-sm font-medium text-white/80 mb-1">Nombre</label>
+            <input type="text" name="name" id="name" value={formData.name} onChange={handleChange} className="w-full bg-white/10 border border-white/20 rounded-lg p-3 outline-none focus:ring-2 focus:ring-indigo-500" />
+          </div>
+          <div>
+            <label htmlFor="age" className="block text-sm font-medium text-white/80 mb-1">Edad</label>
+            <input type="number" name="age" id="age" value={formData.age} onChange={handleChange} className="w-full bg-white/10 border border-white/20 rounded-lg p-3 outline-none focus:ring-2 focus:ring-indigo-500" />
+          </div>
+        </div>
+        <div>
+          <label htmlFor="bio" className="block text-sm font-medium text-white/80 mb-1">Biografía</label>
+          <textarea name="bio" id="bio" value={formData.bio || ''} onChange={handleChange} rows={4} className="w-full bg-white/10 border border-white/20 rounded-lg p-3 outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+        </div>
+         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label htmlFor="city" className="block text-sm font-medium text-white/80 mb-1">Ciudad</label>
+              <select name="city" id="city" value={formData.city} onChange={handleCityChange} className="w-full bg-white/10 border border-white/20 rounded-lg p-3 outline-none focus:ring-2 focus:ring-indigo-500">
+                  {Object.keys(CITIES_DATA).map(city => <option key={city} value={city} className="bg-gray-800">{city}</option>)}
+              </select>
+            </div>
+            <div>
+              <label htmlFor="locality" className="block text-sm font-medium text-white/80 mb-1">Localidad</label>
+              <select name="locality" id="locality" value={formData.locality} onChange={handleChange} className="w-full bg-white/10 border border-white/20 rounded-lg p-3 outline-none focus:ring-2 focus:ring-indigo-500">
+                  {localities.map(loc => <option key={loc} value={loc} className="bg-gray-800">{loc}</option>)}
+              </select>
+            </div>
+        </div>
+        
+        {user.role === 'INQUILINO' && (
+            <>
+                <div>
+                  <label htmlFor="videoUrl" className="block text-sm font-medium text-white/80 mb-1">
+                    URL de Vídeo de Presentación (Opcional)
+                  </label>
+                  <input 
+                    type="url" 
+                    name="videoUrl" 
+                    id="videoUrl" 
+                    value={formData.videoUrl || ''} 
+                    onChange={handleChange} 
+                    className="w-full bg-white/10 border border-white/20 rounded-lg p-3 outline-none focus:ring-2 focus:ring-indigo-500"
+                    placeholder="https://... (máx. 20 segundos)"
+                  />
+                  <p className="text-xs text-white/60 mt-1">
+                    Un vídeo corto aumenta tus posibilidades de encontrar un match.
+                  </p>
+                </div>
+
+                <div>
+                    <h3 className="text-lg font-semibold text-white/90 mb-3">Intereses</h3>
+                    <div className="flex flex-wrap gap-2">
+                        {ALL_INTERESTS.map(interest => (
+                            <button key={interest} type="button" onClick={() => handleInterestToggle(interest)} className={`px-3 py-1 text-sm rounded-full transition-colors border ${formData.interests.includes(interest) ? 'bg-indigo-500 border-indigo-400 text-white font-semibold' : 'bg-white/10 border-white/20 text-white/80 hover:bg-white/20'}`}>
+                                {interest}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+                 <div>
+                    <h3 className="text-lg font-semibold text-white/90 mb-3">Estilo de vida</h3>
+                    <div className="flex flex-wrap gap-2">
+                        {ALL_LIFESTYLES.map(style => (
+                            <button key={style} type="button" onClick={() => handleLifestyleToggle(style)} className={`px-3 py-1 text-sm rounded-full transition-colors border ${formData.lifestyle?.includes(style) ? 'bg-purple-500 border-purple-400 text-white font-semibold' : 'bg-white/10 border-white/20 text-white/80 hover:bg-white/20'}`}>
+                                {style}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label htmlFor="noiseLevel" className="block text-sm font-medium text-white/80 mb-1">Nivel de ruido preferido</label>
+                        <select name="noiseLevel" id="noiseLevel" value={formData.noiseLevel} onChange={handleChange} className="w-full bg-white/10 border border-white/20 rounded-lg p-3 outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="Bajo" className="bg-gray-800">Bajo</option>
+                            <option value="Medio" className="bg-gray-800">Medio</option>
+                            <option value="Alto" className="bg-gray-800">Alto</option>
+                        </select>
+                    </div>
+                    <div>
+                      <label htmlFor="commuteDistance" className="block text-sm font-medium text-white/80 mb-1">Distancia máx. de búsqueda (min)</label>
+                      <input type="number" name="commuteDistance" id="commuteDistance" value={formData.commuteDistance || ''} onChange={handleChange} className="w-full bg-white/10 border border-white/20 rounded-lg p-3 outline-none focus:ring-2 focus:ring-indigo-500" />
+                    </div>
+                </div>
+            </>
+        )}
+
+        <div className="flex justify-end pt-4">
+          <button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg transition-colors">
+            Guardar Cambios
+          </button>
+        </div>
+      </form>
+    </GlassCard>
+  );
+};
+
+export default Profile;
