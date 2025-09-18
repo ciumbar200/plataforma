@@ -215,7 +215,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 <tr key={post.id} className="border-b border-white/10 hover:bg-white/5">
                                     <td className="p-3 font-semibold">{post.title}</td>
                                     <td className="p-3">{post.author}</td>
-                                    <td className="p-3">{new Date(post.publishDate).toLocaleDateString()}</td>
+                                    <td className="p-3">{new Date(post.publish_date).toLocaleDateString()}</td>
                                     <td className="p-3 text-right">
                                         <button onClick={() => openModal('edit_blog', post)} className="text-indigo-400 hover:underline text-sm font-semibold px-2">Editar</button>
                                         <button onClick={() => openModal('delete_blog', post)} className="text-red-400 hover:underline text-sm font-semibold px-2">Eliminar</button>

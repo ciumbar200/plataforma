@@ -25,7 +25,7 @@ const BlogCard: React.FC<{ post: BlogPost; onClick: () => void }> = ({ post, onC
         <img src={post.authorImageUrl} alt={post.author} className="w-10 h-10 rounded-full object-cover" />
         <div>
           <p className="font-semibold text-sm">{post.author}</p>
-          <p className="text-xs text-white/60">{new Date(post.publishDate).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+          <p className="text-xs text-white/60">{new Date(post.publish_date).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
         </div>
       </div>
     </div>
@@ -53,7 +53,7 @@ const BlogPage: React.FC<BlogPageProps> = ({ posts, onHomeClick, onLoginClick, o
                 <img src={selectedPost.authorImageUrl} alt={selectedPost.author} className="w-12 h-12 rounded-full object-cover" />
                 <div>
                   <p className="font-semibold">{selectedPost.author}</p>
-                  <p className="text-sm text-white/60">{new Date(selectedPost.publishDate).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                  <p className="text-sm text-white/60">{new Date(selectedPost.publish_date).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
                 </div>
               </div>
               <img src={selectedPost.imageUrl} alt={selectedPost.title} className="w-full h-auto max-h-[500px] object-cover rounded-xl mb-8" />

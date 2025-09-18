@@ -1,4 +1,5 @@
 
+
 export enum UserRole {
   INQUILINO = 'INQUILINO',
   PROPIETARIO = 'PROPIETARIO',
@@ -124,5 +125,5 @@ export interface BlogPost {
   content: string; 
   author: string;
   authorImageUrl: string;
-  publishDate: string;
+  publish_date: string;
 }

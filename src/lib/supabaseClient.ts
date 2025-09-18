@@ -1,24 +1,33 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
 import { User } from '../types';
 
-// --- PRODUCTION: USE ENVIRONMENT VARIABLES ---
-// This is the secure way to handle your keys for both local development and deployment.
-// 1. Create a file named .env in the root of your project.
-// 2. Add your Supabase credentials to the .env file like this:
-//    VITE_SUPABASE_URL="https://vogzzdnxoldgfpsrobps.supabase.co"
-//    VITE_SUPABASE_ANON_KEY="your-anon-key-here"
-// 3. Make sure the .env file is listed in your .gitignore file.
-
+// --- Vercel Environment Variables (Recommended for Production) ---
+// These variables should be set in your Vercel project settings.
 const supabaseUrl = (import.meta as any)?.env?.VITE_SUPABASE_URL;
 const supabaseAnonKey = (import.meta as any)?.env?.VITE_SUPABASE_ANON_KEY;
 
+// --- Fallback Hardcoded Keys (For local dev or if Vercel vars are not set) ---
+const FALLBACK_SUPABASE_URL = "https://vogzzdnxoldgfpsrobps.supabase.co";
+const FALLBACK_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZvZ3p6ZG54b2xkZ2Zwc3JvYnBzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgwNTIyOTQsImV4cCI6MjA3MzYyODI5NH0.c9H6a7zVtr7-eM1eOQxe6K-xdAVhqIHZqVQ8a6raNMk";
+
+const finalUrl = supabaseUrl || FALLBACK_SUPABASE_URL;
+const finalKey = supabaseAnonKey || FALLBACK_SUPABASE_ANON_KEY;
+
 let supabaseInstance: SupabaseClient | null = null;
 
-if (supabaseUrl && supabaseAnonKey) {
-    supabaseInstance = createClient(supabaseUrl, supabaseAnonKey);
+if (finalUrl && finalKey) {
+    if (!supabaseUrl || !supabaseAnonKey) {
+        console.warn(
+            "----------------------------------------------------------------\n" +
+            "WARNING: Supabase environment variables (VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY) are not set.\n" +
+            "Falling back to hardcoded keys. This is NOT secure and should ONLY be used for local development.\n" +
+            "For production deployment on Vercel, please set these variables in your project's Environment Variables settings.\n" +
+            "----------------------------------------------------------------"
+        );
+    }
+    supabaseInstance = createClient(finalUrl, finalKey);
 } else {
-    // This warning is helpful for local development. Vercel will provide the variables in production.
-    console.warn("Supabase URL and Anon Key are not set in .env file. This is expected during Vercel build, but will cause issues in local dev if not set.");
+    console.error("Supabase URL and Anon Key are missing. The application cannot start.");
 }
 
 export const supabase: SupabaseClient = supabaseInstance as SupabaseClient;
