@@ -163,17 +163,34 @@ const App: React.FC = () => {
     
     const handleUpdateUser = async (updatedUser: User) => {
         if (!currentUser) return;
-        
-        // Destructure to remove properties that are calculated or not meant to be updated by the user.
-        const { id, compatibility, email, role, isBanned, ...updateData } = updatedUser; 
-
+    
+        const { id, compatibility, email, role, isBanned, ...updateData } = updatedUser;
+    
+        // FIX: The database columns are snake_case (e.g., commute_distance), but the form sends camelCase (e.g., commuteDistance).
+        // This maps the property names correctly before sending them to Supabase.
+        const propertyMap: { [key: string]: string } = {
+            lastName: 'last_name',
+            rentalGoal: 'rental_goal',
+            profilePicture: 'profile_picture',
+            videoUrl: 'video_url',
+            noiseLevel: 'noise_level',
+            commuteDistance: 'commute_distance'
+        };
+    
+        Object.keys(propertyMap).forEach(key => {
+            if (key in updateData) {
+                (updateData as any)[propertyMap[key]] = (updateData as any)[key];
+                delete (updateData as any)[key];
+            }
+        });
+    
         const { data, error } = await supabase
             .from('profiles')
             .update(updateData)
             .eq('id', id)
             .select()
             .single();
-
+    
         if (error) {
             console.error("Error updating user:", error);
             alert(`Error al actualizar el perfil: ${error.message}`);
