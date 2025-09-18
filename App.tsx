@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
@@ -12,36 +11,43 @@ import AboutPage from './pages/AboutPage';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 import TermsPage from './pages/TermsPage';
 import ContactPage from './pages/ContactPage';
-import { User, Property, BlogPost, SavedSearch, UserRole, RentalGoal, PropertyType, Notification, NotificationType, OwnerStats } from './types';
+import { User, Property, BlogPost, SavedSearch, UserRole } from './types';
 import { supabase } from './lib/supabaseClient';
-import { Session } from '@supabase/supabase-js';
+import { MoonIcon } from './components/icons';
 
-// --- MOCK DATA ---
+// --- MAPPERS ---
+// Maps a profile from Supabase (snake_case) to a User object (camelCase)
+const mapProfileToUser = (profile: any): User => ({
+  id: profile.id,
+  name: profile.name,
+  email: profile.email,
+  lastName: profile.last_name,
+  phone: profile.phone,
+  city: profile.city,
+  locality: profile.locality,
+  rentalGoal: profile.rental_goal,
+  age: profile.age,
+  profilePicture: profile.avatar_url,
+  videoUrl: profile.video_url,
+  interests: profile.interests || [],
+  noiseLevel: profile.noise_level,
+  compatibility: 0, // Should be calculated dynamically
+  role: profile.role,
+  bio: profile.bio,
+  lifestyle: profile.lifestyle || [],
+  commuteDistance: profile.commute_distance,
+  isBanned: profile.is_banned,
+});
 
-const MOCK_USERS: User[] = [
-  { id: '1', name: 'Elena Rodriguez', email: 'elena@example.com', age: 28, profilePicture: 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?q=80&w=200&h=200&fit=crop', city: 'Madrid', locality: 'Centro', interests: ['Yoga', 'Cocina Vegana', 'Viajar', 'Fotografía'], noiseLevel: 'Bajo', compatibility: 0, role: UserRole.INQUILINO, rentalGoal: RentalGoal.FIND_ROOM_WITH_ROOMMATES, bio: 'Busco un lugar tranquilo para vivir y compartir buenas conversaciones. Me encanta el arte y salir a tomar fotos por la ciudad.', lifestyle: ['Creativo', 'Tranquilo'], commuteDistance: 30, isBanned: false },
-  { id: '2', name: 'Carlos Pérez', email: 'carlos@example.com', age: 31, profilePicture: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=200&h=200&fit=crop', city: 'Madrid', locality: 'Chamberí', interests: ['Senderismo', 'Música Indie', 'Videojuegos', 'Cine'], noiseLevel: 'Medio', compatibility: 0, role: UserRole.INQUILINO, rentalGoal: RentalGoal.FIND_ROOMMATES_AND_APARTMENT, bio: 'Ingeniero de software. En mi tiempo libre me gusta desconectar en la naturaleza o jugar a la PS5. Busco compis para compartir piso y alguna cerveza.', lifestyle: ['Nocturno', 'Intelectual'], commuteDistance: 20, isBanned: false },
-  { id: '3', name: 'Ana García', email: 'ana@example.com', age: 26, profilePicture: 'https://images.unsplash.com/photo-1525134479668-1bee5c7c6845?q=80&w=200&h=200&fit=crop', city: 'Barcelona', locality: 'Gràcia', interests: ['Lectura', 'Teatro', 'Museos', 'Brunch'], noiseLevel: 'Bajo', compatibility: 0, role: UserRole.INQUILINO, rentalGoal: RentalGoal.BOTH, bio: 'Soy periodista y me encanta la vida cultural de la ciudad. Busco un hogar acogedor con gente respetuosa y con quien poder charlar de vez en cuando.', lifestyle: ['Diurno', 'Social'], commuteDistance: 45, isBanned: false },
-  { id: '4', name: 'Javier Moreno', email: 'javier.owner@example.com', age: 42, profilePicture: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=200&h=200&fit=crop', city: 'Valencia', locality: 'Ruzafa', role: UserRole.PROPIETARIO, interests: [], noiseLevel: 'Medio', compatibility: 0, age: 42, bio: 'Propietario de varios inmuebles en Valencia. Busco inquilinos responsables y a largo plazo.' },
-  { id: '5', name: 'Admin', email: 'admin@moon.com', age: 35, profilePicture: 'https://i.pravatar.cc/200?u=admin', city: 'Madrid', role: UserRole.ADMIN, interests: [], noiseLevel: 'Medio', compatibility: 0, bio: 'Administrador del sistema.' },
-];
+const mapPropertyFromDb = (property: any): Property => ({
+    ...property,
+    imageUrls: property.image_urls || [],
+    propertyType: property.property_type,
+    availableFrom: property.available_from,
+    postalCode: property.postal_code,
+    compatibleCandidates: property.compatible_candidates,
+});
 
-const MOCK_PROPERTIES: Property[] = [
-    { id: 1, owner_id: '4', title: 'Piso luminoso en Chamberí', address: 'Calle de Almagro, 20', city: 'Madrid', locality: 'Chamberí', postalCode: '28010', propertyType: PropertyType.FLAT, imageUrls: ['https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=800', 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=800'], price: 1400, visibility: 'Pública', views: 2345, compatibleCandidates: 12, availableFrom: '2024-08-01', lat: 40.430, lng: -3.693, status: 'approved', features: { wifi: true, airConditioning: true, heating: true, kitchen: true, elevator: true, furnished: true } },
-    { id: 2, owner_id: '4', title: 'Habitación con balcón en Gràcia', address: 'Carrer de Verdi, 50', city: 'Barcelona', locality: 'Gràcia', postalCode: '08012', propertyType: PropertyType.ROOM, imageUrls: ['https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=800'], price: 550, visibility: 'Pública', views: 5870, compatibleCandidates: 34, availableFrom: '2024-09-01', lat: 41.403, lng: 2.154, status: 'approved', features: { wifi: true, furnished: true, kitchen: true, washingMachine: true, balcony: true } },
-    { id: 3, owner_id: '4', title: 'Estudio moderno en Ruzafa', address: 'Carrer de Sueca, 30', city: 'Valencia', locality: 'Ruzafa', postalCode: '46004', propertyType: PropertyType.STUDIO, imageUrls: ['https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?q=80&w=800'], price: 800, visibility: 'Pública', views: 1230, compatibleCandidates: 8, availableFrom: '2024-08-15', lat: 39.462, lng: -0.373, status: 'pending', conditions: 'Estancia mínima de 1 año. Se requiere un mes de fianza.' },
-];
-
-const MOCK_BLOG_POSTS: BlogPost[] = [
-    { id: 1, slug: '10-consejos-convivencia', title: '10 consejos para una convivencia feliz con tus compañeros de piso', excerpt: 'Descubre las claves para evitar conflictos y disfrutar de una experiencia increíble compartiendo piso.', imageUrl: 'https://images.unsplash.com/photo-1543269865-cbf427effbad?q=80&w=800', content: '<h2>Introducción</h2><p>Vivir con compañeros de piso puede ser una de las experiencias más enriquecedoras de tu vida, pero también puede presentar desafíos...</p>', author: 'El equipo de MoOn', authorImageUrl: 'https://i.pravatar.cc/100?u=moon', publish_date: '2024-07-20T10:00:00Z' },
-    { id: 2, slug: 'decorar-habitacion-pequena', title: 'Cómo decorar una habitación pequeña para que parezca más grande', excerpt: 'Aprovecha cada rincón de tu espacio con estos trucos de decoración inteligentes y económicos.', imageUrl: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=800', content: '<h2>El poder de los colores claros</h2><p>Pintar las paredes de colores claros como el blanco, beige o gris pálido es el truco más antiguo y efectivo...</p>', author: 'Ana García', authorImageUrl: MOCK_USERS[2].profilePicture, publish_date: '2024-07-15T10:00:00Z' },
-];
-
-const MOCK_NOTIFICATIONS: Notification[] = [
-    { id: 1, userId: '1', type: NotificationType.NEW_MATCH, message: '¡Has hecho match con Carlos Pérez!', timestamp: new Date().toISOString(), read: false },
-    { id: 2, userId: '4', type: NotificationType.PROPERTY_INQUIRY, message: 'Elena Rodríguez está interesada en tu "Piso luminoso en Chamberí".', timestamp: new Date(Date.now() - 3600000).toISOString(), read: false },
-    { id: 3, userId: '1', type: NotificationType.SYSTEM_ALERT, message: 'Hemos actualizado nuestra Política de Privacidad. Revísala.', timestamp: new Date(Date.now() - 86400000).toISOString(), read: true },
-];
 
 // --- APP COMPONENT ---
 
@@ -60,35 +66,71 @@ type ViewState =
     | { view: 'contact' };
 
 const App: React.FC = () => {
-    const [session, setSession] = useState<Session | null>(null);
+    const [session, setSession] = useState<any | null>(null);
     const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [viewState, setViewState] = useState<ViewState>({ view: 'home' });
+    const [loading, setLoading] = useState(true);
 
-    // Mock data state
-    const [users, setUsers] = useState<User[]>(MOCK_USERS);
-    const [properties, setProperties] = useState<Property[]>(MOCK_PROPERTIES);
-    const [blogPosts, setBlogPosts] = useState<BlogPost[]>(MOCK_BLOG_POSTS);
+    // Data state, initialized as empty
+    const [users, setUsers] = useState<User[]>([]);
+    const [properties, setProperties] = useState<Property[]>([]);
+    const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
     const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([]);
     const [userMatches, setUserMatches] = useState<string[]>([]);
-    const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS);
+
+    // --- DATA FETCHING & AUTH ---
 
     useEffect(() => {
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            setSession(session);
-            const user = session?.user ? users.find(u => u.email === session.user.email) || null : null;
-            setCurrentUser(user);
-        });
+        const fetchAllData = async () => {
+            const { data: profilesData } = await supabase.from('profiles').select('*');
+            if (profilesData) setUsers(profilesData.map(mapProfileToUser));
 
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            const { data: propertiesData } = await supabase.from('properties').select('*');
+            if (propertiesData) setProperties(propertiesData.map(mapPropertyFromDb));
+            
+            // NOTE: Assuming blog_posts table exists. If not, this will fail silently.
+            const { data: blogData } = await supabase.from('blog_posts').select('*');
+            if (blogData) setBlogPosts(blogData);
+        };
+
+        const initialize = async () => {
+            setLoading(true);
+            await fetchAllData();
+            
+            const { data: { session } } = await supabase.auth.getSession();
             setSession(session);
-            const user = session?.user ? users.find(u => u.email === session.user.email) || null : null;
-            setCurrentUser(user);
+            if (session) {
+                const { data } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
+                if (data) setCurrentUser(mapProfileToUser(data));
+            }
+            setLoading(false);
+        };
+        
+        initialize();
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+            setSession(session);
+            if (session) {
+                 const { data } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
+                 if (data) {
+                    setCurrentUser(mapProfileToUser(data));
+                 } else { // Profile might not exist yet if signup just happened
+                    const freshUsers = await supabase.from('profiles').select('*');
+                    if(freshUsers.data) {
+                        const profile = freshUsers.data.find(p => p.id === session.user.id);
+                        if(profile) setCurrentUser(mapProfileToUser(profile));
+                    }
+                 }
+            } else {
+                setCurrentUser(null);
+            }
         });
 
         return () => subscription.unsubscribe();
-    }, [users]);
-    
+    }, []);
+
     useEffect(() => {
+        if (loading) return; // Don't navigate while loading
         if (currentUser) {
             switch(currentUser.role) {
                 case UserRole.INQUILINO: setViewState({ view: 'tenant_dashboard' }); break;
@@ -97,19 +139,17 @@ const App: React.FC = () => {
                 default: setViewState({ view: 'home' });
             }
         } else {
-            // Keep current view if not logged in, unless it's a protected view
             if (['tenant_dashboard', 'owner_dashboard', 'admin_dashboard', 'account_settings'].includes(viewState.view)) {
                  setViewState({ view: 'home' });
             }
         }
-    }, [currentUser]);
+    }, [currentUser, loading]);
 
     // --- Handlers ---
     
     const handleLogout = async () => {
         await supabase.auth.signOut();
-        setCurrentUser(null);
-        setViewState({ view: 'home' });
+        setCurrentUser(null); // This will trigger the useEffect above to navigate home
     };
     
     const handleStartRegistration = (data: any) => {
@@ -117,32 +157,79 @@ const App: React.FC = () => {
         setViewState({ view: 'login', registrationData: data, registrationRole: isTenant ? UserRole.INQUILINO : UserRole.PROPIETARIO });
     };
 
-    const handleSaveProperty = (propertyData: Omit<Property, 'id' | 'views' | 'compatibleCandidates' | 'owner_id'> & { id?: number }) => {
-        setProperties(prev => {
-            if (propertyData.id) {
-                return prev.map(p => p.id === propertyData.id ? { ...p, ...propertyData, price: Number(propertyData.price) } : p);
+    const handleSaveProperty = async (propertyData: Omit<Property, 'id' | 'views' | 'compatibleCandidates' | 'owner_id'> & { id?: number }) => {
+        const dbProperty = {
+            ...propertyData,
+            owner_id: currentUser!.id,
+            price: Number(propertyData.price),
+            image_urls: propertyData.imageUrls,
+            property_type: propertyData.propertyType,
+            available_from: propertyData.availableFrom,
+            postal_code: propertyData.postalCode,
+        };
+        delete (dbProperty as any).imageUrls;
+        delete (dbProperty as any).propertyType;
+        delete (dbProperty as any).availableFrom;
+        delete (dbProperty as any).postalCode;
+
+        if (dbProperty.id) { // Update
+            const { data, error } = await supabase.from('properties').update(dbProperty).eq('id', dbProperty.id).select().single();
+            if (data) {
+                setProperties(prev => prev.map(p => p.id === data.id ? mapPropertyFromDb(data) : p));
             }
-            const newProperty: Property = {
-                ...propertyData,
-                id: Math.max(...prev.map(p => p.id)) + 1,
-                price: Number(propertyData.price),
-                owner_id: currentUser!.id,
-                views: 0,
-                compatibleCandidates: 0,
-            };
-            return [...prev, newProperty];
-        });
-    };
-
-    const handleUpdateUser = (updatedUser: User) => {
-        const updated = users.map(u => u.id === updatedUser.id ? updatedUser : u);
-        setUsers(updated);
-        if (currentUser && currentUser.id === updatedUser.id) {
-            setCurrentUser(updatedUser);
+        } else { // Insert
+            delete (dbProperty as any).id;
+             const { data, error } = await supabase.from('properties').insert(dbProperty).select().single();
+            if (data) {
+                setProperties(prev => [...prev, mapPropertyFromDb(data)]);
+            }
         }
-    }
+    };
+    
+    const handleUpdateUser = async (updatedUser: User) => {
+        // A simplified update - only sends fields that are likely to change and exist in the DB
+        const profileUpdate = {
+            name: updatedUser.name,
+            last_name: updatedUser.lastName,
+            phone: updatedUser.phone,
+            city: updatedUser.city,
+            locality: updatedUser.locality,
+            age: updatedUser.age,
+            avatar_url: updatedUser.profilePicture,
+            bio: updatedUser.bio,
+            interests: updatedUser.interests,
+            lifestyle: updatedUser.lifestyle,
+            noise_level: updatedUser.noiseLevel,
+            commute_distance: updatedUser.commuteDistance,
+            rental_goal: updatedUser.rentalGoal
+        };
+        
+        const { data, error } = await supabase.from('profiles').update(profileUpdate).eq('id', updatedUser.id).select().single();
 
+        if (error) {
+            console.error("Error updating profile:", error);
+            alert(`Error al actualizar el perfil: ${error.message}`);
+            return;
+        }
+
+        if (data) {
+            const freshUser = mapProfileToUser(data);
+            setCurrentUser(freshUser);
+            setUsers(prev => prev.map(u => u.id === freshUser.id ? freshUser : u));
+            alert("Perfil actualizado con éxito.");
+        }
+    };
+    
     const renderView = () => {
+        if (loading) {
+            return (
+                <div className="h-full w-full flex flex-col items-center justify-center gap-4 text-white">
+                    <MoonIcon className="w-16 h-16 animate-pulse" />
+                    <p className="font-semibold">Cargando MoOn...</p>
+                </div>
+            );
+        }
+
         switch (viewState.view) {
             case 'home': return <HomePage onLoginClick={() => setViewState({ view: 'login', registrationRole: UserRole.INQUILINO })} onStartRegistration={handleStartRegistration} onOwnersClick={() => setViewState({ view: 'owner_landing' })} onBlogClick={() => setViewState({ view: 'blog' })} onAboutClick={() => setViewState({ view: 'about' })} onPrivacyClick={() => setViewState({ view: 'privacy' })} onTermsClick={() => setViewState({ view: 'terms' })} onContactClick={() => setViewState({ view: 'contact' })} />;
             case 'owner_landing': return <OwnerLandingPage onStartPublication={handleStartRegistration} onHomeClick={() => setViewState({ view: 'home' })} onLoginClick={() => setViewState({ view: 'login', registrationRole: UserRole.PROPIETARIO })} onBlogClick={() => setViewState({ view: 'blog' })} onAboutClick={() => setViewState({ view: 'about' })} onPrivacyClick={() => setViewState({ view: 'privacy' })} onTermsClick={() => setViewState({ view: 'terms' })} onContactClick={() => setViewState({ view: 'contact' })} />;

@@ -84,9 +84,10 @@ const LoginPage: React.FC<LoginPageProps> = ({ onBack, initialData, registration
     });
     if (error) setError(error.message);
     setLoading(false);
+    // onAuthStateChange in App.tsx will handle navigation
   };
   
-  const handleRegistration = async (e: React.FormEvent) => {
+ const handleRegistration = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!supabase) return;
     if (formData.password !== formData.confirmPassword) {
@@ -101,42 +102,48 @@ const LoginPage: React.FC<LoginPageProps> = ({ onBack, initialData, registration
     setLoading(true);
     setError(null);
 
-    const { data: { user }, error } = await (supabase.auth as any).signUp({
+    const { data, error: signUpError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
-        options: {
-            data: {
-                name: formData.name, // Pass metadata to the handle_new_user function
-            }
-        }
     });
 
-    if (error) {
-        setError(error.message);
+    if (signUpError) {
+        setError(signUpError.message);
         setLoading(false);
         return;
     }
 
-    if (user) {
-        // Now update the newly created profile with the rest of the form data
-        const { error: profileError } = await supabase
-            .from('profiles')
-            .update({
-                name: formData.name,
-                last_name: formData.lastName,
-                phone: formData.phone,
-                city: formData.city,
-                locality: formData.locality,
-                rental_goal: formData.rentalGoal,
-                role: registrationRole,
-            })
-            .eq('id', user.id);
-        
+    if (data.user) {
+        // Now, explicitly insert the full profile into the 'profiles' table.
+        const profileData = {
+            id: data.user.id,
+            email: data.user.email,
+            name: formData.name,
+            last_name: formData.lastName,
+            phone: formData.phone,
+            city: formData.city,
+            locality: formData.locality,
+            rental_goal: registrationRole === UserRole.INQUILINO ? formData.rentalGoal : null,
+            role: registrationRole,
+            age: 18, // Default age, user can change later
+            noise_level: 'Medio', // Default noise level
+            avatar_url: `https://i.pravatar.cc/200?u=${data.user.id}` // Default avatar
+        };
+
+        const { error: profileError } = await supabase.from('profiles').insert(profileData);
+
         if (profileError) {
-            setError(profileError.message);
+            setError(`Cuenta creada, pero hubo un error al guardar el perfil: ${profileError.message}. Contacta con soporte.`);
+            setLoading(false);
+        } else {
+            alert("¡Registro completado! Ahora puedes iniciar sesión con tu nueva cuenta.");
+            setMode('login'); // Switch to login form
+            setLoading(false);
         }
+    } else {
+        setError("No se pudo crear el usuario. Por favor, inténtalo de nuevo.");
+        setLoading(false);
     }
-    setLoading(false);
   };
   
   const renderLogin = () => (
