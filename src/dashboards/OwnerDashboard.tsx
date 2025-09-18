@@ -6,7 +6,7 @@ import { BuildingIcon, ChartBarIcon, EyeIcon, UsersIcon, UserCircleIcon, PlusIco
 import PropertyCard from './components/PropertyCard';
 import AddPropertyModal from './components/AddPropertyModal';
 import { Property, User, PropertyType, OwnerStats } from '../types';
-import GlassCard from '../components/GlassCard';
+import GlassCard from '../../components/GlassCard';
 
 const MOCK_OWNER_STATS: OwnerStats = {
     monthlyEarnings: [
