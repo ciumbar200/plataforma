@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase, getUserProfile } from './lib/supabaseClient';
-// FIX: Removed import for AuthChangeEvent and Session as they are causing module resolution errors, likely due to a dependency version issue. Using 'any' type instead.
 
 // --- TYPES ---
 import { User, UserRole, Property, Notification, SavedSearch, RentalGoal, PropertyType, BlogPost } from './types';
@@ -43,7 +42,6 @@ const App: React.FC = () => {
     
     // --- APP-WIDE STATE ---
     const [loading, setLoading] = useState(true);
-    // FIX: Changed Session type to any to resolve import error.
     const [session, setSession] = useState<any | null>(null);
     
     // --- LOGIN/REGISTRATION FLOW STATE ---
@@ -61,7 +59,7 @@ const App: React.FC = () => {
             const [usersRes, propertiesRes, blogPostsRes] = await Promise.all([
                 supabase.from('profiles').select('*'),
                 supabase.from('properties').select('*'),
-                supabase.from('blog_posts').select('*').order('publishDate', { ascending: false }),
+                supabase.from('blog_posts').select('*').order('publish_date', { ascending: false }),
             ]);
 
             if (usersRes.error) throw usersRes.error;
@@ -84,7 +82,6 @@ const App: React.FC = () => {
     // --- AUTH & SESSION MANAGEMENT ---
     useEffect(() => {
         const getSession = async () => {
-            // FIX: Cast supabase.auth to any to bypass TypeScript error. This seems to be caused by a type definition mismatch in the project's dependencies.
             const { data: { session } } = await (supabase.auth as any).getSession();
             setSession(session);
             if (session?.user) {
@@ -99,9 +96,7 @@ const App: React.FC = () => {
         
         getSession();
 
-        // FIX: Cast supabase.auth to any to bypass TypeScript error.
         const { data: { subscription } } = (supabase.auth as any).onAuthStateChange(
-            // FIX: Using any for event and session types to resolve import errors.
             async (_event: any, session: any | null) => {
                 setSession(session);
                 if (session?.user) {
@@ -109,7 +104,6 @@ const App: React.FC = () => {
                     setCurrentUser(profile);
                     if (profile?.isBanned) {
                         alert('Esta cuenta ha sido baneada.');
-                        // FIX: Cast supabase.auth to any to bypass TypeScript error.
                         await (supabase.auth as any).signOut();
                     } else if (profile) {
                          // Only fetch all data again if the user has changed
@@ -136,7 +130,6 @@ const App: React.FC = () => {
     // --- HANDLERS ---
     const handleLogout = async () => {
         setLoading(true);
-        // FIX: Cast supabase.auth to any to bypass TypeScript error.
         await (supabase.auth as any).signOut();
         setCurrentUser(null);
         setView('home');

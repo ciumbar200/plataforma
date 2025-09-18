@@ -63,7 +63,6 @@ const LoginPage: React.FC<LoginPageProps> = ({ onBack, initialData, registration
     if (!supabase) return;
     setLoading(true);
     setError(null);
-    // FIX: Cast supabase.auth to any to bypass TypeScript error. This seems to be caused by a type definition mismatch in the project's dependencies.
     const { error } = await (supabase.auth as any).signInWithOAuth({
       provider: 'google',
     });
@@ -78,7 +77,6 @@ const LoginPage: React.FC<LoginPageProps> = ({ onBack, initialData, registration
     if (!supabase) return;
     setLoading(true);
     setError(null);
-    // FIX: Cast supabase.auth to any to bypass TypeScript error. This seems to be caused by a type definition mismatch in the project's dependencies.
     const { error } = await (supabase.auth as any).signInWithPassword({
         email: loginData.email,
         password: loginData.password,
@@ -102,7 +100,6 @@ const LoginPage: React.FC<LoginPageProps> = ({ onBack, initialData, registration
     setLoading(true);
     setError(null);
 
-    // FIX: Cast supabase.auth to any to bypass TypeScript error. This seems to be caused by a type definition mismatch in the project's dependencies.
     const { data: { user }, error } = await (supabase.auth as any).signUp({
         email: formData.email,
         password: formData.password,
