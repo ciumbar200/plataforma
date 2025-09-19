@@ -1,19 +1,18 @@
-
 import React, { useState, useCallback } from 'react';
-import HomePage from '../pages/HomePage';
-import OwnerLandingPage from '../pages/OwnerLandingPage';
+import HomePage from './pages/HomePage';
+import OwnerLandingPage from './pages/OwnerLandingPage';
 import LoginPage from './pages/LoginPage';
-import TenantDashboard from '../dashboards/TenantDashboard';
-import OwnerDashboard from '../dashboards/OwnerDashboard';
-import AdminDashboard from '../dashboards/AdminDashboard';
-import AccountLayout from '../pages/account/AccountLayout';
-import BlogPage from '../pages/BlogPage';
-import AboutPage from '../pages/AboutPage';
-import ContactPage from '../pages/ContactPage';
-import PrivacyPolicyPage from '../pages/PrivacyPolicyPage';
-import TermsPage from '../pages/TermsPage';
+import TenantDashboard from './dashboards/TenantDashboard';
+import OwnerDashboard from './dashboards/OwnerDashboard';
+import AdminDashboard from './dashboards/AdminDashboard';
+import AccountLayout from './pages/account/AccountLayout';
+import BlogPage from './pages/BlogPage';
+import AboutPage from './pages/AboutPage';
+import ContactPage from './pages/ContactPage';
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
+import TermsPage from './pages/TermsPage';
 import { User, UserRole, RentalGoal, Property, PropertyType, SavedSearch, BlogPost, Notification } from './types';
-import { MOCK_USERS, MOCK_PROPERTIES, MOCK_SAVED_SEARCHES, MOCK_BLOG_POSTS, MOCK_NOTIFICATIONS, MOCK_MATCHES } from '../constants';
+import { MOCK_USERS, MOCK_PROPERTIES, MOCK_SAVED_SEARCHES, MOCK_BLOG_POSTS, MOCK_NOTIFICATIONS, MOCK_MATCHES } from './constants';
 
 type Page = 'home' | 'owners' | 'login' | 'tenant-dashboard' | 'owner-dashboard' | 'admin-dashboard' | 'account' | 'blog' | 'about' | 'privacy' | 'terms' | 'contact';
 
@@ -194,7 +193,7 @@ function App() {
     }
   };
 
-  return <div className="h-screen w-screen bg-gray-900">{renderPage()}</div>;
+  return <div className="h-screen w-screen bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-900">{renderPage()}</div>;
 }
 
 export default App;

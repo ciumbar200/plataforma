@@ -1,10 +1,10 @@
 
 import React, { useState } from 'react';
-import Header from '../../components/Header';
-import Footer from '../../components/Footer';
-import { User, UserRole } from '../../types';
-import { GoogleIcon, FacebookIcon, MoonIcon } from '../../components/icons';
-import GlassCard from '../../components/GlassCard';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
+import { User, UserRole } from '../types';
+import { GoogleIcon, FacebookIcon, MoonIcon } from '../components/icons';
+import GlassCard from '../components/GlassCard';
 
 interface LoginPageProps {
   onLogin: (user: User) => void;

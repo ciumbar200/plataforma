@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { User, Property, UserRole, BlogPost } from '../types';
+import { User, Property, UserRole, BlogPost } from '../../types';
 import StatCard from './components/StatCard';
-import { UsersIcon, CheckCircleIcon, BuildingIcon, HeartIcon, ChartBarIcon, ClockIcon, FileTextIcon, SettingsIcon, EyeIcon, TrashIcon, BanIcon, PencilIcon, CheckIcon as CheckMarkIcon, XIcon, PlusIcon, AlertTriangleIcon, MoonIcon, LogoutIcon } from '../components/icons';
-import GlassCard from '../components/GlassCard';
+import { UsersIcon, CheckCircleIcon, BuildingIcon, HeartIcon, ChartBarIcon, ClockIcon, FileTextIcon, SettingsIcon, EyeIcon, TrashIcon, BanIcon, PencilIcon, CheckIcon as CheckMarkIcon, XIcon, PlusIcon, AlertTriangleIcon, MoonIcon, LogoutIcon } from '../../components/icons';
+import GlassCard from '../../components/GlassCard';
 import UserDetailsModal from './components/UserDetailsModal';
 import PropertyDetailsModal from './components/PropertyDetailsModal';
 import ConfirmationModal from './components/ConfirmationModal';
