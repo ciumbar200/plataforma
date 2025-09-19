@@ -3,6 +3,7 @@ import { User, RentalGoal } from '../../types';
 import GlassCard from '../../components/GlassCard';
 import { CITIES_DATA } from '../../constants';
 import { CameraIcon } from '../../components/icons';
+import { supabase } from '../../lib/supabaseClient';
 
 interface ProfileProps {
   user: User;
@@ -15,6 +16,8 @@ const ALL_LIFESTYLES = ['Diurno', 'Nocturno', 'Deportista', 'Creativo', 'Social'
 const Profile: React.FC<ProfileProps> = ({ user, onSave }) => {
   const [formData, setFormData] = useState(user);
   const [localities, setLocalities] = useState<string[]>(CITIES_DATA[user.city || 'Madrid'] || []);
+  const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -24,11 +27,9 @@ const Profile: React.FC<ProfileProps> = ({ user, onSave }) => {
   const handleProfilePictureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setFormData(prev => ({ ...prev, profile_picture: event.target?.result as string }));
-      };
-      reader.readAsDataURL(file);
+      setProfileImageFile(file);
+      // Create a temporary URL for instant preview
+      setFormData(prev => ({ ...prev, profile_picture: URL.createObjectURL(file) }));
     }
   };
   
@@ -55,9 +56,40 @@ const Profile: React.FC<ProfileProps> = ({ user, onSave }) => {
     setFormData(prev => ({ ...prev, lifestyle }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(formData);
+    setIsUploading(true);
+    
+    let finalUserData = { ...formData };
+
+    if (profileImageFile) {
+        const fileExt = profileImageFile.name.split('.').pop();
+        const filePath = `public/${user.id}-${new Date().getTime()}.${fileExt}`;
+
+        const { error: uploadError } = await supabase.storage
+            .from('avatars')
+            .upload(filePath, profileImageFile, {
+                cacheControl: '3600',
+                upsert: true,
+            });
+
+        if (uploadError) {
+            console.error('Error uploading image:', uploadError);
+            alert('Hubo un error al subir la nueva imagen de perfil.');
+            setFormData(prev => ({ ...prev, profile_picture: user.profile_picture }));
+            setIsUploading(false);
+            return;
+        }
+
+        const { data: urlData } = supabase.storage
+            .from('avatars')
+            .getPublicUrl(filePath);
+        
+        finalUserData.profile_picture = urlData.publicUrl;
+    }
+
+    onSave(finalUserData);
+    setIsUploading(false);
   };
 
   return (
@@ -172,8 +204,8 @@ const Profile: React.FC<ProfileProps> = ({ user, onSave }) => {
         )}
 
         <div className="flex justify-end pt-4">
-          <button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg transition-colors">
-            Guardar Cambios
+          <button type="submit" disabled={isUploading} className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg transition-colors disabled:bg-gray-500 disabled:cursor-not-allowed">
+            {isUploading ? 'Guardando...' : 'Guardar Cambios'}
           </button>
         </div>
       </form>
