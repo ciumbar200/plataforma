@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import './index.css';
 
 // Types
 import { User, Property, SavedSearch, RentalGoal, PropertyType, BlogPost, UserRole, Notification } from './types';
@@ -261,7 +260,7 @@ const App: React.FC = () => {
     }
   };
 
-  return <div className="h-screen w-screen">{renderView()}</div>;
+  return <div className="h-screen w-screen bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-900 text-white">{renderView()}</div>;
 };
 
 export default App;
