@@ -1,106 +1,121 @@
 
 import React, { useState } from 'react';
-import { GoogleIcon, FacebookIcon, MoonIcon, EyeIcon } from '../components/icons';
-import GlassCard from '../components/GlassCard';
+import Header from '../../components/Header';
+import Footer from '../../components/Footer';
+import { User, UserRole } from '../../types';
+import { GoogleIcon, FacebookIcon, MoonIcon } from '../../components/icons';
+import GlassCard from '../../components/GlassCard';
 
 interface LoginPageProps {
-  onLogin: (email: string) => void;
-  onSwitchToRegister: () => void;
-  onBackToHome: () => void;
+  onLogin: (user: User) => void;
+  onHomeClick: () => void;
+  onOwnersClick: () => void;
+  users: User[];
+  onBlogClick: () => void;
+  onAboutClick: () => void;
+  onPrivacyClick: () => void;
+  onTermsClick: () => void;
+  onContactClick: () => void;
 }
 
-const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSwitchToRegister, onBackToHome }) => {
+const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onHomeClick, onOwnersClick, users, onBlogClick, onAboutClick, onPrivacyClick, onTermsClick, onContactClick }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) {
-        alert("Por favor, introduce un email válido.");
-        return;
+    if (email === 'admin@moon.com') { // Hardcoded admin login
+        const adminUser = users.find(u => u.role === UserRole.ADMIN);
+        if (adminUser) {
+            onLogin(adminUser);
+            return;
+        }
     }
-    onLogin(email);
+    const user = users.find(u => u.email === email);
+    if (user) {
+      onLogin(user);
+    } else {
+      setError('Usuario no encontrado. El registro no está implementado en esta demo.');
+    }
   };
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-900 text-white flex flex-col items-center justify-center p-4">
-        <div className="absolute top-6 left-6">
-             <button className="flex items-center gap-2 cursor-pointer" onClick={onBackToHome}>
-                <MoonIcon className="w-7 h-7" />
-                <span className="text-xl font-bold">MoOn</span>
-            </button>
-        </div>
+    <div className="min-h-screen w-full bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-900 text-white flex flex-col">
+      <Header onLoginClick={() => {}} onHomeClick={onHomeClick} onOwnersClick={onOwnersClick} pageContext="inquilino" />
+      <main className="flex-grow flex items-center justify-center p-4">
         <GlassCard className="w-full max-w-md">
-            <div className="text-center mb-8">
-                <h1 className="text-3xl font-bold text-white">Bienvenido de Nuevo</h1>
-                <p className="text-white/70 mt-2">Inicia sesión para encontrar tu match perfecto.</p>
+          <div className="text-center mb-8">
+            <MoonIcon className="w-12 h-12 mx-auto text-indigo-400" />
+            <h2 className="text-3xl font-bold mt-4">Bienvenido de nuevo</h2>
+            <p className="text-white/70 mt-2">Inicia sesión para encontrar tu match perfecto.</p>
+          </div>
+          
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-white/80 mb-1">Email</label>
+              <input
+                type="email"
+                id="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full bg-white/10 border border-white/20 rounded-lg p-3 outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="tu@email.com"
+                required
+              />
             </div>
-            
-            <div className="flex flex-col gap-4 mb-6">
-                <button className="w-full flex items-center justify-center gap-3 bg-[#4285F4] hover:bg-[#357ae8] text-white font-semibold py-3 rounded-lg transition-colors">
-                    <GoogleIcon className="w-6 h-6" />
-                    <span>Continuar con Google</span>
-                </button>
-                <button className="w-full flex items-center justify-center gap-3 bg-[#1877F2] hover:bg-[#166fe5] text-white font-semibold py-3 rounded-lg transition-colors">
-                    <FacebookIcon className="w-6 h-6" />
-                    <span>Continuar con Facebook</span>
-                </button>
-            </div>
-            
-            <div className="flex items-center my-6">
-                <hr className="w-full border-white/20" />
-                <span className="px-4 text-white/70 text-sm">O</span>
-                <hr className="w-full border-white/20" />
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-white/80 mb-1">Contraseña</label>
+              <input
+                type="password"
+                id="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full bg-white/10 border border-white/20 rounded-lg p-3 outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="••••••••"
+                required
+              />
             </div>
 
-            <form onSubmit={handleLogin} className="space-y-4">
-                <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-white/80 mb-1">Email</label>
-                    <input 
-                        type="email" 
-                        id="email" 
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="w-full bg-white/10 border border-white/20 rounded-lg p-3 outline-none focus:ring-2 focus:ring-indigo-500"
-                        placeholder="tu@email.com"
-                        required
-                    />
-                </div>
-                 <div>
-                    <label htmlFor="password" className="block text-sm font-medium text-white/80 mb-1">Contraseña</label>
-                    <div className="relative">
-                        <input 
-                            type="password" 
-                            id="password" 
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            className="w-full bg-white/10 border border-white/20 rounded-lg p-3 outline-none focus:ring-2 focus:ring-indigo-500 pr-10"
-                            placeholder="••••••••"
-                            required
-                        />
-                         <EyeIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/60" />
-                    </div>
-                </div>
-                <div className="text-right">
-                    <a href="#" className="text-sm text-indigo-400 hover:underline">¿Has olvidado tu contraseña?</a>
-                </div>
-                <div>
-                    <button 
-                        type="submit" 
-                        className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-3 rounded-lg transition-all shadow-lg"
-                    >
-                        Iniciar Sesión
-                    </button>
-                </div>
-            </form>
-            
-            <div className="text-center mt-8">
-                <p className="text-white/70">
-                    ¿No tienes una cuenta?{' '}
-                    <button onClick={onSwitchToRegister} className="font-semibold text-indigo-400 hover:underline">Regístrate gratis</button>
-                </p>
+            {error && <p className="text-red-400 text-sm text-center">{error}</p>}
+
+            <div className="flex items-center justify-between">
+              <a href="#" className="text-sm text-indigo-400 hover:underline">¿Olvidaste tu contraseña?</a>
             </div>
+
+            <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition-colors">
+              Iniciar Sesión
+            </button>
+
+            <div className="relative my-4">
+              <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                <div className="w-full border-t border-white/20"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-slate-900 text-white/70">O continúa con</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <button type="button" className="flex items-center justify-center gap-3 w-full bg-white/10 hover:bg-white/20 text-white font-semibold py-3 px-4 rounded-lg transition-colors">
+                <GoogleIcon className="w-5 h-5" />
+                <span>Google</span>
+              </button>
+               <button type="button" className="flex items-center justify-center gap-3 w-full bg-white/10 hover:bg-white/20 text-white font-semibold py-3 px-4 rounded-lg transition-colors">
+                <FacebookIcon className="w-5 h-5" />
+                <span>Facebook</span>
+              </button>
+            </div>
+          </form>
+          <p className="text-sm text-white/70 text-center mt-6">
+            ¿No tienes cuenta? <a href="#" onClick={(e) => { e.preventDefault(); onHomeClick(); }} className="font-semibold text-indigo-400 hover:underline">Regístrate</a>
+          </p>
+           <p className="text-xs text-white/50 text-center mt-4">
+            Hint: Usa 'admin@moon.com' o cualquier email de los datos de prueba.
+          </p>
         </GlassCard>
+      </main>
+      <Footer onBlogClick={onBlogClick} onAboutClick={onAboutClick} onPrivacyClick={onPrivacyClick} onTermsClick={onTermsClick} onContactClick={onContactClick} />
     </div>
   );
 };
