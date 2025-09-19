@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -13,6 +12,11 @@ import {
 import { PropertyType } from '../types';
 import { CITIES_DATA } from '../constants';
 
+const SUPABASE_PROJECT_URL = "https://vogzzdnxoldgfpsrobps.supabase.co";
+const getSupabaseUrl = (bucket: 'avatars' | 'property-media', path: string) => {
+  const cleanedPath = path.startsWith('/') ? path.substring(1) : path;
+  return `${SUPABASE_PROJECT_URL}/storage/v1/object/public/${bucket}/${cleanedPath}`;
+};
 
 interface OwnerLandingPageProps {
     onStartPublication: (data: { propertyType: PropertyType; city: string; locality: string }) => void;
@@ -38,19 +42,19 @@ const testimonials = [
         quote: "Publiqué un viernes y el domingo ya tenía visitas programadas. Firmamos en una semana.",
         author: "María G.",
         details: "Barcelona - Piso 3 hab.",
-        img: "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?q=80&w=100&h=100&fit=crop"
+        img: getSupabaseUrl('avatars', 'testimonial01.webp')
     },
     {
         quote: "Me encantó el filtro de compatibilidad. Menos ruido, mejores candidatos.",
         author: "Jordi R.",
         details: "Valencia - Ático 2 hab.",
-        img: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=100&h=100&fit=crop"
+        img: getSupabaseUrl('avatars', 'testimonial02.webp')
     },
     {
         quote: "Proceso claro y digital. Contrato, depósito y pagos sin papel.",
         author: "Ana L.",
         details: "Madrid - Loft",
-        img: "https://images.unsplash.com/photo-1525134479668-1bee5c7c6845?q=80&w=100&h=100&fit=crop"
+        img: getSupabaseUrl('avatars', 'testimonial03.webp')
     }
 ];
 

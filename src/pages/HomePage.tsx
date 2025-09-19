@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -6,6 +5,12 @@ import { CompassIcon, UsersIcon, BuildingIcon, ChevronDownIcon, PencilIcon, Sear
 import GlassCard from '../components/GlassCard';
 import { RentalGoal } from '../types';
 import { CITIES_DATA } from '../constants';
+
+const SUPABASE_PROJECT_URL = "https://vogzzdnxoldgfpsrobps.supabase.co";
+const getSupabaseUrl = (bucket: 'avatars' | 'property-media', path: string) => {
+  const cleanedPath = path.startsWith('/') ? path.substring(1) : path;
+  return `${SUPABASE_PROJECT_URL}/storage/v1/object/public/${bucket}/${cleanedPath}`;
+};
 
 interface HomePageProps {
     onLoginClick: () => void;
@@ -191,7 +196,7 @@ const HomePage: React.FC<HomePageProps> = ({ onLoginClick, onStartRegistration, 
                 <section className="py-20 bg-black/10">
                     <div className="max-w-3xl mx-auto px-4 text-center">
                         <img 
-                            src="https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?q=80&w=200&h=200&fit=crop" 
+                            src={getSupabaseUrl('avatars', 'testimonial01.webp')} 
                             alt="Elena Rodríguez" 
                             className="w-24 h-24 rounded-full mx-auto mb-4 border-4 border-purple-400"
                         />

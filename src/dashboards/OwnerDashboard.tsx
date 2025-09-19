@@ -115,13 +115,13 @@ const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ user, properties, onSav
     const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
     const [invitedGroups, setInvitedGroups] = useState<string[]>([]);
 
+    // FIX: Modified useEffect to prevent premature clearing of initialPropertyData, ensuring it's available when the modal opens.
     useEffect(() => {
         if (initialPropertyData) {
             setPropertyToEdit(null); // Ensure we are not editing
             setIsModalOpen(true);
-            onClearInitialPropertyData(); // Clear data after using it
         }
-    }, [initialPropertyData, onClearInitialPropertyData]);
+    }, [initialPropertyData]);
 
     const handleAddNew = () => {
         setPropertyToEdit(null);
@@ -139,9 +139,13 @@ const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ user, properties, onSav
         setView('propertyDetail');
     };
 
+    // FIX: Updated handleCloseModal to clear initialPropertyData only after the modal is closed.
     const handleCloseModal = () => {
         setIsModalOpen(false);
         setPropertyToEdit(null);
+        if (initialPropertyData) {
+            onClearInitialPropertyData();
+        }
     };
 
     const handleSaveAndClose = (propertyData: Omit<Property, 'id' | 'views' | 'compatibleCandidates' | 'owner_id'> & { id?: number }) => {
@@ -381,6 +385,7 @@ const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ user, properties, onSav
                 onClose={handleCloseModal}
                 onSave={handleSaveAndClose}
                 propertyToEdit={propertyToEdit}
+                // FIX: Corrected variable name from 'initialData' to 'initialPropertyData' and added logic to pass null when editing a property.
                 initialData={propertyToEdit ? null : initialPropertyData}
             />
             <BottomNavBar activeView={view} setView={setView} onAddNew={handleAddNew} />

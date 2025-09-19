@@ -14,6 +14,13 @@ interface PageProps {
   onContactClick: () => void;
 }
 
+const SUPABASE_PROJECT_URL = "https://vogzzdnxoldgfpsrobps.supabase.co";
+const getSupabaseUrl = (bucket: 'avatars' | 'property-media', path: string) => {
+  const cleanedPath = path.startsWith('/') ? path.substring(1) : path;
+  return `${SUPABASE_PROJECT_URL}/storage/v1/object/public/${bucket}/${cleanedPath}`;
+};
+
+
 const TeamMemberCard: React.FC<{ imgSrc: string; name: string; title: string; }> = ({ imgSrc, name, title }) => (
     <div className="text-center">
         <img src={imgSrc} alt={name} className="w-32 h-32 rounded-full mx-auto mb-4 border-4 border-white/20 object-cover"/>
@@ -56,7 +63,7 @@ const AboutPage: React.FC<PageProps> = ({ onHomeClick, onLoginClick, onBlogClick
                             </p>
                         </div>
                         <GlassCard>
-                            <img src="https://images.unsplash.com/photo-1543269865-cbf427effbad?q=80&w=800&auto=format&fit=crop" alt="Equipo colaborando" className="rounded-lg"/>
+                            <img src={getSupabaseUrl('property-media', 'about-mission.webp')} alt="Equipo colaborando" className="rounded-lg"/>
                         </GlassCard>
                     </div>
                 </section>
@@ -69,9 +76,9 @@ const AboutPage: React.FC<PageProps> = ({ onHomeClick, onLoginClick, onBlogClick
                             <p className="text-lg text-white/70 mt-2">Apasionados por la tecnología, el diseño y las buenas vibras.</p>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-12">
-                            <TeamMemberCard imgSrc="https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=200&h=200&fit=crop" name="Elena Rodríguez" title="Fundadora & CEO" />
-                            <TeamMemberCard imgSrc="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=200&h=200&fit=crop" name="Javier Moreno" title="Líder de Tecnología" />
-                            <TeamMemberCard imgSrc="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=200&h=200&fit=crop" name="Carlos Pérez" title="Gestor de Comunidad" />
+                            <TeamMemberCard imgSrc={getSupabaseUrl('avatars', '01.webp')} name="Elena Rodríguez" title="Fundadora & CEO" />
+                            <TeamMemberCard imgSrc={getSupabaseUrl('avatars', '02.webp')} name="Javier Moreno" title="Líder de Tecnología" />
+                            <TeamMemberCard imgSrc={getSupabaseUrl('avatars', '03.webp')} name="Carlos Pérez" title="Gestor de Comunidad" />
                         </div>
                     </div>
                 </section>
