@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import StatCard from './components/StatCard';
-import { BuildingIcon, ChartBarIcon, EyeIcon, UsersIcon, UserCircleIcon, PlusIcon, ChevronLeftIcon } from '../../components/icons';
+import { BuildingIcon, ChartBarIcon, EyeIcon, UsersIcon, UserCircleIcon, PlusIcon, ChevronLeftIcon } from '../components/icons';
 import PropertyCard from './components/PropertyCard';
 import AddPropertyModal from './components/AddPropertyModal';
-import { Property, User, PropertyType, OwnerStats, UserRole, RentalGoal } from '../../types';
-import GlassCard from '../../components/GlassCard';
+import { Property, User, PropertyType, OwnerStats, UserRole, RentalGoal } from '../types';
+import GlassCard from '../components/GlassCard';
 import CandidateGroupCard from './components/CandidateGroupCard';
 
 const MOCK_OWNER_STATS: OwnerStats = {

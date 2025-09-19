@@ -23,9 +23,6 @@ export const CITIES_DATA: { [key: string]: string[] } = {
 };
 
 export const showNotification = (title: string, options: NotificationOptions) => {
-  // --- NOTIFICACIONES DESACTIVADAS TEMPORALMENTE ---
-  console.log(`Notificación suprimida: ${title}`, options);
-  /*
   if (!('Notification' in window)) {
     console.log('Este navegador no soporta notificaciones de escritorio');
   } else if (Notification.permission === 'granted') {
@@ -37,7 +34,6 @@ export const showNotification = (title: string, options: NotificationOptions) =>
       }
     });
   }
-  */
 };
 
 /**
@@ -122,8 +118,11 @@ export const addToFluentCRM = async (user: { name: string; lastName?: string; em
   }
 };
 
-// FIX: Added mock data to this file to resolve import errors.
 // --- MOCK DATA ---
+// NOTE: For this demo, images are loaded from an external service (unsplash.com).
+// For a production application with offline support, these images should be stored
+// locally (e.g., in a `public/images` directory) and paths should be updated accordingly.
+
 export const MOCK_USERS: User[] = [
   {
     id: '1', name: 'Elena García', email: 'elena@example.com', age: 28, city: 'Madrid', locality: 'Malasaña', profilePicture: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=200&h=200&fit=crop&crop=faces&facepad=4', interests: ['Yoga', 'Cocina Vegana', 'Viajar', 'Fotografía'], noiseLevel: 'Bajo', compatibility: 92, role: UserRole.INQUILINO, bio: 'Busco un espacio tranquilo y gente con buena energía para compartir piso. Soy diseñadora gráfica, me encanta el arte y los planes de día.', lifestyle: ['Diurno', 'Creativo', 'Tranquilo'], commuteDistance: 20, rentalGoal: RentalGoal.FIND_ROOM_WITH_ROOMMATES, isBanned: false,
@@ -200,6 +199,11 @@ export const MOCK_BLOG_POSTS: BlogPost[] = [
 ];
 
 export const MOCK_MATCHES: {[key: string]: string[]} = {
-    '1': ['2'],
-    '2': ['1']
+    '1': ['2', '4', '8'],
+    '2': ['1'],
+    '4': ['1', '8'],
+    '8': ['1', '4'],
+    '5': ['7', '11'],
+    '7': ['5'],
+    '11': ['5']
 };
