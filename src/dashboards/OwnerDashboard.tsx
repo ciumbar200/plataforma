@@ -132,7 +132,7 @@ const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ user, properties, onSav
         setPropertyToEdit(property);
         setIsModalOpen(true);
     };
-
+    
     const handlePropertyClick = (property: Property) => {
         setSelectedProperty(property);
         setInvitedGroups([]); // Reset invitations when viewing a new property
@@ -148,67 +148,70 @@ const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ user, properties, onSav
         onSaveProperty(propertyData);
         handleCloseModal();
     };
-    
+
     const tenantGroups = useMemo(() => {
         const tenants = allUsers.filter(u => u.role === UserRole.INQUILINO && (u.rentalGoal === RentalGoal.FIND_ROOMMATES_AND_APARTMENT || u.rentalGoal === RentalGoal.BOTH));
-        const tenantMap = new Map(tenants.map(t => [t.id, t]));
         
-        const mutualMatches = new Map<string, string[]>();
-        tenants.forEach(t => {
-            const tMatches = matches[t.id] || [];
-            const mutual = tMatches.filter(otherId => (matches[otherId] || []).includes(t.id) && tenantMap.has(otherId));
-            mutualMatches.set(t.id, mutual);
-        });
+        const isMutualMatch = (id1: string, id2: string) => {
+            const matches1 = matches[id1] || [];
+            const matches2 = matches[id2] || [];
+            return matches1.includes(id2) && matches2.includes(id1);
+        };
 
         const groups: User[][] = [];
         const processedUsers = new Set<string>();
 
-        // Find triplets
-        tenants.forEach(userA => {
-            if (processedUsers.has(userA.id)) return;
-            const mutualA = mutualMatches.get(userA.id) || [];
-            mutualA.forEach(idB => {
-                if (processedUsers.has(idB)) return;
-                const userB = tenantMap.get(idB)!;
-                const mutualB = mutualMatches.get(idB) || [];
-                const commonWithA = mutualB.filter(idC => mutualA.includes(idC));
-                
-                commonWithA.forEach(idC => {
-                    if (processedUsers.has(idC)) return;
-                    const mutualC = mutualMatches.get(idC) || [];
-                    if (mutualC.includes(userA.id) && mutualC.includes(userB.id)) {
-                        const userC = tenantMap.get(idC)!;
-                        groups.push([userA, userB, userC]);
-                        processedUsers.add(userA.id);
-                        processedUsers.add(userB.id);
-                        processedUsers.add(userC.id);
-                    }
-                });
-            });
-        });
+        // Find groups of 3
+        for (let i = 0; i < tenants.length; i++) {
+            const userA = tenants[i];
+            if (processedUsers.has(userA.id)) continue;
 
-        // Find pairs
-        tenants.forEach(userA => {
-            if (processedUsers.has(userA.id)) return;
-            const mutualA = mutualMatches.get(userA.id) || [];
-            mutualA.forEach(idB => {
-                if (!processedUsers.has(idB)) {
-                    const userB = tenantMap.get(idB)!;
+            for (let j = i + 1; j < tenants.length; j++) {
+                const userB = tenants[j];
+                if (processedUsers.has(userB.id)) continue;
+                
+                if (isMutualMatch(userA.id, userB.id)) {
+                    for (let k = j + 1; k < tenants.length; k++) {
+                        const userC = tenants[k];
+                        if (processedUsers.has(userC.id)) continue;
+
+                        if (isMutualMatch(userA.id, userC.id) && isMutualMatch(userB.id, userC.id)) {
+                            groups.push([userA, userB, userC]);
+                            processedUsers.add(userA.id);
+                            processedUsers.add(userB.id);
+                            processedUsers.add(userC.id);
+                            break; 
+                        }
+                    }
+                }
+                if (processedUsers.has(userA.id)) break;
+            }
+        }
+        
+        // Find groups of 2 from remaining users
+        for (let i = 0; i < tenants.length; i++) {
+            const userA = tenants[i];
+            if (processedUsers.has(userA.id)) continue;
+            
+            for (let j = i + 1; j < tenants.length; j++) {
+                const userB = tenants[j];
+                if (processedUsers.has(userB.id)) continue;
+
+                if (isMutualMatch(userA.id, userB.id)) {
                     groups.push([userA, userB]);
                     processedUsers.add(userA.id);
-                    processedUsers.add(idB);
+                    processedUsers.add(userB.id);
+                    break;
                 }
-            });
-        });
-
+            }
+        }
         return groups;
     }, [allUsers, matches]);
 
     const handleInviteGroup = (group: User[]) => {
         const groupId = group.map(u => u.id).sort().join('-');
         setInvitedGroups(prev => [...prev, groupId]);
-        // Here you would typically trigger a notification to the users
-        alert(`Grupo de ${group.map(u => u.name).join(', ')} ha sido invitado a ver la propiedad.`);
+        alert(`Grupo de ${group.map(u => u.name).join(', ')} ha sido notificado sobre la propiedad.`);
     };
 
     const renderDashboardView = () => (
@@ -305,7 +308,7 @@ const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ user, properties, onSav
             </div>
         </>
     );
-
+    
     const renderPropertyDetailView = () => {
         if (!selectedProperty) return null;
 
@@ -330,7 +333,7 @@ const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ user, properties, onSav
                             {selectedProperty.visibility === 'Privada' && (
                                 <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
                                     {tenantGroups.length > 0 ? (
-                                        tenantGroups.map((group, index) => {
+                                        tenantGroups.map((group) => {
                                             const groupId = group.map(u => u.id).sort().join('-');
                                             return (
                                                 <CandidateGroupCard

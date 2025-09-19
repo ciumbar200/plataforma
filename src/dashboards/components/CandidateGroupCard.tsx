@@ -10,7 +10,6 @@ interface CandidateGroupCardProps {
 }
 
 const CandidateGroupCard: React.FC<CandidateGroupCardProps> = ({ group, onInvite, isInvited }) => {
-  const avgCompatibility = Math.round(group.reduce((acc, user) => acc + user.compatibility, 0) / group.length);
 
   return (
     <GlassCard className="!p-4 mb-4 !bg-black/20">
@@ -31,9 +30,6 @@ const CandidateGroupCard: React.FC<CandidateGroupCardProps> = ({ group, onInvite
               {group.map(user => user.name).join(', ')}
             </div>
           </div>
-          <div className="text-sm text-white/70">
-            <p>Compatibilidad media (aprox): <span className="font-bold text-green-400">{avgCompatibility}%</span></p>
-          </div>
         </div>
         <div className="flex-shrink-0 flex items-center w-full sm:w-auto">
           <button
@@ -45,7 +41,7 @@ const CandidateGroupCard: React.FC<CandidateGroupCardProps> = ({ group, onInvite
                 : 'bg-indigo-600 hover:bg-indigo-700 text-white'
             }`}
           >
-            {isInvited ? <><CheckIcon className="w-5 h-5" /> Invitado</> : 'Invitar al grupo'}
+            {isInvited ? <><CheckIcon className="w-5 h-5" /> Liberado</> : 'Liberar propiedad'}
           </button>
         </div>
       </div>
