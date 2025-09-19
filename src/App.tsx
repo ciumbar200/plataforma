@@ -33,6 +33,7 @@ function App() {
   const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS);
   const [matches, setMatches] = useState<{ [key: string]: string[] }>(MOCK_MATCHES);
 
+  const [registrationData, setRegistrationData] = useState<RegistrationData | null>(null);
   const [publicationData, setPublicationData] = useState<PublicationData | null>(null);
   const [accountInitialTab, setAccountInitialTab] = useState<string>('overview');
   
@@ -50,7 +51,6 @@ function App() {
         
       } catch (error: any) {
         console.error("Error al obtener datos de Supabase:", error.message || error);
-        // Here you might want to set an error state to show a message to the user
       } finally {
         setLoading(false);
       }
@@ -64,6 +64,48 @@ function App() {
     else if (user.role === UserRole.PROPIETARIO) setPage('owner-dashboard');
     else setPage('tenant-dashboard');
   };
+  
+  const handleRegister = async (userData: Partial<User>) => {
+    if (!registrationData || !userData.email || !userData.name || !userData.age) {
+        alert("Faltan datos para el registro.");
+        return;
+    }
+
+    const newUserPayload = {
+        name: userData.name,
+        last_name: userData.last_name || '',
+        email: userData.email,
+        age: userData.age,
+        city: registrationData.city,
+        locality: registrationData.locality,
+        rental_goal: registrationData.rentalGoal,
+        profile_picture: 'https://placehold.co/100x100/7c3aed/ffffff?text=U',
+        interests: [],
+        lifestyle: [],
+        noise_level: 'Medio' as const,
+        role: UserRole.INQUILINO,
+        is_banned: false,
+        bio: `¡Hola! Soy ${userData.name} y acabo de unirme a MoOn.`,
+    };
+
+    // NOTE: This flow bypasses Supabase Auth for demo purposes.
+    // In a real app, you would use supabase.auth.signUp() first.
+    const { data, error } = await supabase
+      .from('profiles')
+      .insert(newUserPayload)
+      .select();
+
+    if (error) {
+        console.error('Error en el registro:', error);
+        alert(`Error al registrar el perfil: ${error.message}`);
+    } else if (data) {
+        const newUser = data[0] as User;
+        setUsers(prev => [...prev, newUser]);
+        setCurrentUser(newUser);
+        setPage('tenant-dashboard');
+        setRegistrationData(null);
+    }
+  };
 
   const handleLogout = () => {
     setCurrentUser(null);
@@ -71,6 +113,7 @@ function App() {
   };
 
   const handleStartRegistration = (data: RegistrationData) => {
+    setRegistrationData(data);
     setPage('login');
   };
 
@@ -81,9 +124,9 @@ function App() {
 
   const handleUpdateUser = async (updatedUser: User) => {
     if (!currentUser) return;
-    const { id, ...updateData } = updatedUser;
+    
     // @ts-ignore
-    delete updateData.compatibility; // Do not save compatibility score in DB
+    const { id, compatibility, ...updateData } = updatedUser;
     
     const { data, error } = await supabase
       .from('profiles')
@@ -236,14 +279,14 @@ function App() {
     switch (page) {
       case 'home': return <HomePage onStartRegistration={handleStartRegistration} {...pageNavigationProps} />;
       case 'owners': return <OwnerLandingPage onStartPublication={handleStartPublication} {...pageNavigationProps} />;
-      case 'login': return <LoginPage onLogin={handleLogin} users={users} {...pageNavigationProps} />;
+      case 'login': return <LoginPage onLogin={handleLogin} onRegister={handleRegister} users={users} registrationData={registrationData} {...pageNavigationProps} />;
       case 'blog': return <BlogPage posts={blogPosts} {...pageNavigationProps} />;
       case 'about': return <AboutPage {...pageNavigationProps} />;
       case 'privacy': return <PrivacyPolicyPage {...pageNavigationProps} />;
       case 'terms': return <TermsPage {...pageNavigationProps} />;
       case 'contact': return <ContactPage {...pageNavigationProps} />;
       case 'tenant-dashboard':
-        if (!currentUser) return <LoginPage onLogin={handleLogin} users={users} {...pageNavigationProps} />;
+        if (!currentUser) return <LoginPage onLogin={handleLogin} onRegister={handleRegister} users={users} {...pageNavigationProps} />;
         return <TenantDashboard 
             user={currentUser} 
             allUsers={users}
@@ -257,7 +300,7 @@ function App() {
             onGoToAccountSettings={() => { setAccountInitialTab('profile'); setPage('account'); }}
         />;
       case 'owner-dashboard':
-        if (!currentUser) return <LoginPage onLogin={handleLogin} users={users} {...pageNavigationProps} />;
+        if (!currentUser) return <LoginPage onLogin={handleLogin} onRegister={handleRegister} users={users} {...pageNavigationProps} />;
         return <OwnerDashboard 
             user={currentUser}
             properties={properties.filter(p => p.owner_id === currentUser.id)}
@@ -268,7 +311,7 @@ function App() {
             matches={matches}
         />;
       case 'admin-dashboard':
-        if (!currentUser || currentUser.role !== UserRole.ADMIN) return <LoginPage onLogin={handleLogin} users={users} {...pageNavigationProps} />;
+        if (!currentUser || currentUser.role !== UserRole.ADMIN) return <LoginPage onLogin={handleLogin} onRegister={handleRegister} users={users} {...pageNavigationProps} />;
         return <AdminDashboard 
             users={users}
             properties={properties}
@@ -281,7 +324,7 @@ function App() {
             onLogout={handleLogout}
         />;
       case 'account':
-        if (!currentUser) return <LoginPage onLogin={handleLogin} users={users} {...pageNavigationProps} />;
+        if (!currentUser) return <LoginPage onLogin={handleLogin} onRegister={handleRegister} users={users} {...pageNavigationProps} />;
         const backPage = currentUser.role === UserRole.INQUILINO ? 'tenant-dashboard' : 'owner-dashboard';
         return <AccountLayout 
             user={currentUser}

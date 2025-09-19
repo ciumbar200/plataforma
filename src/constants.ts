@@ -133,6 +133,11 @@ export const addToFluentCRM = async (user: { name: string; last_name?: string; e
   }
 };
 
+// --- MOCK DATA ---
+// MOCK_USERS and MOCK_PROPERTIES have been removed.
+// The application will now fetch this data directly from Supabase.
+// The data has been migrated via the `supabase_setup.sql` script.
+
 export const MOCK_NOTIFICATIONS: Notification[] = [
     { id: 1, user_id: '1', type: NotificationType.NEW_MATCH, message: '¡Tienes un nuevo match con Javier! Compatibilidad del 85%.', timestamp: '2024-07-25T10:30:00Z', read: false, related_entity_id: 2 },
     { id: 2, user_id: '3', type: NotificationType.PROPERTY_INQUIRY, message: 'Elena está interesada en tu "Habitación luminosa en Gràcia".', timestamp: '2024-07-25T09:00:00Z', read: true, related_entity_id: 1 },
@@ -147,11 +152,8 @@ export const MOCK_BLOG_POSTS: BlogPost[] = [
 ];
 
 export const MOCK_MATCHES: {[key: string]: string[]} = {
-    '1': ['2', '4', '8'],
-    '2': ['1'],
-    '4': ['1', '8'],
-    '8': ['1', '4'],
-    '5': ['7', '11'],
-    '7': ['5'],
-    '11': ['5']
+    '8a65e909-7a54-4e81-872f-488f5f1a3ba2': ['1b8e8a6a-3e4b-4b1a-9f5a-3e1b3a3b3a3b', '4d4e8a6a-3e4b-4b1a-9f5a-3e1b3a3b3a4d'],
+    '1b8e8a6a-3e4b-4b1a-9f5a-3e1b3a3b3a3b': ['8a65e909-7a54-4e81-872f-488f5f1a3ba2'],
+    '4d4e8a6a-3e4b-4b1a-9f5a-3e1b3a3b3a4d': ['8a65e909-7a54-4e81-872f-488f5f1a3ba2'],
+    '5e5e8a6a-3e4b-4b1a-9f5a-3e1b3a3b3a5e': [],
 };
