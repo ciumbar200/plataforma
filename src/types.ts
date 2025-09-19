@@ -70,6 +70,7 @@ export interface Property {
   lat: number;
   lng: number;
   status: 'approved' | 'pending' | 'rejected';
+  bathrooms?: number;
 }
 
 export interface OwnerStats {
@@ -109,6 +110,8 @@ export interface SavedSearch {
     minPrice?: number;
     maxPrice?: number;
     amenities?: AmenityId[];
+    propertyType?: PropertyType;
+    bathrooms?: number;
   };
 }
 

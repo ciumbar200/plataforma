@@ -4,9 +4,9 @@ import { CITIES_DATA, showNotification } from '../constants';
 import { AVAILABLE_AMENITIES } from '../components/icons';
 import UserProfileCard from './components/UserProfileCard';
 import PropertyCard from './components/PropertyCard';
-import { CheckIcon, XIcon, CompassIcon, BuildingIcon, HeartIcon, UserCircleIcon, ChevronLeftIcon, PaperAirplaneIcon, EyeIcon, UsersIcon, CalendarIcon, PieChartIcon, AlertTriangleIcon } from '../components/icons';
+import { CheckIcon, XIcon, CompassIcon, BuildingIcon, HeartIcon, UserCircleIcon, ChevronLeftIcon, PaperAirplaneIcon, EyeIcon, UsersIcon, CalendarIcon, PieChartIcon, AlertTriangleIcon, PawPrintIcon } from '../components/icons';
 import GlassCard from '../components/GlassCard';
-import { User, Property, AmenityId, SavedSearch, UserRole, RentalGoal } from '../types';
+import { User, Property, AmenityId, SavedSearch, UserRole, RentalGoal, PropertyType } from '../types';
 import GoogleMap from './components/GoogleMap';
 import SaveSearchModal from './components/SaveSearchModal';
 import MoonSplit from './components/MoonSplit';
@@ -255,6 +255,8 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user: currentUser, al
   const [priceRange, setPriceRange] = useState({ min: '', max: '' });
   const [selectedAmenities, setSelectedAmenities] = useState<AmenityId[]>([]);
   const [isSaveModalOpen, setSaveModalOpen] = useState(false);
+  const [selectedPropertyType, setSelectedPropertyType] = useState('');
+  const [selectedBathrooms, setSelectedBathrooms] = useState('');
 
   const profileCompletion = useMemo(() => calculateProfileCompletion(currentUser), [currentUser]);
   
@@ -309,6 +311,17 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user: currentUser, al
     if (priceRange.max) {
         filtered = filtered.filter(p => p.price <= parseInt(priceRange.max, 10));
     }
+    if (selectedPropertyType) {
+        filtered = filtered.filter(p => p.propertyType === selectedPropertyType);
+    }
+    if (selectedBathrooms) {
+        const minBathrooms = parseInt(selectedBathrooms, 10);
+        if (minBathrooms === 3) { // 3+ case
+            filtered = filtered.filter(p => p.bathrooms && p.bathrooms >= 3);
+        } else {
+            filtered = filtered.filter(p => p.bathrooms === minBathrooms);
+        }
+    }
     if (selectedAmenities.length > 0) {
         filtered = filtered.filter(p => p.features && selectedAmenities.every(amenity => p.features![amenity]));
     }
@@ -316,7 +329,7 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user: currentUser, al
         return filtered.filter(p => p.visibility === 'Pública');
     }
     return filtered;
-  }, [properties, selectedPropertyCity, selectedPropertyLocality, propertySearchQuery, priceRange, selectedAmenities, isPremiumUser]);
+  }, [properties, selectedPropertyCity, selectedPropertyLocality, propertySearchQuery, priceRange, selectedAmenities, isPremiumUser, selectedPropertyType, selectedBathrooms]);
 
   const matches = useMemo(() => {
     return allUsers.filter(u => userMatches.includes(u.id));
@@ -324,6 +337,14 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user: currentUser, al
 
   const handleToggleInterest = (interest: string) => {
     setSelectedInterests(prev => prev.includes(interest) ? prev.filter(i => i !== interest) : [...prev, interest]);
+  };
+
+  const handleToggleAmenity = (amenityId: AmenityId) => {
+    setSelectedAmenities(prev => 
+        prev.includes(amenityId) 
+            ? prev.filter(i => i !== amenityId) 
+            : [...prev, amenityId]
+    );
   };
 
   useEffect(() => {
@@ -393,6 +414,8 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user: currentUser, al
         minPrice: priceRange.min ? parseInt(priceRange.min, 10) : undefined,
         maxPrice: priceRange.max ? parseInt(priceRange.max, 10) : undefined,
         amenities: selectedAmenities.length > 0 ? selectedAmenities : undefined,
+        propertyType: selectedPropertyType as PropertyType || undefined,
+        bathrooms: selectedBathrooms ? parseInt(selectedBathrooms, 10) : undefined,
       }
     });
   };
@@ -406,6 +429,8 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user: currentUser, al
       max: search.filters.maxPrice?.toString() || '',
     });
     setSelectedAmenities(search.filters.amenities || []);
+    setSelectedPropertyType(search.filters.propertyType || '');
+    setSelectedBathrooms(search.filters.bathrooms?.toString() || '');
   };
   
   const hasMoreProfiles = currentIndex < filteredUsers.length;
@@ -538,12 +563,12 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user: currentUser, al
 
             <GlassCard className="w-full max-w-6xl mx-auto mb-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 mb-4">
-                    <input type="text" placeholder="Buscar por título o dirección..." value={propertySearchQuery} onChange={(e) => setPropertySearchQuery(e.target.value)} className="lg:col-span-2 w-full bg-white/10 border border-white/20 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-indigo-500" />
-                    <select value={selectedPropertyCity} onChange={(e) => setSelectedPropertyCity(e.target.value)} className="w-full bg-white/10 border border-white/20 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-indigo-500 lg:col-span-1">
+                    <input type="text" placeholder="Buscar por título o dirección..." value={propertySearchQuery} onChange={(e) => setPropertySearchQuery(e.target.value)} className="lg:col-span-6 w-full bg-white/10 border border-white/20 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-indigo-500" />
+                    <select value={selectedPropertyCity} onChange={(e) => setSelectedPropertyCity(e.target.value)} className="w-full bg-white/10 border border-white/20 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-indigo-500 lg:col-span-2">
                         <option value="" className="bg-gray-800">Todas las ciudades</option>
                         {allPropertyCities.map(city => <option key={city} value={city} className="bg-gray-800">{city}</option>)}
                     </select>
-                     <select value={selectedPropertyLocality} onChange={(e) => setSelectedPropertyLocality(e.target.value)} disabled={!selectedPropertyCity} className="w-full bg-white/10 border border-white/20 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-indigo-500 lg:col-span-1 disabled:opacity-50">
+                     <select value={selectedPropertyLocality} onChange={(e) => setSelectedPropertyLocality(e.target.value)} disabled={!selectedPropertyCity} className="w-full bg-white/10 border border-white/20 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-indigo-500 lg:col-span-2 disabled:opacity-50">
                         <option value="" className="bg-gray-800">Todas las localidades</option>
                         {availableLocalities.map(loc => <option key={loc} value={loc} className="bg-gray-800">{loc}</option>)}
                     </select>
@@ -552,11 +577,30 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user: currentUser, al
                         <input type="number" placeholder="Precio Máx." value={priceRange.max} onChange={e => setPriceRange(p => ({...p, max: e.target.value}))} className="w-full bg-white/10 border border-white/20 rounded-lg p-2.5 outline-none" />
                     </div>
                 </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <select value={selectedPropertyType} onChange={(e) => setSelectedPropertyType(e.target.value)} className="w-full bg-white/10 border border-white/20 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="" className="bg-gray-800">Todos los tipos</option>
+                        {Object.values(PropertyType).map(type => <option key={type} value={type} className="bg-gray-800">{type}</option>)}
+                    </select>
+                    <select value={selectedBathrooms} onChange={(e) => setSelectedBathrooms(e.target.value)} className="w-full bg-white/10 border border-white/20 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="" className="bg-gray-800">Baños (cualquiera)</option>
+                        <option value="1" className="bg-gray-800">1 baño</option>
+                        <option value="2" className="bg-gray-800">2 baños</option>
+                        <option value="3" className="bg-gray-800">3+ baños</option>
+                    </select>
+                </div>
                 <div>
                     <h4 className="text-sm font-semibold text-white/80 mb-2">Filtrar por servicios</h4>
-                    <div className="flex flex-wrap gap-2">
-                        {AVAILABLE_AMENITIES.map(amenity => (
-                            <button key={amenity.id} onClick={() => setSelectedAmenities(prev => prev.includes(amenity.id) ? prev.filter(i => i !== amenity.id) : [...prev, amenity.id])} className={`px-3 py-1 text-xs rounded-full transition-colors border ${selectedAmenities.includes(amenity.id) ? 'bg-indigo-500 border-indigo-400 text-white font-semibold' : 'bg-white/10 border-white/20 text-white/80 hover:bg-white/20'}`}>
+                    <div className="flex flex-wrap gap-2 items-center">
+                        <button 
+                            key="petsAllowed" 
+                            onClick={() => handleToggleAmenity('petsAllowed')} 
+                            className={`flex items-center gap-2 px-3 py-1.5 text-sm rounded-full transition-colors border ${selectedAmenities.includes('petsAllowed') ? 'bg-indigo-500 border-indigo-400 text-white font-semibold' : 'bg-white/10 border-white/20 text-white/80 hover:bg-white/20'}`}>
+                                <PawPrintIcon className="w-4 h-4" /> <span>Mascotas</span>
+                        </button>
+                        <div className="w-px h-5 bg-white/20 mx-1"></div>
+                        {AVAILABLE_AMENITIES.filter(amenity => amenity.id !== 'petsAllowed').map(amenity => (
+                            <button key={amenity.id} onClick={() => handleToggleAmenity(amenity.id)} className={`px-3 py-1 text-xs rounded-full transition-colors border ${selectedAmenities.includes(amenity.id) ? 'bg-indigo-500 border-indigo-400 text-white font-semibold' : 'bg-white/10 border-white/20 text-white/80 hover:bg-white/20'}`}>
                                 {amenity.label}
                             </button>
                         ))}

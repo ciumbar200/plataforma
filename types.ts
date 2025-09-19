@@ -1,4 +1,4 @@
-
+// FIX: Removed circular dependency by defining AmenityId in this file instead of importing it from components/icons.
 
 export enum UserRole {
   INQUILINO = 'INQUILINO',
@@ -34,6 +34,7 @@ export interface User {
   isBanned?: boolean;
 }
 
+// FIX: Defined AmenityId here to break circular dependency with components/icons.tsx
 export type AmenityId = 
   | 'pool' | 'wifi' | 'airConditioning' | 'heating' | 'furnished' 
   | 'kitchen' | 'washingMachine' | 'parking' | 'elevator' | 'balcony' 
@@ -73,6 +74,7 @@ export interface Property {
   lat: number;
   lng: number;
   status: 'approved' | 'pending' | 'rejected';
+  bathrooms?: number;
 }
 
 export interface OwnerStats {
@@ -113,6 +115,8 @@ export interface SavedSearch {
     minPrice?: number;
     maxPrice?: number;
     amenities?: AmenityId[];
+    propertyType?: PropertyType;
+    bathrooms?: number;
   };
 }
 
