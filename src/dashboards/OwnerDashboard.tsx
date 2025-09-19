@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import StatCard from './components/StatCard';
-import { BuildingIcon, ChartBarIcon, EyeIcon, UsersIcon, UserCircleIcon, PlusIcon } from '../../components/icons';
+import { BuildingIcon, ChartBarIcon, EyeIcon, UsersIcon, UserCircleIcon, PlusIcon, ChevronLeftIcon } from '../../components/icons';
 import PropertyCard from './components/PropertyCard';
 import AddPropertyModal from './components/AddPropertyModal';
-import { Property, User, PropertyType, OwnerStats } from '../../types';
+import { Property, User, PropertyType, OwnerStats, UserRole, RentalGoal } from '../../types';
 import GlassCard from '../../components/GlassCard';
+import CandidateGroupCard from './components/CandidateGroupCard';
 
 const MOCK_OWNER_STATS: OwnerStats = {
     monthlyEarnings: [
@@ -30,6 +31,8 @@ interface OwnerDashboardProps {
     onSaveProperty: (propertyData: Omit<Property, 'id' | 'views' | 'compatibleCandidates' | 'owner_id'> & { id?: number }) => void;
     initialPropertyData: InitialPropertyData | null;
     onClearInitialPropertyData: () => void;
+    allUsers: User[];
+    matches: { [key: string]: string[] };
 }
 
 const navItems = [
@@ -38,7 +41,7 @@ const navItems = [
     { id: 'profile', icon: <UserCircleIcon className="w-7 h-7" />, label: 'Mi Perfil' },
 ] as const;
 
-type View = typeof navItems[number]['id'];
+type View = typeof navItems[number]['id'] | 'propertyDetail';
 
 const TopNavBar = ({ activeView, setView, onAddNew }: { activeView: View; setView: (view: View) => void; onAddNew: () => void; }) => (
     <nav className="hidden md:flex justify-between items-center w-full bg-black/20 backdrop-blur-lg border-b border-white/10 p-2 px-6">
@@ -98,10 +101,19 @@ const BottomNavBar = ({ activeView, setView, onAddNew }: { activeView: View; set
     </div>
 );
 
-const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ user, properties, onSaveProperty, initialPropertyData, onClearInitialPropertyData }) => {
+const BackButton = ({ onClick, text }: { onClick: () => void; text: string; }) => (
+    <button onClick={onClick} className="flex items-center gap-2 text-white/80 hover:text-white transition-colors z-10 bg-black/20 backdrop-blur-sm px-4 py-2 rounded-lg border border-white/10 mb-4">
+      <ChevronLeftIcon className="w-5 h-5" />
+      <span>{text}</span>
+    </button>
+);
+
+const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ user, properties, onSaveProperty, initialPropertyData, onClearInitialPropertyData, allUsers, matches }) => {
     const [view, setView] = useState<View>('dashboard');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [propertyToEdit, setPropertyToEdit] = useState<Property | null>(null);
+    const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
+    const [invitedGroups, setInvitedGroups] = useState<string[]>([]);
 
     useEffect(() => {
         if (initialPropertyData) {
@@ -121,6 +133,12 @@ const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ user, properties, onSav
         setIsModalOpen(true);
     };
 
+    const handlePropertyClick = (property: Property) => {
+        setSelectedProperty(property);
+        setInvitedGroups([]); // Reset invitations when viewing a new property
+        setView('propertyDetail');
+    };
+
     const handleCloseModal = () => {
         setIsModalOpen(false);
         setPropertyToEdit(null);
@@ -129,6 +147,68 @@ const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ user, properties, onSav
     const handleSaveAndClose = (propertyData: Omit<Property, 'id' | 'views' | 'compatibleCandidates' | 'owner_id'> & { id?: number }) => {
         onSaveProperty(propertyData);
         handleCloseModal();
+    };
+    
+    const tenantGroups = useMemo(() => {
+        const tenants = allUsers.filter(u => u.role === UserRole.INQUILINO && (u.rentalGoal === RentalGoal.FIND_ROOMMATES_AND_APARTMENT || u.rentalGoal === RentalGoal.BOTH));
+        const tenantMap = new Map(tenants.map(t => [t.id, t]));
+        
+        const mutualMatches = new Map<string, string[]>();
+        tenants.forEach(t => {
+            const tMatches = matches[t.id] || [];
+            const mutual = tMatches.filter(otherId => (matches[otherId] || []).includes(t.id) && tenantMap.has(otherId));
+            mutualMatches.set(t.id, mutual);
+        });
+
+        const groups: User[][] = [];
+        const processedUsers = new Set<string>();
+
+        // Find triplets
+        tenants.forEach(userA => {
+            if (processedUsers.has(userA.id)) return;
+            const mutualA = mutualMatches.get(userA.id) || [];
+            mutualA.forEach(idB => {
+                if (processedUsers.has(idB)) return;
+                const userB = tenantMap.get(idB)!;
+                const mutualB = mutualMatches.get(idB) || [];
+                const commonWithA = mutualB.filter(idC => mutualA.includes(idC));
+                
+                commonWithA.forEach(idC => {
+                    if (processedUsers.has(idC)) return;
+                    const mutualC = mutualMatches.get(idC) || [];
+                    if (mutualC.includes(userA.id) && mutualC.includes(userB.id)) {
+                        const userC = tenantMap.get(idC)!;
+                        groups.push([userA, userB, userC]);
+                        processedUsers.add(userA.id);
+                        processedUsers.add(userB.id);
+                        processedUsers.add(userC.id);
+                    }
+                });
+            });
+        });
+
+        // Find pairs
+        tenants.forEach(userA => {
+            if (processedUsers.has(userA.id)) return;
+            const mutualA = mutualMatches.get(userA.id) || [];
+            mutualA.forEach(idB => {
+                if (!processedUsers.has(idB)) {
+                    const userB = tenantMap.get(idB)!;
+                    groups.push([userA, userB]);
+                    processedUsers.add(userA.id);
+                    processedUsers.add(idB);
+                }
+            });
+        });
+
+        return groups;
+    }, [allUsers, matches]);
+
+    const handleInviteGroup = (group: User[]) => {
+        const groupId = group.map(u => u.id).sort().join('-');
+        setInvitedGroups(prev => [...prev, groupId]);
+        // Here you would typically trigger a notification to the users
+        alert(`Grupo de ${group.map(u => u.name).join(', ')} ha sido invitado a ver la propiedad.`);
     };
 
     const renderDashboardView = () => (
@@ -193,7 +273,7 @@ const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ user, properties, onSav
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {properties.length > 0 ? (
                     properties.map(prop => (
-                        <PropertyCard key={prop.id} property={prop} onEdit={handleEdit} />
+                        <PropertyCard key={prop.id} property={prop} onEdit={handleEdit} onCardClick={handlePropertyClick} />
                     ))
                 ) : (
                     <GlassCard className="md:col-span-2 lg:col-span-3 min-h-[200px] flex items-center justify-center">
@@ -226,11 +306,61 @@ const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ user, properties, onSav
         </>
     );
 
+    const renderPropertyDetailView = () => {
+        if (!selectedProperty) return null;
+
+        return (
+            <div>
+                <BackButton onClick={() => setView('properties')} text="Volver a mis Propiedades" />
+                <GlassCard>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div>
+                            <h2 className="text-3xl font-bold mb-2">{selectedProperty.title}</h2>
+                            <p className="text-white/70 mb-4">{selectedProperty.address}</p>
+                            <img src={selectedProperty.imageUrls[0]} alt={selectedProperty.title} className="w-full h-64 object-cover rounded-lg mb-4" />
+                            <p className="text-lg">{selectedProperty.conditions}</p>
+                        </div>
+                        <div>
+                            <h3 className="text-2xl font-bold mb-4">Grupos de Candidatos</h3>
+                            {selectedProperty.visibility === 'Pública' && (
+                                <div className="text-center p-6 bg-black/20 rounded-lg">
+                                    <p className="text-white/80">Esta propiedad es pública. Los candidatos pueden mostrar interés directamente.</p>
+                                </div>
+                            )}
+                            {selectedProperty.visibility === 'Privada' && (
+                                <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+                                    {tenantGroups.length > 0 ? (
+                                        tenantGroups.map((group, index) => {
+                                            const groupId = group.map(u => u.id).sort().join('-');
+                                            return (
+                                                <CandidateGroupCard
+                                                    key={groupId}
+                                                    group={group}
+                                                    onInvite={() => handleInviteGroup(group)}
+                                                    isInvited={invitedGroups.includes(groupId)}
+                                                />
+                                            );
+                                        })
+                                    ) : (
+                                        <div className="text-center p-6 bg-black/20 rounded-lg">
+                                            <p className="text-white/80">No se han encontrado grupos de inquilinos compatibles por ahora.</p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </GlassCard>
+            </div>
+        )
+    };
+
     const renderContent = () => {
         switch(view) {
             case 'dashboard': return renderDashboardView();
             case 'properties': return renderPropertiesView();
             case 'profile': return renderProfileView();
+            case 'propertyDetail': return renderPropertyDetailView();
             default: return renderDashboardView();
         }
     };

@@ -164,6 +164,8 @@ function App() {
             onSaveProperty={handleSaveProperty}
             initialPropertyData={publicationData}
             onClearInitialPropertyData={() => setPublicationData(null)}
+            allUsers={users}
+            matches={matches}
         />;
       case 'admin-dashboard':
         if (!currentUser || currentUser.role !== UserRole.ADMIN) return <LoginPage onLogin={handleLogin} users={users} {...pageNavigationProps} />;

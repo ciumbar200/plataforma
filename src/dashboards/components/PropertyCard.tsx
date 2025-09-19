@@ -106,5 +106,4 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onEdit, onCardCli
     );
 };
 
-// FIX: Added default export to allow the component to be imported as a module.
 export default PropertyCard;
