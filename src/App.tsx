@@ -60,36 +60,51 @@ function App() {
 
   const handleLogin = (user: User) => {
     setCurrentUser(user);
+    setRegistrationData(null);
+    setPublicationData(null);
     if (user.role === UserRole.ADMIN) setPage('admin-dashboard');
     else if (user.role === UserRole.PROPIETARIO) setPage('owner-dashboard');
     else setPage('tenant-dashboard');
   };
   
   const handleRegister = async (userData: Partial<User>) => {
-    if (!registrationData || !userData.email || !userData.name || !userData.age) {
-        alert("Faltan datos para el registro.");
+    let newUserPayload;
+    let targetRole: UserRole;
+
+    if (publicationData) { // Owner registration flow
+        targetRole = UserRole.PROPIETARIO;
+        newUserPayload = {
+            name: userData.name,
+            last_name: userData.last_name || '',
+            email: userData.email,
+            age: userData.age,
+            city: publicationData.city,
+            locality: publicationData.locality,
+            profile_picture: 'https://placehold.co/100x100/9333ea/ffffff?text=P',
+            role: targetRole,
+        };
+    } else if (registrationData) { // Tenant registration flow
+        targetRole = UserRole.INQUILINO;
+        newUserPayload = {
+            name: userData.name,
+            last_name: userData.last_name || '',
+            email: userData.email,
+            age: userData.age,
+            city: registrationData.city,
+            locality: registrationData.locality,
+            rental_goal: registrationData.rentalGoal,
+            profile_picture: 'https://placehold.co/100x100/3b82f6/ffffff?text=I',
+            interests: [],
+            lifestyle: [],
+            noise_level: 'Medio' as const,
+            role: targetRole,
+        };
+    } else {
+        alert("Error: No registration flow started.");
         return;
     }
 
-    const newUserPayload = {
-        name: userData.name,
-        last_name: userData.last_name || '',
-        email: userData.email,
-        age: userData.age,
-        city: registrationData.city,
-        locality: registrationData.locality,
-        rental_goal: registrationData.rentalGoal,
-        profile_picture: 'https://placehold.co/100x100/7c3aed/ffffff?text=U',
-        interests: [],
-        lifestyle: [],
-        noise_level: 'Medio' as const,
-        role: UserRole.INQUILINO,
-        is_banned: false,
-        bio: `¡Hola! Soy ${userData.name} y acabo de unirme a MoOn.`,
-    };
-
     // NOTE: This flow bypasses Supabase Auth for demo purposes.
-    // In a real app, you would use supabase.auth.signUp() first.
     const { data, error } = await supabase
       .from('profiles')
       .insert(newUserPayload)
@@ -102,10 +117,17 @@ function App() {
         const newUser = data[0] as User;
         setUsers(prev => [...prev, newUser]);
         setCurrentUser(newUser);
-        setPage('tenant-dashboard');
-        setRegistrationData(null);
+
+        if (targetRole === UserRole.PROPIETARIO) {
+            setPage('owner-dashboard');
+            // publicationData is already set, OwnerDashboard will pick it up
+        } else {
+            setPage('tenant-dashboard');
+            setRegistrationData(null); // Clear tenant registration data
+        }
     }
   };
+
 
   const handleLogout = () => {
     setCurrentUser(null);
@@ -114,11 +136,13 @@ function App() {
 
   const handleStartRegistration = (data: RegistrationData) => {
     setRegistrationData(data);
+    setPublicationData(null);
     setPage('login');
   };
 
   const handleStartPublication = (data: PublicationData) => {
     setPublicationData(data);
+    setRegistrationData(null);
     setPage('login');
   };
 
@@ -279,7 +303,7 @@ function App() {
     switch (page) {
       case 'home': return <HomePage onStartRegistration={handleStartRegistration} {...pageNavigationProps} />;
       case 'owners': return <OwnerLandingPage onStartPublication={handleStartPublication} {...pageNavigationProps} />;
-      case 'login': return <LoginPage onLogin={handleLogin} onRegister={handleRegister} users={users} registrationData={registrationData} {...pageNavigationProps} />;
+      case 'login': return <LoginPage onLogin={handleLogin} onRegister={handleRegister} users={users} registrationData={registrationData} publicationData={publicationData} {...pageNavigationProps} />;
       case 'blog': return <BlogPage posts={blogPosts} {...pageNavigationProps} />;
       case 'about': return <AboutPage {...pageNavigationProps} />;
       case 'privacy': return <PrivacyPolicyPage {...pageNavigationProps} />;
