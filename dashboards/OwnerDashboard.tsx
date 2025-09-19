@@ -7,7 +7,7 @@ import PropertyCard from './components/PropertyCard';
 import AddPropertyModal from './components/AddPropertyModal';
 // FIX: Added OwnerStats to import to use for the mock data type.
 import { Property, User, PropertyType, OwnerStats } from '../types';
-import GlassCard from '../../components/GlassCard';
+import GlassCard from '../components/GlassCard';
 
 // FIX: Added MOCK_OWNER_STATS constant locally as it was missing from the imported file.
 const MOCK_OWNER_STATS: OwnerStats = {

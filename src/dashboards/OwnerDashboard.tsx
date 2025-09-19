@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import StatCard from './components/StatCard';
@@ -6,7 +7,7 @@ import { BuildingIcon, ChartBarIcon, EyeIcon, UsersIcon, UserCircleIcon, PlusIco
 import PropertyCard from './components/PropertyCard';
 import AddPropertyModal from './components/AddPropertyModal';
 import { Property, User, PropertyType, OwnerStats } from '../types';
-import GlassCard from '../../components/GlassCard';
+import GlassCard from '../components/GlassCard';
 
 const MOCK_OWNER_STATS: OwnerStats = {
     monthlyEarnings: [
