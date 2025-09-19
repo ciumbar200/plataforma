@@ -1,11 +1,12 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import { CITIES_DATA, showNotification } from '../../constants';
-import { AVAILABLE_AMENITIES } from '../../components/icons';
+// FIX: Corrected import paths to point within the src directory.
+import { CITIES_DATA, showNotification } from '../constants';
+import { AVAILABLE_AMENITIES } from '../components/icons';
 import UserProfileCard from './components/UserProfileCard';
 import PropertyCard from './components/PropertyCard';
-import { CheckIcon, XIcon, CompassIcon, BuildingIcon, HeartIcon, UserCircleIcon, ChevronLeftIcon, PaperAirplaneIcon, EyeIcon, UsersIcon, CalendarIcon, PieChartIcon, AlertTriangleIcon, PawPrintIcon } from '../../components/icons';
-import GlassCard from '../../components/GlassCard';
-import { User, Property, AmenityId, SavedSearch, UserRole, RentalGoal, PropertyType } from '../../types';
+import { CheckIcon, XIcon, CompassIcon, BuildingIcon, HeartIcon, UserCircleIcon, ChevronLeftIcon, PaperAirplaneIcon, EyeIcon, UsersIcon, CalendarIcon, PieChartIcon, AlertTriangleIcon, PawPrintIcon } from '../components/icons';
+import GlassCard from '../components/GlassCard';
+import { User, Property, AmenityId, SavedSearch, UserRole, RentalGoal, PropertyType } from '../types';
 import GoogleMap from './components/GoogleMap';
 import SaveSearchModal from './components/SaveSearchModal';
 import MoonSplit from './components/MoonSplit';
@@ -731,5 +732,4 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user: currentUser, al
   );
 };
 
-// FIX: Added default export to resolve module import error in App.tsx.
 export default TenantDashboard;
