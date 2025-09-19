@@ -4,13 +4,7 @@ import Footer from '../components/Footer';
 import { CompassIcon, UsersIcon, BuildingIcon, ChevronDownIcon, PencilIcon, SearchIcon, SignatureIcon } from '../components/icons';
 import GlassCard from '../components/GlassCard';
 import { RentalGoal } from '../types';
-import { CITIES_DATA } from '../constants';
-
-const SUPABASE_PROJECT_URL = "https://vogzzdnxoldgfpsrobps.supabase.co";
-const getSupabaseUrl = (bucket: 'avatars' | 'property-media', path: string) => {
-  const cleanedPath = path.startsWith('/') ? path.substring(1) : path;
-  return `${SUPABASE_PROJECT_URL}/storage/v1/object/public/${bucket}/${cleanedPath}`;
-};
+import { CITIES_DATA, getSupabaseUrl } from '../constants';
 
 interface HomePageProps {
     onLoginClick: () => void;

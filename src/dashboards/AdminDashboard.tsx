@@ -95,7 +95,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 <tr key={user.id} className="border-b border-white/10 hover:bg-white/5">
                                     <td className="p-3">
                                         <div className="flex items-center gap-3">
-                                            <img src={user.profilePicture} alt={user.name} className="w-10 h-10 rounded-full object-cover" />
+                                            <img src={user.profile_picture} alt={user.name} className="w-10 h-10 rounded-full object-cover" />
                                             <div>
                                                 <p className="font-semibold">{user.name}</p>
                                                 <p className="text-sm text-white/70">{user.email || 'N/A'}</p>
@@ -104,14 +104,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                     </td>
                                     <td className="p-3 capitalize">{user.role.toLowerCase()}</td>
                                     <td className="p-3">
-                                        <span className={`text-xs font-bold px-2 py-1 rounded-full ${user.isBanned ? 'bg-red-500/50 text-red-300' : 'bg-green-500/50 text-green-300'}`}>
-                                            {user.isBanned ? 'Baneado' : 'Activo'}
+                                        <span className={`text-xs font-bold px-2 py-1 rounded-full ${user.is_banned ? 'bg-red-500/50 text-red-300' : 'bg-green-500/50 text-green-300'}`}>
+                                            {user.is_banned ? 'Baneado' : 'Activo'}
                                         </span>
                                     </td>
                                     <td className="p-3 text-right">
                                         <button onClick={() => setSelectedUser(user)} className="text-indigo-400 hover:underline text-sm font-semibold px-2">Ver</button>
-                                        <button onClick={() => openModal('ban_user', user)} className={`font-semibold text-sm px-2 ${user.isBanned ? 'text-green-400 hover:underline' : 'text-red-400 hover:underline'}`}>
-                                            {user.isBanned ? 'Quitar Ban' : 'Banear'}
+                                        <button onClick={() => openModal('ban_user', user)} className={`font-semibold text-sm px-2 ${user.is_banned ? 'text-green-400 hover:underline' : 'text-red-400 hover:underline'}`}>
+                                            {user.is_banned ? 'Quitar Ban' : 'Banear'}
                                         </button>
                                     </td>
                                 </tr>
@@ -315,12 +315,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 isOpen={modal === 'ban_user'}
                 onClose={closeModal}
                 onConfirm={() => {
-                    onSetUserBanStatus(modalPayload.id, !modalPayload.isBanned);
+                    onSetUserBanStatus(modalPayload.id, !modalPayload.is_banned);
                     closeModal();
                 }}
-                title={modalPayload?.isBanned ? `Quitar Ban a ${modalPayload?.name}` : `Banear a ${modalPayload?.name}`}
-                description={`¿Estás seguro de que quieres ${modalPayload?.isBanned ? 'quitar el ban a' : 'banear a'} este usuario? ${modalPayload?.isBanned ? 'Podrá volver a acceder a la plataforma.' : 'No podrá iniciar sesión.'}`}
-                confirmText={modalPayload?.isBanned ? 'Quitar Ban' : 'Sí, Banear'}
+                title={modalPayload?.is_banned ? `Quitar Ban a ${modalPayload?.name}` : `Banear a ${modalPayload?.name}`}
+                description={`¿Estás seguro de que quieres ${modalPayload?.is_banned ? 'quitar el ban a' : 'banear a'} este usuario? ${modalPayload?.is_banned ? 'Podrá volver a acceder a la plataforma.' : 'No podrá iniciar sesión.'}`}
+                confirmText={modalPayload?.is_banned ? 'Quitar Ban' : 'Sí, Banear'}
                 Icon={BanIcon}
                 color="red"
             />

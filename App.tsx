@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import HomePage from './pages/HomePage';
 import OwnerLandingPage from './pages/OwnerLandingPage';
 import LoginPage from './pages/LoginPage';
@@ -13,19 +13,22 @@ import ContactPage from './pages/ContactPage';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 import TermsPage from './pages/TermsPage';
 import { User, UserRole, RentalGoal, Property, PropertyType, SavedSearch, BlogPost, Notification } from './types';
-import { MOCK_USERS, MOCK_PROPERTIES, MOCK_SAVED_SEARCHES, MOCK_BLOG_POSTS, MOCK_NOTIFICATIONS, MOCK_MATCHES } from './constants';
+import { MOCK_SAVED_SEARCHES, MOCK_BLOG_POSTS, MOCK_NOTIFICATIONS, MOCK_MATCHES } from './constants';
+import { supabase } from './lib/supabaseClient';
+import { MoonIcon } from './components/icons';
 
 type Page = 'home' | 'owners' | 'login' | 'tenant-dashboard' | 'owner-dashboard' | 'admin-dashboard' | 'account' | 'blog' | 'about' | 'privacy' | 'terms' | 'contact';
 
 type RegistrationData = { rentalGoal: RentalGoal; city: string; locality: string };
-type PublicationData = { propertyType: PropertyType; city: string; locality: string };
+type PublicationData = { property_type: PropertyType; city: string; locality: string };
 
 function App() {
   const [page, setPage] = useState<Page>('home');
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const [users, setUsers] = useState<User[]>(MOCK_USERS);
-  const [properties, setProperties] = useState<Property[]>(MOCK_PROPERTIES);
+  const [users, setUsers] = useState<User[]>([]);
+  const [properties, setProperties] = useState<Property[]>([]);
   const [savedSearches, setSavedSearches] = useState<SavedSearch[]>(MOCK_SAVED_SEARCHES);
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>(MOCK_BLOG_POSTS);
   const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS);
@@ -33,6 +36,28 @@ function App() {
 
   const [publicationData, setPublicationData] = useState<PublicationData | null>(null);
   const [accountInitialTab, setAccountInitialTab] = useState<string>('overview');
+  
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const { data: usersData, error: usersError } = await supabase.from('users').select('*');
+        if (usersError) throw usersError;
+        setUsers(usersData as User[]);
+        
+        const { data: propertiesData, error: propertiesError } = await supabase.from('properties').select('*');
+        if (propertiesError) throw propertiesError;
+        setProperties(propertiesData as Property[]);
+        
+      } catch (error: any) {
+        console.error("Error al obtener datos de Supabase:", error.message || error);
+        // Here you might want to set an error state to show a message to the user
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   const handleLogin = (user: User) => {
     setCurrentUser(user);
@@ -55,30 +80,67 @@ function App() {
     setPage('login');
   };
 
-  const handleUpdateUser = (updatedUser: User) => {
+  const handleUpdateUser = async (updatedUser: User) => {
     if (!currentUser) return;
-    const updated = { ...currentUser, ...updatedUser };
-    setCurrentUser(updated);
-    setUsers(users.map(u => u.id === updated.id ? updated : u));
-    alert('Perfil actualizado');
-    setPage(currentUser.role === UserRole.INQUILINO ? 'tenant-dashboard' : 'owner-dashboard');
+    const { id, ...updateData } = updatedUser;
+    // @ts-ignore
+    delete updateData.compatibility; // Do not save compatibility score in DB
+    
+    const { data, error } = await supabase
+      .from('users')
+      .update(updateData)
+      .eq('id', id)
+      .select();
+    
+    if (error) {
+      console.error('Error al actualizar el usuario:', error);
+      alert('Error al actualizar el perfil.');
+    } else if (data) {
+      const updated = data[0] as User;
+      setCurrentUser(updated);
+      setUsers(users.map(u => u.id === updated.id ? updated : u));
+      alert('Perfil actualizado');
+      setPage(currentUser.role === UserRole.INQUILINO ? 'tenant-dashboard' : 'owner-dashboard');
+    }
   };
 
-  const handleSaveProperty = (propertyData: Omit<Property, 'id' | 'views' | 'compatibleCandidates' | 'owner_id'> & { id?: number }) => {
+  const handleSaveProperty = async (propertyData: Omit<Property, 'id' | 'views' | 'compatible_candidates' | 'owner_id'> & { id?: number }) => {
     if (!currentUser) return;
-    if (propertyData.id) {
-      setProperties(properties.map(p => p.id === propertyData.id ? { ...p, ...propertyData, price: Number(propertyData.price) } as Property : p));
-    } else {
-      const newProperty: Property = {
-        ...propertyData,
-        id: Math.max(0, ...properties.map(p => p.id)) + 1,
+    
+    const dataToSave = {
+      ...propertyData,
+      price: Number(propertyData.price),
+    };
+
+    if (propertyData.id) { // Update
+      const { id, ...updateData } = dataToSave;
+      const { data, error } = await supabase
+        .from('properties')
+        .update(updateData)
+        .eq('id', id)
+        .select();
+      if (error) {
+          console.error('Error al actualizar la propiedad:', error);
+      } else if (data) {
+          setProperties(properties.map(p => p.id === data[0].id ? data[0] as Property : p));
+      }
+    } else { // Insert
+      const newPropertyData = {
+        ...dataToSave,
         owner_id: currentUser.id,
         views: 0,
-        compatibleCandidates: 0,
-        price: Number(propertyData.price),
-        status: 'pending',
+        compatible_candidates: 0,
+        status: 'pending' as const,
       };
-      setProperties(prev => [...prev, newProperty]);
+      const { data, error } = await supabase
+        .from('properties')
+        .insert(newPropertyData)
+        .select();
+      if (error) {
+        console.error('Error al crear la propiedad:', error);
+      } else if (data) {
+        setProperties(prev => [...prev, data[0] as Property]);
+      }
     }
   };
 
@@ -90,16 +152,45 @@ function App() {
     }
   };
 
-  const handleUpdatePropertyStatus = (propertyId: number, status: 'approved' | 'rejected') => {
-    setProperties(properties.map(p => p.id === propertyId ? { ...p, status } : p));
+  const handleUpdatePropertyStatus = async (propertyId: number, status: 'approved' | 'rejected') => {
+    const { data, error } = await supabase
+      .from('properties')
+      .update({ status })
+      .eq('id', propertyId)
+      .select();
+
+    if (error) {
+      console.error('Error al actualizar el estado de la propiedad:', error);
+    } else if (data) {
+      setProperties(properties.map(p => p.id === propertyId ? data[0] as Property : p));
+    }
   };
   
-  const handleDeleteProperty = (propertyId: number) => {
-    setProperties(properties.filter(p => p.id !== propertyId));
+  const handleDeleteProperty = async (propertyId: number) => {
+    const { error } = await supabase
+      .from('properties')
+      .delete()
+      .eq('id', propertyId);
+
+    if (error) {
+      console.error('Error al eliminar la propiedad:', error);
+    } else {
+      setProperties(properties.filter(p => p.id !== propertyId));
+    }
   };
 
-  const handleSetUserBanStatus = (userId: string, isBanned: boolean) => {
-    setUsers(users.map(u => u.id === userId ? { ...u, isBanned } : u));
+  const handleSetUserBanStatus = async (userId: string, isBanned: boolean) => {
+    const { data, error } = await supabase
+      .from('users')
+      .update({ is_banned: isBanned })
+      .eq('id', userId)
+      .select();
+    
+    if (error) {
+      console.error('Error al actualizar el estado de baneo del usuario:', error);
+    } else if (data) {
+      setUsers(users.map(u => u.id === userId ? data[0] as User : u));
+    }
   };
 
   const handleSaveBlogPost = (postData: Omit<BlogPost, 'id'> & { id?: number }) => {
@@ -111,7 +202,7 @@ function App() {
             id: Math.max(0, ...blogPosts.map(p => p.id)) + 1,
             slug: postData.title.toLowerCase().replace(/\s+/g, '-'),
             author: currentUser?.name || 'Admin',
-            authorImageUrl: currentUser?.profilePicture || '',
+            author_image_url: currentUser?.profile_picture || '',
             publish_date: new Date().toISOString(),
         };
         setBlogPosts(prev => [newPost, ...prev]);
@@ -132,6 +223,15 @@ function App() {
     onTermsClick: () => setPage('terms'),
     onContactClick: () => setPage('contact'),
   };
+  
+  if (loading) {
+    return (
+        <div className="h-screen w-screen bg-gray-900 flex flex-col items-center justify-center text-white">
+            <MoonIcon className="w-16 h-16 animate-pulse text-indigo-400" />
+            <p className="mt-4 text-lg">Cargando MoOn...</p>
+        </div>
+    );
+  }
 
   const renderPage = () => {
     switch (page) {
@@ -151,7 +251,7 @@ function App() {
             properties={properties.filter(p => p.status === 'approved')}
             onSendInterest={() => alert('Interés enviado (simulación)')}
             savedSearches={savedSearches}
-            onSaveSearch={(search) => setSavedSearches([...savedSearches, {...search, id: Date.now(), userId: currentUser.id}])}
+            onSaveSearch={(search) => setSavedSearches([...savedSearches, {...search, id: Date.now(), user_id: currentUser.id}])}
             onDeleteSearch={(id) => setSavedSearches(savedSearches.filter(s => s.id !== id))}
             userMatches={matches[currentUser.id] || []}
             onAddMatch={handleAddMatch}
@@ -194,7 +294,7 @@ function App() {
     }
   };
 
-  return <div className="h-screen w-screen bg-gray-900">{renderPage()}</div>;
+  return <div className="h-screen w-screen bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-900">{renderPage()}</div>;
 }
 
 export default App;

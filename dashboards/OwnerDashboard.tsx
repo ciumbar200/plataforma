@@ -25,13 +25,13 @@ const MOCK_OWNER_STATS: OwnerStats = {
     totalCandidates: 340,
 };
 
-type InitialPropertyData = { propertyType: PropertyType; city: string; locality: string };
+type InitialPropertyData = { property_type: PropertyType; city: string; locality: string };
 
 interface OwnerDashboardProps {
     user: User;
     properties: Property[];
     // FIX: Excluded 'owner_id' from the prop type to match the expected data structure from child components.
-    onSaveProperty: (propertyData: Omit<Property, 'id' | 'views' | 'compatibleCandidates' | 'owner_id'> & { id?: number }) => void;
+    onSaveProperty: (propertyData: Omit<Property, 'id' | 'views' | 'compatible_candidates' | 'owner_id'> & { id?: number }) => void;
     initialPropertyData: InitialPropertyData | null;
     onClearInitialPropertyData: () => void;
 }
@@ -131,7 +131,7 @@ const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ user, properties, onSav
     };
 
     // FIX: Updated parameter type to exclude 'owner_id' to align with child component and parent handler.
-    const handleSaveAndClose = (propertyData: Omit<Property, 'id' | 'views' | 'compatibleCandidates' | 'owner_id'> & { id?: number }) => {
+    const handleSaveAndClose = (propertyData: Omit<Property, 'id' | 'views' | 'compatible_candidates' | 'owner_id'> & { id?: number }) => {
         onSaveProperty(propertyData);
         handleCloseModal();
     };
@@ -161,7 +161,7 @@ const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ user, properties, onSav
                 <StatCard 
                     icon={<UsersIcon className="w-7 h-7 text-white" />}
                     title="Candidatos Totales"
-                    value={properties.reduce((acc, p) => acc + p.compatibleCandidates, 0).toLocaleString()}
+                    value={properties.reduce((acc, p) => acc + p.compatible_candidates, 0).toLocaleString()}
                     color="purple"
                 />
             </div>
@@ -215,7 +215,7 @@ const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ user, properties, onSav
             <div className="w-full max-w-4xl mx-auto">
                 <GlassCard className="!p-8">
                     <div className="flex flex-col md:flex-row items-center gap-8 text-center md:text-left">
-                        <img src={user.profilePicture} alt={user.name} className="w-40 h-40 rounded-full object-cover border-4 border-purple-400 shadow-lg" />
+                        <img src={user.profile_picture} alt={user.name} className="w-40 h-40 rounded-full object-cover border-4 border-purple-400 shadow-lg" />
                         <div>
                             <h3 className="text-4xl font-bold">{user.name}</h3>
                             {user.city && <p className="text-lg text-cyan-400 mt-1">{user.city}, {user.locality}</p>}

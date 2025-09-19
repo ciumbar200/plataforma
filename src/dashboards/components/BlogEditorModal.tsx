@@ -14,7 +14,7 @@ const BlogEditorModal: React.FC<BlogEditorModalProps> = ({ isOpen, onClose, onSa
   const [formData, setFormData] = useState({
     title: '',
     excerpt: '',
-    imageUrl: '',
+    image_url: '',
     content: '',
   });
 
@@ -24,11 +24,11 @@ const BlogEditorModal: React.FC<BlogEditorModalProps> = ({ isOpen, onClose, onSa
         setFormData({
           title: postToEdit.title,
           excerpt: postToEdit.excerpt,
-          imageUrl: postToEdit.imageUrl,
+          image_url: postToEdit.image_url,
           content: postToEdit.content,
         });
       } else {
-        setFormData({ title: '', excerpt: '', imageUrl: '', content: '' });
+        setFormData({ title: '', excerpt: '', image_url: '', content: '' });
       }
     }
   }, [postToEdit, isOpen]);
@@ -62,8 +62,8 @@ const BlogEditorModal: React.FC<BlogEditorModalProps> = ({ isOpen, onClose, onSa
             <input type="text" name="title" id="title" value={formData.title} onChange={handleChange} className="w-full bg-white/10 border border-white/20 rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 outline-none" required />
           </div>
           <div>
-            <label htmlFor="imageUrl" className="block text-sm font-medium text-white/80 mb-1">URL de la Imagen de Portada</label>
-            <input type="text" name="imageUrl" id="imageUrl" value={formData.imageUrl} onChange={handleChange} className="w-full bg-white/10 border border-white/20 rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="https://images.unsplash.com/..." required />
+            <label htmlFor="image_url" className="block text-sm font-medium text-white/80 mb-1">URL de la Imagen de Portada</label>
+            <input type="text" name="image_url" id="image_url" value={formData.image_url} onChange={handleChange} className="w-full bg-white/10 border border-white/20 rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="https://images.unsplash.com/..." required />
           </div>
           <div>
             <label htmlFor="excerpt" className="block text-sm font-medium text-white/80 mb-1">Extracto (Resumen corto)</label>

@@ -10,11 +10,11 @@ import {
     ChevronLeftIcon
 } from '../components/icons';
 import { PropertyType } from '../types';
-import { CITIES_DATA } from '../constants';
+import { CITIES_DATA, getSupabaseUrl } from '../constants';
 
 
 interface OwnerLandingPageProps {
-    onStartPublication: (data: { propertyType: PropertyType; city: string; locality: string }) => void;
+    onStartPublication: (data: { property_type: PropertyType; city: string; locality: string }) => void;
     onHomeClick: () => void;
     onLoginClick: () => void;
     onBlogClick: () => void;
@@ -37,19 +37,19 @@ const testimonials = [
         quote: "Publiqué un viernes y el domingo ya tenía visitas programadas. Firmamos en una semana.",
         author: "María G.",
         details: "Barcelona - Piso 3 hab.",
-        img: "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?q=80&w=100&h=100&fit=crop"
+        img: getSupabaseUrl('avatars', 'testimonial01.webp')
     },
     {
         quote: "Me encantó el filtro de compatibilidad. Menos ruido, mejores candidatos.",
         author: "Jordi R.",
         details: "Valencia - Ático 2 hab.",
-        img: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=100&h=100&fit=crop"
+        img: getSupabaseUrl('avatars', 'testimonial02.webp')
     },
     {
         quote: "Proceso claro y digital. Contrato, depósito y pagos sin papel.",
         author: "Ana L.",
         details: "Madrid - Loft",
-        img: "https://images.unsplash.com/photo-1525134479668-1bee5c7c6845?q=80&w=100&h=100&fit=crop"
+        img: getSupabaseUrl('avatars', 'testimonial03.webp')
     }
 ];
 
@@ -77,7 +77,7 @@ const OwnerLandingPage: React.FC<OwnerLandingPageProps> = ({ onStartPublication,
             alert('Por favor, completa todos los campos para continuar.');
             return;
         }
-        onStartPublication({ propertyType, city: selectedCity, locality: selectedLocality });
+        onStartPublication({ property_type: propertyType, city: selectedCity, locality: selectedLocality });
     };
 
     const nextTestimonial = () => {
@@ -90,8 +90,7 @@ const OwnerLandingPage: React.FC<OwnerLandingPageProps> = ({ onStartPublication,
 
     return (
         <div className="min-h-screen w-full bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-900 text-white flex flex-col">
-            {/* FIX: Corrected pageContext value from "owner" to "propietario" to match component's prop type. */}
-            <Header onLoginClick={onLoginClick} onHomeClick={onHomeClick} pageContext="propietario" />
+            <Header onLoginClick={onLoginClick} onHomeClick={onHomeClick} onOwnersClick={onHomeClick} pageContext="propietario" />
             <main className="flex-grow">
                 {/* Hero Section */}
                 <section className="relative py-16 sm:py-32 text-center overflow-hidden">

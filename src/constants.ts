@@ -1,6 +1,8 @@
 import {
-  User, UserRole, RentalGoal, Property, PropertyType, OwnerStats,
-  Notification, NotificationType, SavedSearch, BlogPost
+  UserRole, RentalGoal, PropertyType, NotificationType
+} from './types';
+import type {
+  User, Property, OwnerStats, Notification, SavedSearch, BlogPost
 } from './types';
 
 // --- START: Supabase URL Helper ---
@@ -8,7 +10,7 @@ import {
 // It uses the project URL from your supabaseClient.ts and the specified bucket name.
 const SUPABASE_PROJECT_URL = "https://vogzzdnxoldgfpsrobps.supabase.co";
 
-const getSupabaseUrl = (bucket: 'avatars' | 'property-media', path: string) => {
+export const getSupabaseUrl = (bucket: 'avatars' | 'property-media', path: string) => {
   // Removes any leading slashes from the path to prevent double slashes in the URL
   const cleanedPath = path.startsWith('/') ? path.substring(1) : path;
   return `${SUPABASE_PROJECT_URL}/storage/v1/object/public/${bucket}/${cleanedPath}`;
@@ -92,7 +94,7 @@ export const sendEmail = async (to: string, subject: string, html: string): Prom
  * Adds a new contact to Fluent CRM via webhook.
  * @param user The user object containing contact details.
  */
-export const addToFluentCRM = async (user: { name: string; lastName?: string; email?: string; role: UserRole }): Promise<void> => {
+export const addToFluentCRM = async (user: { name: string; last_name?: string; email?: string; role: UserRole }): Promise<void> => {
   // NOTE FOR DEPLOYMENT: This URL uses a raw IP and is likely for a development environment.
   // Replace with your production Fluent CRM webhook URL.
   // It is also highly recommended to move this to a serverless function for security.
@@ -105,7 +107,7 @@ export const addToFluentCRM = async (user: { name: string; lastName?: string; em
 
   const payload = {
     first_name: user.name,
-    last_name: user.lastName || '',
+    last_name: user.last_name || '',
     email: user.email,
     tags: [user.role], // Use the role as a tag
   };
@@ -131,80 +133,17 @@ export const addToFluentCRM = async (user: { name: string; lastName?: string; em
   }
 };
 
-// --- MOCK DATA ---
-export const MOCK_USERS: User[] = [
-  {
-    id: '1', name: 'Elena García', email: 'elena@example.com', age: 28, city: 'Madrid', locality: 'Malasaña', profilePicture: getSupabaseUrl('avatars', '01.webp'), interests: ['Yoga', 'Cocina Vegana', 'Viajar', 'Fotografía'], noiseLevel: 'Bajo', compatibility: 92, role: UserRole.INQUILINO, bio: 'Busco un espacio tranquilo y gente con buena energía para compartir piso. Soy diseñadora gráfica, me encanta el arte y los planes de día.', lifestyle: ['Diurno', 'Creativo', 'Tranquilo'], commuteDistance: 20, rentalGoal: RentalGoal.FIND_ROOM_WITH_ROOMMATES, isBanned: false,
-  },
-  {
-    id: '2', name: 'Javier Moreno', email: 'javier@example.com', age: 31, city: 'Madrid', locality: 'Chamberí', profilePicture: getSupabaseUrl('avatars', '02.webp'), interests: ['Senderismo', 'Música Indie', 'Cine', 'Salir de tapas'], noiseLevel: 'Medio', compatibility: 85, role: UserRole.INQUILINO, bio: 'Soy desarrollador de software y en mi tiempo libre me gusta descubrir la sierra de Madrid. Busco buen rollo y gente independiente.', lifestyle: ['Diurno', 'Social'], commuteDistance: 30, rentalGoal: RentalGoal.FIND_ROOM_WITH_ROOMMATES, isBanned: false,
-  },
-  {
-    id: '3', name: 'Carlos Pérez', email: 'carlos@example.com', age: 34, city: 'Barcelona', locality: 'Gràcia', profilePicture: getSupabaseUrl('avatars', '03.webp'), interests: ['Arte Urbano', 'Videojuegos', 'Música en vivo'], noiseLevel: 'Medio', compatibility: 78, role: UserRole.PROPIETARIO, bio: 'Alquilo una habitación en mi piso de Gràcia. Soy una persona tranquila y trabajo desde casa. Busco a alguien limpio y respetuoso.', lifestyle: ['Diurno', 'Tranquilo'], commuteDistance: 10, isBanned: false,
-  },
-  {
-    id: '4', name: 'Sofía López', email: 'sofia@example.com', age: 25, city: 'Barcelona', locality: 'Poblenou', profilePicture: getSupabaseUrl('avatars', '04.webp'), interests: ['Música en vivo', 'Brunch', 'Pasear por la playa', 'Diseño'], noiseLevel: 'Bajo', compatibility: 0, role: UserRole.INQUILINO, bio: 'Recién llegada a Barcelona por trabajo. Me gusta la vida tranquila entre semana pero no digo que no a un buen plan de finde.', lifestyle: ['Creativo', 'Tranquilo'], commuteDistance: 15, rentalGoal: RentalGoal.FIND_ROOM_WITH_ROOMMATES, isBanned: false,
-  },
-  {
-    id: '5', name: 'David Martín', email: 'david@example.com', age: 29, city: 'Madrid', locality: 'Retiro', profilePicture: getSupabaseUrl('avatars', '05.webp'), interests: ['Deportes', 'Videojuegos', 'Series', 'Cerveza artesanal'], noiseLevel: 'Medio', compatibility: 0, role: UserRole.INQUILINO, bio: 'Ingeniero informático. Me paso el día programando así que necesito desconectar. Fan del Real Madrid y de cualquier deporte.', lifestyle: ['Social', 'Deportista'], commuteDistance: 40, rentalGoal: RentalGoal.FIND_ROOMMATES_AND_APARTMENT, isBanned: false,
-  },
-  {
-    id: '6', name: 'Lucía Fernández', email: 'lucia@example.com', age: 27, city: 'Valencia', locality: 'Ruzafa', profilePicture: getSupabaseUrl('avatars', '06.webp'), interests: ['Lectura', 'Teatro', 'Museos', 'Cocinar'], noiseLevel: 'Bajo', compatibility: 0, role: UserRole.INQUILINO, bio: 'Enfermera de profesión, tranquila por naturaleza. Necesito silencio para descansar por mis turnos. Me encanta leer y cocinar postres.', lifestyle: ['Diurno', 'Tranquilo', 'Intelectual'], commuteDistance: 25, rentalGoal: RentalGoal.FIND_ROOM_WITH_ROOMMATES, isBanned: false,
-  },
-  {
-    id: '7', name: 'Marcos Ruiz', email: 'marcos@example.com', age: 22, city: 'Sevilla', locality: 'Triana', profilePicture: getSupabaseUrl('avatars', '07.webp'), interests: ['Salir de tapas', 'Fútbol', 'Viajar', 'Fiestas'], noiseLevel: 'Alto', compatibility: 0, role: UserRole.INQUILINO, bio: 'Estudiante de ADE. Busco gente para compartir piso y pasarlo bien. Soy sociable y bastante ordenado, eso sí.', lifestyle: ['Nocturno', 'Social'], commuteDistance: 10, rentalGoal: RentalGoal.FIND_ROOMMATES_AND_APARTMENT, isBanned: false,
-  },
-  {
-    id: '8', name: 'Paula Jiménez', email: 'paula@example.com', age: 30, city: 'Madrid', locality: 'Lavapiés', profilePicture: getSupabaseUrl('avatars', '08.webp'), interests: ['Arte Urbano', 'Fotografía', 'Cocina Vegana', 'Mercadillos'], noiseLevel: 'Medio', compatibility: 0, role: UserRole.INQUILINO, bio: 'Artista y activista. Busco un espacio inspirador con gente de mente abierta. El respeto y la comunicación son clave para mí.', lifestyle: ['Creativo', 'Eco-friendly'], commuteDistance: 20, rentalGoal: RentalGoal.BOTH, isBanned: false,
-  },
-  {
-    id: '9', name: 'Adrián González', email: 'adrian@example.com', age: 33, city: 'Barcelona', locality: 'El Raval', profilePicture: getSupabaseUrl('avatars', '09.webp'), interests: ['Cocinar', 'Música en vivo', 'Cine', 'Vino'], noiseLevel: 'Medio', compatibility: 0, role: UserRole.INQUILINO, bio: 'Soy chef, así que mis horarios son un poco locos, pero siempre hay algo rico en la nevera. Disfruto de una buena charla con una copa de vino.', lifestyle: ['Nocturno', 'Social'], commuteDistance: 30, rentalGoal: RentalGoal.FIND_ROOM_WITH_ROOMMATES, isBanned: false,
-  },
-  {
-    id: '10', name: 'Isabel Romero', email: 'isabel@example.com', age: 35, city: 'Madrid', locality: 'Salamanca', profilePicture: getSupabaseUrl('avatars', '10.webp'), interests: ['Lectura', 'Yoga', 'Museos', 'Brunch'], noiseLevel: 'Bajo', compatibility: 0, role: UserRole.INQUILINO, bio: 'Escritora freelance. Trabajo desde casa, por lo que valoro mucho el silencio y el orden. Busco un ambiente relajado y maduro.', lifestyle: ['Diurno', 'Tranquilo', 'Intelectual'], commuteDistance: 45, rentalGoal: RentalGoal.FIND_ROOM_WITH_ROOMMATES, isBanned: false,
-  },
-  {
-    id: '11', name: 'Hugo Navarro', email: 'hugo@example.com', age: 26, city: 'Valencia', locality: 'El Cabanyal', profilePicture: getSupabaseUrl('avatars', '11.webp'), interests: ['Fitness', 'Deportes', 'Senderismo', 'Nutrición'], noiseLevel: 'Medio', compatibility: 0, role: UserRole.INQUILINO, bio: 'Entrenador personal. Mi día empieza a las 6 AM. Busco compañeros con un estilo de vida activo y saludable. El orden es importante.', lifestyle: ['Diurno', 'Deportista'], commuteDistance: 15, rentalGoal: RentalGoal.FIND_ROOMMATES_AND_APARTMENT, isBanned: false,
-  },
-  {
-    id: '12', name: 'Carmen Torres', email: 'carmen@example.com', age: 24, city: 'Barcelona', locality: 'Sants', profilePicture: getSupabaseUrl('avatars', '12.webp'), interests: ['Música Indie', 'Tocar la guitarra', 'Series', 'Viajar'], noiseLevel: 'Medio', compatibility: 0, role: UserRole.INQUILINO, bio: 'Estudiante de música. A veces ensayo en casa, pero siempre a horas razonables. Busco gente maja con la que poder charlar de vez en cuando.', lifestyle: ['Creativo', 'Social'], commuteDistance: 20, rentalGoal: RentalGoal.FIND_ROOM_WITH_ROOMMATES, isBanned: false,
-  },
-  {
-    id: '13', name: 'Daniel Ríos', email: 'daniel@example.com', age: 32, city: 'Madrid', locality: 'La Latina', profilePicture: getSupabaseUrl('avatars', '13.webp'), interests: ['Perros', 'Salir de tapas', 'Fotografía', 'Senderismo'], noiseLevel: 'Medio', compatibility: 0, role: UserRole.INQUILINO, bio: 'Paseo perros y tengo un golden retriever adorable y muy bien educado. Busco un piso pet-friendly y compañeros que amen a los animales.', lifestyle: ['Diurno', 'Eco-friendly'], commuteDistance: 35, rentalGoal: RentalGoal.BOTH, isBanned: false,
-  },
-  {
-    id: 'admin', name: 'Admin', email: 'admin@moon.com', age: 99, city: 'Internet', locality: 'The Cloud', profilePicture: 'https://placehold.co/100x100/7c3aed/ffffff?text=M', interests: [], noiseLevel: 'Medio', compatibility: 0, role: UserRole.ADMIN, bio: 'I am the administrator.', isBanned: false,
-  }
-];
-
-export const MOCK_PROPERTIES: Property[] = [
-    { id: 1, owner_id: '3', title: 'Habitación luminosa en Gràcia', address: 'Carrer de Verdi, 24', city: 'Barcelona', locality: 'Gràcia', postalCode: '08012', propertyType: PropertyType.ROOM, imageUrls: [getSupabaseUrl('property-media', '01.webp')], price: 550, visibility: 'Pública', views: 1204, compatibleCandidates: 18, conditions: 'Estancia mínima 6 meses. No fumadores.', features: { wifi: true, kitchen: true, washingMachine: true, furnished: true, petsAllowed: false }, availableFrom: '2024-08-01', lat: 41.4036, lng: 2.1545, status: 'approved', bathrooms: 1},
-    { id: 2, owner_id: '3', title: 'Ático con terraza en Chamberí', address: 'Calle de Ponzano, 50', city: 'Madrid', locality: 'Chamberí', postalCode: '28003', propertyType: PropertyType.APARTMENT, imageUrls: [getSupabaseUrl('property-media', '02.webp')], price: 1400, visibility: 'Pública', views: 8560, compatibleCandidates: 120, conditions: 'Se requiere 2 meses de fianza.', features: { wifi: true, airConditioning: true, kitchen: true, washingMachine: true, elevator: true, balcony: true, petsAllowed: true }, availableFrom: '2024-09-01', lat: 40.4358, lng: -3.6974, status: 'approved', bathrooms: 2},
-    { id: 3, owner_id: '3', title: 'Piso por Aprobar', address: 'Calle Falsa, 123', city: 'Madrid', locality: 'Centro', postalCode: '28001', propertyType: PropertyType.FLAT, imageUrls: [getSupabaseUrl('property-media', '03.webp')], price: 900, visibility: 'Pública', views: 0, compatibleCandidates: 0, availableFrom: '2024-08-15', lat: 40.4168, lng: -3.7038, status: 'pending', bathrooms: 1},
-    { id: 4, owner_id: '3', title: 'Moderno apartamento en El Born', address: 'Carrer de la Princesa, 10', city: 'Barcelona', locality: 'Ciutat Vella', postalCode: '08003', propertyType: PropertyType.APARTMENT, imageUrls: [getSupabaseUrl('property-media', '04.webp')], price: 1250, visibility: 'Pública', views: 5620, compatibleCandidates: 85, conditions: 'Contrato de larga duración. Ideal para creativos.', features: { wifi: true, airConditioning: true, kitchen: true, furnished: true, balcony: true }, availableFrom: '2024-09-15', lat: 41.385, lng: 2.180, status: 'approved', bathrooms: 1 },
-    { id: 5, owner_id: '3', title: 'Piso de lujo en Salamanca', address: 'Calle de Velázquez, 80', city: 'Madrid', locality: 'Salamanca', postalCode: '28001', propertyType: PropertyType.FLAT, imageUrls: [getSupabaseUrl('property-media', '05.webp')], price: 2800, visibility: 'Pública', views: 11200, compatibleCandidates: 45, conditions: 'Se requiere solvencia demostrable. No estudiantes.', features: { wifi: true, airConditioning: true, heating: true, kitchen: true, washingMachine: true, parking: true, elevator: true, doorman: true, petsAllowed: true }, availableFrom: '2024-10-01', lat: 40.426, lng: -3.683, status: 'approved', bathrooms: 3 },
-    { id: 6, owner_id: '3', title: 'Casa con jardín en Nervión', address: 'Avenida de la Cruz del Campo, 25', city: 'Sevilla', locality: 'Nervión', postalCode: '41005', propertyType: PropertyType.HOUSE, imageUrls: [getSupabaseUrl('property-media', '06.webp')], price: 1800, visibility: 'Pública', views: 9300, compatibleCandidates: 95, conditions: 'Ideal para familias. Se admiten mascotas pequeñas.', features: { heating: true, kitchen: true, washingMachine: true, parking: true, petsAllowed: true, airConditioning: true }, availableFrom: '2024-08-20', lat: 37.382, lng: -5.970, status: 'approved', bathrooms: 2 },
-    { id: 7, owner_id: '3', title: 'Loft diáfano en Ruzafa', address: 'Carrer de Sueca, 45', city: 'Valencia', locality: 'Ruzafa', postalCode: '46004', propertyType: PropertyType.STUDIO, imageUrls: [getSupabaseUrl('property-media', '07.webp')], price: 850, visibility: 'Pública', views: 7150, compatibleCandidates: 150, conditions: 'Perfecto para una persona o pareja.', features: { wifi: true, airConditioning: true, kitchen: true, elevator: true, furnished: true }, availableFrom: '2024-11-01', lat: 39.462, lng: -0.373, status: 'approved', bathrooms: 1 },
-    { id: 8, owner_id: '3', title: 'Piso bohemio en Lavapiés', address: 'Calle del Amparo, 70', city: 'Madrid', locality: 'Lavapiés', postalCode: '28012', propertyType: PropertyType.FLAT, imageUrls: [getSupabaseUrl('property-media', '08.webp')], price: 950, visibility: 'Pública', views: 4321, compatibleCandidates: 77, conditions: 'Se busca gente con mente abierta y buen rollo.', features: { wifi: true, kitchen: true, washingMachine: true, balcony: true }, availableFrom: '2024-09-05', lat: 40.408, lng: -3.701, status: 'approved', bathrooms: 1 },
-    { id: 9, owner_id: '3', title: 'Apartamento con vistas en Eixample', address: 'Passeig de Gràcia, 92', city: 'Barcelona', locality: 'Eixample', postalCode: '08008', propertyType: PropertyType.APARTMENT, imageUrls: [getSupabaseUrl('property-media', '09.webp')], price: 2100, visibility: 'Pública', views: 15000, compatibleCandidates: 60, conditions: 'Contrato mínimo de un año.', features: { wifi: true, airConditioning: true, heating: true, elevator: true, doorman: true, balcony: true }, availableFrom: '2025-01-01', lat: 41.395, lng: 2.162, status: 'approved', bathrooms: 2 },
-    { id: 10, owner_id: '3', title: 'Casa adosada en Pozuelo', address: 'Calle de la Iglesia, 15', city: 'Madrid', locality: 'Pozuelo de Alarcón', postalCode: '28223', propertyType: PropertyType.HOUSE, imageUrls: [getSupabaseUrl('property-media', '10.webp')], price: 2500, visibility: 'Privada', views: 2500, compatibleCandidates: 15, conditions: 'Solo perfiles verificados. Ideal para expatriados.', features: { pool: true, heating: true, parking: true, petsAllowed: true, gym: true }, availableFrom: '2024-09-01', lat: 40.434, lng: -3.812, status: 'approved', bathrooms: 4 },
-    { id: 11, owner_id: '3', title: 'Estudio acogedor cerca de la playa', address: 'Carrer de la Reina, 200', city: 'Valencia', locality: 'El Cabanyal', postalCode: '46011', propertyType: PropertyType.STUDIO, imageUrls: [getSupabaseUrl('property-media', '11.webp')], price: 700, visibility: 'Pública', views: 6800, compatibleCandidates: 130, conditions: 'Disponible para el curso escolar.', features: { wifi: true, airConditioning: true, kitchen: true, furnished: true }, availableFrom: '2024-09-01', lat: 39.469, lng: -0.326, status: 'approved', bathrooms: 1 },
-    { id: 12, owner_id: '3', title: 'Habitación para estudiante en Argüelles', address: 'Calle de la Princesa, 60', city: 'Madrid', locality: 'Argüelles', postalCode: '28008', propertyType: PropertyType.ROOM, imageUrls: [getSupabaseUrl('property-media', '12.webp')], price: 480, visibility: 'Pública', views: 3200, compatibleCandidates: 55, conditions: 'Solo estudiantes. Ambiente tranquilo.', features: { wifi: true, heating: true, furnished: true, kitchen: true }, availableFrom: '2024-09-01', lat: 40.428, lng: -3.714, status: 'approved', bathrooms: 1 },
-    { id: 13, owner_id: '3', title: 'Habitación con balcón en Poblenou', address: 'Rambla del Poblenou, 75', city: 'Barcelona', locality: 'Poblenou', postalCode: '08005', propertyType: PropertyType.ROOM, imageUrls: [getSupabaseUrl('property-media', '13.webp')], price: 620, visibility: 'Pública', views: 4100, compatibleCandidates: 40, conditions: 'Se busca persona trabajadora y ordenada.', features: { wifi: true, airConditioning: true, balcony: true, elevator: true, washingMachine: true }, availableFrom: '2024-08-10', lat: 41.401, lng: 2.202, status: 'approved', bathrooms: 1 },
-    { id: 14, owner_id: '3', title: 'Habitación exterior en Triana', address: 'Calle Betis, 50', city: 'Sevilla', locality: 'Triana', postalCode: '41010', propertyType: PropertyType.ROOM, imageUrls: [getSupabaseUrl('property-media', '14.webp')], price: 400, visibility: 'Pública', views: 2800, compatibleCandidates: 65, conditions: 'Piso compartido con 2 personas más.', features: { airConditioning: true, kitchen: true, furnished: true, wifi: true }, availableFrom: '2024-09-01', lat: 37.384, lng: -6.002, status: 'approved', bathrooms: 1 }
-];
-
 export const MOCK_NOTIFICATIONS: Notification[] = [
-    { id: 1, userId: '1', type: NotificationType.NEW_MATCH, message: '¡Tienes un nuevo match con Javier! Compatibilidad del 85%.', timestamp: '2024-07-25T10:30:00Z', read: false, relatedEntityId: 2 },
-    { id: 2, userId: '3', type: NotificationType.PROPERTY_INQUIRY, message: 'Elena está interesada en tu "Habitación luminosa en Gràcia".', timestamp: '2024-07-25T09:00:00Z', read: true, relatedEntityId: 1 },
+    { id: 1, user_id: '1', type: NotificationType.NEW_MATCH, message: '¡Tienes un nuevo match con Javier! Compatibilidad del 85%.', timestamp: '2024-07-25T10:30:00Z', read: false, related_entity_id: 2 },
+    { id: 2, user_id: '3', type: NotificationType.PROPERTY_INQUIRY, message: 'Elena está interesada en tu "Habitación luminosa en Gràcia".', timestamp: '2024-07-25T09:00:00Z', read: true, related_entity_id: 1 },
 ];
 
 export const MOCK_SAVED_SEARCHES: SavedSearch[] = [
-    { id: 1, userId: '1', name: 'Pisos en Malasaña', filters: { city: 'Madrid', locality: 'Malasaña', maxPrice: 600 } }
+    { id: 1, user_id: '1', name: 'Pisos en Malasaña', filters: { city: 'Madrid', locality: 'Malasaña', max_price: 600 } }
 ];
 
 export const MOCK_BLOG_POSTS: BlogPost[] = [
-    { id: 1, slug: '5-consejos-para-una-convivencia-exitosa', title: '5 Consejos para una Convivencia Exitosa', excerpt: 'Descubre las claves para mantener la armonía en tu piso compartido. Desde la comunicación hasta la limpieza, te lo contamos todo.', imageUrl: getSupabaseUrl('property-media', 'blog01.webp'), content: '<h2>1. Comunicación Abierta y Honesta</h2><p>La base de cualquier buena relación, incluida la de compañeros de piso, es la comunicación...</p>', author: 'Laura Sánchez', authorImageUrl: getSupabaseUrl('avatars', 'author01.webp'), publish_date: '2024-07-15T12:00:00Z' },
+    { id: 1, slug: '5-consejos-para-una-convivencia-exitosa', title: '5 Consejos para una Convivencia Exitosa', excerpt: 'Descubre las claves para mantener la armonía en tu piso compartido. Desde la comunicación hasta la limpieza, te lo contamos todo.', image_url: getSupabaseUrl('property-media', 'blog01.webp'), content: '<h2>1. Comunicación Abierta y Honesta</h2><p>La base de cualquier buena relación, incluida la de compañeros de piso, es la comunicación...</p>', author: 'Laura Sánchez', author_image_url: getSupabaseUrl('avatars', 'author01.webp'), publish_date: '2024-07-15T12:00:00Z' },
 ];
 
 export const MOCK_MATCHES: {[key: string]: string[]} = {

@@ -3,6 +3,7 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import GlassCard from '../components/GlassCard';
 import { HeartIcon } from '../components/icons';
+import { getSupabaseUrl } from '../constants';
 
 interface PageProps {
   onHomeClick: () => void;
@@ -13,13 +14,6 @@ interface PageProps {
   onTermsClick: () => void;
   onContactClick: () => void;
 }
-
-const SUPABASE_PROJECT_URL = "https://vogzzdnxoldgfpsrobps.supabase.co";
-const getSupabaseUrl = (bucket: 'avatars' | 'property-media', path: string) => {
-  const cleanedPath = path.startsWith('/') ? path.substring(1) : path;
-  return `${SUPABASE_PROJECT_URL}/storage/v1/object/public/${bucket}/${cleanedPath}`;
-};
-
 
 const TeamMemberCard: React.FC<{ imgSrc: string; name: string; title: string; }> = ({ imgSrc, name, title }) => (
     <div className="text-center">

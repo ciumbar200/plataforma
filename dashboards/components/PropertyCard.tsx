@@ -15,7 +15,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onEdit, onCardCli
     
     const handlePlayClick = (e: React.MouseEvent) => {
         e.stopPropagation();
-        if (property.videoUrl) {
+        if (property.video_url) {
             setIsPlayerOpen(true);
         }
     };
@@ -25,11 +25,11 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onEdit, onCardCli
         onEdit?.(property);
     };
 
-    const mainImageUrl = property.imageUrls && property.imageUrls.length > 0
-        ? property.imageUrls[0]
+    const mainImageUrl = property.image_urls && property.image_urls.length > 0
+        ? property.image_urls[0]
         : 'https://placehold.co/800x600/1e1b4b/ffffff?text=Sin+Imagen';
 
-    const formattedDate = new Date(property.availableFrom + 'T00:00:00').toLocaleDateString('es-ES', {
+    const formattedDate = new Date(property.available_from + 'T00:00:00').toLocaleDateString('es-ES', {
         day: 'numeric',
         month: 'short',
         year: '2-digit'
@@ -45,7 +45,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onEdit, onCardCli
             >
                 <div className="relative">
                     <img src={mainImageUrl} alt={property.title} className="w-full h-48 object-cover" />
-                    {property.videoUrl && (
+                    {property.video_url && (
                         <div 
                             className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity"
                         >
@@ -73,7 +73,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onEdit, onCardCli
                         </div>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-white/70 mb-2">
-                        <span className="font-semibold text-indigo-300">{property.propertyType}</span>
+                        <span className="font-semibold text-indigo-300">{property.property_type}</span>
                         <span className="text-white/50">|</span>
                         <span className="truncate">{fullAddress}</span>
                     </div>
@@ -89,17 +89,17 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onEdit, onCardCli
                         </div>
                         <div className="flex items-center gap-2">
                             <UsersIcon className="w-5 h-5" />
-                            <span>{property.compatibleCandidates} candidatos</span>
+                            <span>{property.compatible_candidates} candidatos</span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {property.videoUrl && (
+            {property.video_url && (
                 <VideoPlayerModal 
                     isOpen={isPlayerOpen}
                     onClose={() => setIsPlayerOpen(false)}
-                    videoUrl={property.videoUrl}
+                    videoUrl={property.video_url}
                 />
             )}
         </>

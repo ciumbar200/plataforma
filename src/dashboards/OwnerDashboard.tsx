@@ -23,12 +23,12 @@ const MOCK_OWNER_STATS: OwnerStats = {
     totalCandidates: 340,
 };
 
-type InitialPropertyData = { propertyType: PropertyType; city: string; locality: string };
+type InitialPropertyData = { property_type: PropertyType; city: string; locality: string };
 
 interface OwnerDashboardProps {
     user: User;
     properties: Property[];
-    onSaveProperty: (propertyData: Omit<Property, 'id' | 'views' | 'compatibleCandidates' | 'owner_id'> & { id?: number }) => void;
+    onSaveProperty: (propertyData: Omit<Property, 'id' | 'views' | 'compatible_candidates' | 'owner_id'> & { id?: number }) => void;
     initialPropertyData: InitialPropertyData | null;
     onClearInitialPropertyData: () => void;
     allUsers: User[];
@@ -146,13 +146,13 @@ const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ user, properties, onSav
         }
     };
 
-    const handleSaveAndClose = (propertyData: Omit<Property, 'id' | 'views' | 'compatibleCandidates' | 'owner_id'> & { id?: number }) => {
+    const handleSaveAndClose = (propertyData: Omit<Property, 'id' | 'views' | 'compatible_candidates' | 'owner_id'> & { id?: number }) => {
         onSaveProperty(propertyData);
         handleCloseModal();
     };
 
     const tenantGroups = useMemo(() => {
-        const tenants = allUsers.filter(u => u.role === UserRole.INQUILINO && (u.rentalGoal === RentalGoal.FIND_ROOMMATES_AND_APARTMENT || u.rentalGoal === RentalGoal.BOTH));
+        const tenants = allUsers.filter(u => u.role === UserRole.INQUILINO && (u.rental_goal === RentalGoal.FIND_ROOMMATES_AND_APARTMENT || u.rental_goal === RentalGoal.BOTH));
         
         const isMutualMatch = (id1: string, id2: string) => {
             const matches1 = matches[id1] || [];
@@ -241,7 +241,7 @@ const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ user, properties, onSav
                 <StatCard 
                     icon={<UsersIcon className="w-7 h-7 text-white" />}
                     title="Candidatos Totales"
-                    value={properties.reduce((acc, p) => acc + p.compatibleCandidates, 0).toLocaleString()}
+                    value={properties.reduce((acc, p) => acc + p.compatible_candidates, 0).toLocaleString()}
                     color="purple"
                 />
             </div>
@@ -295,7 +295,7 @@ const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ user, properties, onSav
             <div className="w-full max-w-4xl mx-auto">
                 <GlassCard className="!p-8">
                     <div className="flex flex-col md:flex-row items-center gap-8 text-center md:text-left">
-                        <img src={user.profilePicture} alt={user.name} className="w-40 h-40 rounded-full object-cover border-4 border-purple-400 shadow-lg" />
+                        <img src={user.profile_picture} alt={user.name} className="w-40 h-40 rounded-full object-cover border-4 border-purple-400 shadow-lg" />
                         <div>
                             <h3 className="text-4xl font-bold">{user.name}</h3>
                             {user.city && <p className="text-lg text-cyan-400 mt-1">{user.city}, {user.locality}</p>}
@@ -322,7 +322,7 @@ const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ user, properties, onSav
                         <div>
                             <h2 className="text-3xl font-bold mb-2">{selectedProperty.title}</h2>
                             <p className="text-white/70 mb-4">{selectedProperty.address}</p>
-                            <img src={selectedProperty.imageUrls[0]} alt={selectedProperty.title} className="w-full h-64 object-cover rounded-lg mb-4" />
+                            <img src={selectedProperty.image_urls[0]} alt={selectedProperty.title} className="w-full h-64 object-cover rounded-lg mb-4" />
                             <p className="text-lg">{selectedProperty.conditions}</p>
                         </div>
                         <div>

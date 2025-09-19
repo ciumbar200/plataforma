@@ -6,13 +6,13 @@ import { Property, AmenityId, PropertyFeatures, PropertyType } from '../../types
 import { CITIES_DATA } from '../../constants';
 import { AVAILABLE_AMENITIES } from '../../components/icons';
 
-type InitialPropertyData = { propertyType: PropertyType; city: string; locality: string };
+type InitialPropertyData = { property_type: PropertyType; city: string; locality: string };
 
 interface AddPropertyModalProps {
   isOpen: boolean;
   onClose: () => void;
   // FIX: Excluded owner_id from the type as it is handled by the parent component, resolving a type mismatch error on save.
-  onSave: (property: Omit<Property, 'id' | 'views' | 'compatibleCandidates' | 'owner_id'> & { id?: number }) => void;
+  onSave: (property: Omit<Property, 'id' | 'views' | 'compatible_candidates' | 'owner_id'> & { id?: number }) => void;
   propertyToEdit?: Property | null;
   initialData?: InitialPropertyData | null;
 }
@@ -24,11 +24,11 @@ const AddPropertyModal: React.FC<AddPropertyModalProps> = ({ isOpen, onClose, on
     address: '', // Street address
     city: 'Madrid',
     locality: '',
-    postalCode: '',
-    propertyType: PropertyType.FLAT,
+    postal_code: '',
+    property_type: PropertyType.FLAT,
     price: '',
-    availableFrom: '',
-    videoUrl: '',
+    available_from: '',
+    video_url: '',
     visibility: 'Pública' as 'Pública' | 'Privada',
     conditions: '',
     features: {} as PropertyFeatures,
@@ -56,14 +56,14 @@ const AddPropertyModal: React.FC<AddPropertyModalProps> = ({ isOpen, onClose, on
             setFormData({
                 ...propertyToEdit,
                 price: propertyToEdit.price.toString(),
-                videoUrl: propertyToEdit.videoUrl || '',
+                video_url: propertyToEdit.video_url || '',
                 conditions: propertyToEdit.conditions || '',
                 features: propertyToEdit.features || {},
-                postalCode: propertyToEdit.postalCode || '',
+                postal_code: propertyToEdit.postal_code || '',
                 city,
                 locality,
             });
-            setExistingImageUrls(propertyToEdit.imageUrls || []);
+            setExistingImageUrls(propertyToEdit.image_urls || []);
         } else {
             const initialCity = initialData?.city || 'Madrid';
             const { city, locality } = resetData(initialCity, initialData?.locality);
@@ -71,16 +71,16 @@ const AddPropertyModal: React.FC<AddPropertyModalProps> = ({ isOpen, onClose, on
             setFormData({
                 title: '',
                 address: '',
-                propertyType: initialData?.propertyType || PropertyType.FLAT,
+                property_type: initialData?.property_type || PropertyType.FLAT,
                 price: '',
-                availableFrom: '',
-                videoUrl: '',
+                available_from: '',
+                video_url: '',
                 visibility: 'Pública',
                 conditions: '',
                 features: {},
                 lat: 40.416775,
                 lng: -3.703790,
-                postalCode: '',
+                postal_code: '',
                 city,
                 locality,
                 status: 'pending',
@@ -150,8 +150,8 @@ const AddPropertyModal: React.FC<AddPropertyModalProps> = ({ isOpen, onClose, on
       ...formData,
       price: parseInt(formData.price, 10) || 0,
       id: propertyToEdit?.id,
-      imageUrls: finalImageUrls,
-    });
+      image_urls: finalImageUrls,
+    } as any);
   };
 
   if (!isOpen) return null;
@@ -176,8 +176,8 @@ const AddPropertyModal: React.FC<AddPropertyModalProps> = ({ isOpen, onClose, on
               <input type="text" name="title" id="title" value={formData.title} onChange={handleChange} className="w-full bg-white/10 border border-white/20 rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 outline-none" required />
             </div>
             <div>
-              <label htmlFor="propertyType" className="block text-sm font-medium text-white/80 mb-1">Tipo de Propiedad</label>
-              <select name="propertyType" id="propertyType" value={formData.propertyType} onChange={handleChange} className="w-full bg-white/10 border border-white/20 rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 outline-none">
+              <label htmlFor="property_type" className="block text-sm font-medium text-white/80 mb-1">Tipo de Propiedad</label>
+              <select name="property_type" id="property_type" value={formData.property_type} onChange={handleChange} className="w-full bg-white/10 border border-white/20 rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 outline-none">
                   {Object.values(PropertyType).map(type => (
                       <option key={type} value={type} className="bg-gray-800">{type}</option>
                   ))}
@@ -202,8 +202,8 @@ const AddPropertyModal: React.FC<AddPropertyModalProps> = ({ isOpen, onClose, on
                   </select>
               </div>
               <div>
-                <label htmlFor="postalCode" className="block text-sm font-medium text-white/80 mb-1">Código Postal</label>
-                <input type="text" name="postalCode" id="postalCode" value={formData.postalCode} onChange={handleChange} className="w-full bg-white/10 border border-white/20 rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 outline-none" required />
+                <label htmlFor="postal_code" className="block text-sm font-medium text-white/80 mb-1">Código Postal</label>
+                <input type="text" name="postal_code" id="postal_code" value={formData.postal_code} onChange={handleChange} className="w-full bg-white/10 border border-white/20 rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 outline-none" required />
               </div>
           </div>
            <div className="grid grid-cols-2 gap-4">
@@ -212,8 +212,8 @@ const AddPropertyModal: React.FC<AddPropertyModalProps> = ({ isOpen, onClose, on
                 <input type="number" name="price" id="price" value={formData.price} onChange={handleChange} className="w-full bg-white/10 border border-white/20 rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 outline-none" required />
               </div>
               <div>
-                <label htmlFor="availableFrom" className="block text-sm font-medium text-white/80 mb-1">Disponible desde</label>
-                <input type="date" name="availableFrom" id="availableFrom" value={formData.availableFrom} onChange={handleChange} className="w-full bg-white/10 border border-white/20 rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 outline-none" required style={{ colorScheme: 'dark' }} />
+                <label htmlFor="available_from" className="block text-sm font-medium text-white/80 mb-1">Disponible desde</label>
+                <input type="date" name="available_from" id="available_from" value={formData.available_from} onChange={handleChange} className="w-full bg-white/10 border border-white/20 rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 outline-none" required style={{ colorScheme: 'dark' }} />
               </div>
           </div>
            <div>
@@ -276,8 +276,8 @@ const AddPropertyModal: React.FC<AddPropertyModalProps> = ({ isOpen, onClose, on
               </div>
           </div>
           <div>
-            <label htmlFor="videoUrl" className="block text-sm font-medium text-white/80 mb-1">URL del Vídeo (Opcional)</label>
-            <input type="text" name="videoUrl" id="videoUrl" value={formData.videoUrl} onChange={handleChange} className="w-full bg-white/10 border border-white/20 rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 outline-none" />
+            <label htmlFor="video_url" className="block text-sm font-medium text-white/80 mb-1">URL del Vídeo (Opcional)</label>
+            <input type="text" name="video_url" id="video_url" value={formData.video_url} onChange={handleChange} className="w-full bg-white/10 border border-white/20 rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 outline-none" />
           </div>
           <div className="flex justify-end gap-4 pt-4 sticky bottom-0 bg-black/20 backdrop-blur-sm -m-6 mt-4 p-6 border-t border-white/10">
             <button type="button" onClick={onClose} className="bg-white/10 hover:bg-white/20 px-6 py-2 rounded-lg font-semibold transition-colors">Cancelar</button>

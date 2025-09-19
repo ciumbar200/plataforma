@@ -10,16 +10,11 @@ import {
     ChevronLeftIcon
 } from '../components/icons';
 import { PropertyType } from '../types';
-import { CITIES_DATA } from '../constants';
+import { CITIES_DATA, getSupabaseUrl } from '../constants';
 
-const SUPABASE_PROJECT_URL = "https://vogzzdnxoldgfpsrobps.supabase.co";
-const getSupabaseUrl = (bucket: 'avatars' | 'property-media', path: string) => {
-  const cleanedPath = path.startsWith('/') ? path.substring(1) : path;
-  return `${SUPABASE_PROJECT_URL}/storage/v1/object/public/${bucket}/${cleanedPath}`;
-};
 
 interface OwnerLandingPageProps {
-    onStartPublication: (data: { propertyType: PropertyType; city: string; locality: string }) => void;
+    onStartPublication: (data: { property_type: PropertyType; city: string; locality: string }) => void;
     onHomeClick: () => void;
     onLoginClick: () => void;
     onBlogClick: () => void;
@@ -82,7 +77,7 @@ const OwnerLandingPage: React.FC<OwnerLandingPageProps> = ({ onStartPublication,
             alert('Por favor, completa todos los campos para continuar.');
             return;
         }
-        onStartPublication({ propertyType, city: selectedCity, locality: selectedLocality });
+        onStartPublication({ property_type: propertyType, city: selectedCity, locality: selectedLocality });
     };
 
     const nextTestimonial = () => {
@@ -95,7 +90,7 @@ const OwnerLandingPage: React.FC<OwnerLandingPageProps> = ({ onStartPublication,
 
     return (
         <div className="min-h-screen w-full bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-900 text-white flex flex-col">
-            <Header onLoginClick={onLoginClick} onHomeClick={onHomeClick} pageContext="propietario" />
+            <Header onLoginClick={onLoginClick} onHomeClick={onHomeClick} onOwnersClick={onHomeClick} pageContext="propietario" />
             <main className="flex-grow">
                 {/* Hero Section */}
                 <section className="relative py-16 sm:py-32 text-center overflow-hidden">
@@ -115,8 +110,8 @@ const OwnerLandingPage: React.FC<OwnerLandingPageProps> = ({ onStartPublication,
                         <GlassCard className="mt-10 max-w-4xl mx-auto !p-4 !bg-white/10">
                              <form onSubmit={handleSubmit} className="flex flex-col md:flex-row items-center gap-2 text-left">
                                 <div className="w-full">
-                                    <label htmlFor="propertyType" className="text-xs text-white/70">Tipo de Propiedad</label>
-                                    <select id="propertyType" value={propertyType} onChange={(e) => setPropertyType(e.target.value as PropertyType)} className={`w-full bg-transparent font-semibold focus:outline-none ${!propertyType ? 'text-white/60' : 'text-white'}`}>
+                                    <label htmlFor="property_type" className="text-xs text-white/70">Tipo de Propiedad</label>
+                                    <select id="property_type" value={propertyType} onChange={(e) => setPropertyType(e.target.value as PropertyType)} className={`w-full bg-transparent font-semibold focus:outline-none ${!propertyType ? 'text-white/60' : 'text-white'}`}>
                                         <option value="" disabled>Tipo de propiedad</option>
                                         {Object.values(PropertyType).map(type => <option key={type} value={type} className="bg-gray-800 text-white">{type}</option>)}
                                     </select>

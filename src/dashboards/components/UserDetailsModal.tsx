@@ -1,4 +1,3 @@
-
 import React from 'react';
 import GlassCard from '../../components/GlassCard';
 import { XIcon } from '../../components/icons';
@@ -51,7 +50,7 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ isOpen, onClose, us
 
         <div className="p-6 max-h-[75vh] overflow-y-auto">
             <div className="flex flex-col md:flex-row items-center gap-8 text-center md:text-left mb-6">
-                <img src={user.profilePicture} alt={user.name} className="w-32 h-32 rounded-full object-cover border-4 border-indigo-400 shadow-lg flex-shrink-0" />
+                <img src={user.profile_picture} alt={user.name} className="w-32 h-32 rounded-full object-cover border-4 border-indigo-400 shadow-lg flex-shrink-0" />
                 <div>
                     <h3 className="text-3xl font-bold">{user.name}, {user.age}</h3>
                     {user.bio && <p className="text-white/80 mt-2 text-md italic">"{user.bio}"</p>}
@@ -60,9 +59,9 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ isOpen, onClose, us
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 bg-black/20 p-6 rounded-xl mb-6">
                 <DetailItem label="Ciudad / Localidad" value={`${user.city || 'N/A'} / ${user.locality || 'N/A'}`} />
-                <DetailItem label="Objetivo de Alquiler" value={user.rentalGoal ? rentalGoalText[user.rentalGoal] : 'N/A'} />
-                <DetailItem label="Nivel de Ruido" value={user.noiseLevel} />
-                <DetailItem label="Búsqueda Máxima" value={user.commuteDistance ? `${user.commuteDistance} min` : 'N/A'} />
+                <DetailItem label="Objetivo de Alquiler" value={user.rental_goal ? rentalGoalText[user.rental_goal] : 'N/A'} />
+                <DetailItem label="Nivel de Ruido" value={user.noise_level} />
+                <DetailItem label="Búsqueda Máxima" value={user.commute_distance ? `${user.commute_distance} min` : 'N/A'} />
                 <DetailItem label="Email" value={user.email || 'No especificado'} />
                 <DetailItem label="Teléfono" value={user.phone || 'No especificado'} />
             </div>

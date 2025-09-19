@@ -15,8 +15,10 @@ const PropertyDetailsModal: React.FC<PropertyDetailsModalProps> = ({ isOpen, onC
   if (!isOpen || !property) return null;
 
   const availableAmenities = AVAILABLE_AMENITIES.filter(amenity => property.features && property.features[amenity.id]);
-  const formattedDate = new Date(property.availableFrom + 'T00:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
-  const fullAddress = [property.address, property.locality, property.city, property.postalCode].filter(Boolean).join(', ');
+  // FIX: Corrected property name from availableFrom to available_from.
+  const formattedDate = new Date(property.available_from + 'T00:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+  // FIX: Corrected property name from postalCode to postal_code.
+  const fullAddress = [property.address, property.locality, property.city, property.postal_code].filter(Boolean).join(', ');
 
   return (
     <div
@@ -37,7 +39,8 @@ const PropertyDetailsModal: React.FC<PropertyDetailsModalProps> = ({ isOpen, onC
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div>
               <div className="space-y-4">
-                {property.imageUrls.map((url, index) => (
+                {/* FIX: Corrected property name from imageUrls to image_urls. */}
+                {property.image_urls.map((url, index) => (
                   <img key={index} src={url} alt={`Vista de la propiedad ${index + 1}`} className="w-full h-auto object-cover rounded-lg" />
                 ))}
               </div>
@@ -49,7 +52,8 @@ const PropertyDetailsModal: React.FC<PropertyDetailsModalProps> = ({ isOpen, onC
               
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm text-white/80 border-t border-white/20 pt-4 text-center">
                   <div className="flex items-center justify-center gap-2"><EyeIcon className="w-5 h-5" /><span>{property.views.toLocaleString()} visitas</span></div>
-                  <div className="flex items-center justify-center gap-2"><UsersIcon className="w-5 h-5" /><span>{property.compatibleCandidates} candidatos</span></div>
+                  {/* FIX: Corrected property name from compatibleCandidates to compatible_candidates. */}
+                  <div className="flex items-center justify-center gap-2"><UsersIcon className="w-5 h-5" /><span>{property.compatible_candidates} candidatos</span></div>
                   <div className="flex items-center justify-center gap-2 text-green-300 font-semibold"><CalendarIcon className="w-5 h-5" /><span>Disponible: {formattedDate}</span></div>
               </div>
 

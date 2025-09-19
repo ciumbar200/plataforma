@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 // FIX: Import AVAILABLE_AMENITIES from components/icons and other constants from the main constants file.
 import { showNotification } from './constants';
@@ -6,7 +7,7 @@ import UserProfileCard from './dashboards/components/UserProfileCard';
 import PropertyCard from './dashboards/components/PropertyCard';
 import { CheckIcon, XIcon, CompassIcon, BuildingIcon, HeartIcon, UserCircleIcon, ChevronLeftIcon, PaperAirplaneIcon, EyeIcon, UsersIcon, CalendarIcon, PieChartIcon } from './components/icons';
 import GlassCard from './components/GlassCard';
-import { User, Property, AmenityId, SavedSearch, UserRole, RentalGoal } from './types';
+import { User, Property, AmenityId, SavedSearch, UserRole, RentalGoal, PropertyType } from './types';
 import GoogleMap from './dashboards/components/GoogleMap';
 import SaveSearchModal from './dashboards/components/SaveSearchModal';
 import MoonSplit from './dashboards/components/MoonSplit';
@@ -21,8 +22,10 @@ const NOISE_LEVEL_MAP: { [key: string]: number } = {
 
 // Max score: 30
 const calculateNoiseScore = (userA: User, userB: User): number => {
-  const levelA = NOISE_LEVEL_MAP[userA.noiseLevel] || 2;
-  const levelB = NOISE_LEVEL_MAP[userB.noiseLevel] || 2;
+  // FIX: Corrected property name from noiseLevel to noise_level.
+  const levelA = NOISE_LEVEL_MAP[userA.noise_level] || 2;
+  // FIX: Corrected property name from noiseLevel to noise_level.
+  const levelB = NOISE_LEVEL_MAP[userB.noise_level] || 2;
   const diff = Math.abs(levelA - levelB);
   if (diff === 0) return 30;
   if (diff === 1) return 15;
@@ -45,8 +48,10 @@ const calculateInterestScore = (userA: User, userB: User): number => {
 
 // Max score: 15
 const calculateCommuteScore = (userA: User, userB: User): number => {
-    if (userA.commuteDistance === undefined || userB.commuteDistance === undefined) return 7; // Average score if data is missing
-    const diff = Math.abs(userA.commuteDistance - userB.commuteDistance);
+    // FIX: Corrected property name from commuteDistance to commute_distance.
+    if (userA.commute_distance === undefined || userB.commute_distance === undefined) return 7; // Average score if data is missing
+    // FIX: Corrected property name from commuteDistance to commute_distance.
+    const diff = Math.abs(userA.commute_distance - userB.commute_distance);
     return Math.max(0, 15 - Math.floor(diff / 2));
 };
 
@@ -159,7 +164,7 @@ interface TenantDashboardProps {
   properties: Property[];
   onSendInterest: (property: Property) => void;
   savedSearches: SavedSearch[];
-  onSaveSearch: (searchData: Omit<SavedSearch, 'id' | 'userId'>) => void;
+  onSaveSearch: (searchData: Omit<SavedSearch, 'id' | 'user_id'>) => void;
   onDeleteSearch: (searchId: number) => void;
   // FIX: User IDs are strings (UUIDs), not numbers. This corrects the type for the user matches array.
   userMatches: string[];
@@ -242,7 +247,8 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user: currentUser, al
   const isPremiumUser = currentUser.id === '1';
 
   const userSavedSearches = useMemo(() => {
-    return savedSearches.filter(s => s.userId === currentUser.id);
+    // FIX: Corrected property name from userId to user_id.
+    return savedSearches.filter(s => s.user_id === currentUser.id);
   }, [savedSearches, currentUser.id]);
 
   const propertiesToShow = useMemo(() => {
@@ -258,7 +264,8 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user: currentUser, al
             p.address.toLowerCase().includes(query) ||
             p.city?.toLowerCase().includes(query) ||
             p.locality?.toLowerCase().includes(query) ||
-            p.postalCode?.includes(query)
+            // FIX: Corrected property name from postalCode to postal_code.
+            p.postal_code?.includes(query)
         );
     }
     if (priceRange.min) {
@@ -288,14 +295,19 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user: currentUser, al
     const newFilteredUsers = users
       .filter(user => user.city === currentUser.city) // Filter by current user's city
       .filter(user => { // Filter by compatible rental goal
-        if (!currentUser.rentalGoal || currentUser.rentalGoal === RentalGoal.BOTH) {
+        // FIX: Corrected property name from rentalGoal to rental_goal.
+        if (!currentUser.rental_goal || currentUser.rental_goal === RentalGoal.BOTH) {
           return true; // Show all if user is open to both
         }
-        if (currentUser.rentalGoal === RentalGoal.FIND_ROOM_WITH_ROOMMATES) {
-          return user.rentalGoal === RentalGoal.FIND_ROOMMATES_AND_APARTMENT || user.rentalGoal === RentalGoal.BOTH;
+        // FIX: Corrected property name from rentalGoal to rental_goal.
+        if (currentUser.rental_goal === RentalGoal.FIND_ROOM_WITH_ROOMMATES) {
+          // FIX: Corrected property name from rentalGoal to rental_goal.
+          return user.rental_goal === RentalGoal.FIND_ROOMMATES_AND_APARTMENT || user.rental_goal === RentalGoal.BOTH;
         }
-        if (currentUser.rentalGoal === RentalGoal.FIND_ROOMMATES_AND_APARTMENT) {
-          return user.rentalGoal === RentalGoal.FIND_ROOM_WITH_ROOMMATES || user.rentalGoal === RentalGoal.BOTH;
+        // FIX: Corrected property name from rentalGoal to rental_goal.
+        if (currentUser.rental_goal === RentalGoal.FIND_ROOMMATES_AND_APARTMENT) {
+          // FIX: Corrected property name from rentalGoal to rental_goal.
+          return user.rental_goal === RentalGoal.FIND_ROOM_WITH_ROOMMATES || user.rental_goal === RentalGoal.BOTH;
         }
         return false;
       })
@@ -342,8 +354,10 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user: currentUser, al
       filters: {
         city: selectedPropertyCity || undefined,
         keyword: propertySearchQuery || undefined,
-        minPrice: priceRange.min ? parseInt(priceRange.min, 10) : undefined,
-        maxPrice: priceRange.max ? parseInt(priceRange.max, 10) : undefined,
+        // FIX: Corrected property name from minPrice to min_price.
+        min_price: priceRange.min ? parseInt(priceRange.min, 10) : undefined,
+        // FIX: Corrected property name from maxPrice to max_price.
+        max_price: priceRange.max ? parseInt(priceRange.max, 10) : undefined,
         amenities: selectedAmenities.length > 0 ? selectedAmenities : undefined,
       }
     });
@@ -353,8 +367,10 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user: currentUser, al
     setSelectedPropertyCity(search.filters.city || '');
     setPropertySearchQuery(search.filters.keyword || '');
     setPriceRange({
-      min: search.filters.minPrice?.toString() || '',
-      max: search.filters.maxPrice?.toString() || '',
+      // FIX: Corrected property name from minPrice to min_price.
+      min: search.filters.min_price?.toString() || '',
+      // FIX: Corrected property name from maxPrice to max_price.
+      max: search.filters.max_price?.toString() || '',
     });
     setSelectedAmenities(search.filters.amenities || []);
   };
@@ -515,7 +531,8 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user: currentUser, al
         <div className="w-full max-w-4xl mx-auto flex-grow">
             <GlassCard className="!p-8">
                 <div className="flex flex-col md:flex-row items-center gap-8 text-center md:text-left">
-                    <img src={currentUser.profilePicture} alt={currentUser.name} className="w-40 h-40 rounded-full object-cover border-4 border-indigo-400 shadow-lg" />
+                    {/* FIX: Corrected property name from profilePicture to profile_picture. */}
+                    <img src={currentUser.profile_picture} alt={currentUser.name} className="w-40 h-40 rounded-full object-cover border-4 border-indigo-400 shadow-lg" />
                     <div>
                         <h3 className="text-4xl font-bold">{currentUser.name}, {currentUser.age}</h3>
                         <p className="text-white/80 mt-2 text-lg italic">"{currentUser.bio || 'Sin biografía.'}"</p>
@@ -526,8 +543,10 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user: currentUser, al
                     <div>
                         <h4 className="text-2xl font-bold mb-4">Estilo de Vida y Preferencias</h4>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 bg-black/20 p-6 rounded-xl">
-                            <div className="text-center"><p className="text-sm text-indigo-300 font-semibold uppercase tracking-wider">Nivel de Ruido</p><p className="text-2xl font-bold mt-1">{currentUser.noiseLevel}</p></div>
-                            <div className="text-center"><p className="text-sm text-indigo-300 font-semibold uppercase tracking-wider">Búsqueda Máxima</p><p className="text-2xl font-bold mt-1">{currentUser.commuteDistance || 'N/A'}<span className="text-lg text-white/70"> min</span></p></div>
+                            {/* FIX: Corrected property name from noiseLevel to noise_level. */}
+                            <div className="text-center"><p className="text-sm text-indigo-300 font-semibold uppercase tracking-wider">Nivel de Ruido</p><p className="text-2xl font-bold mt-1">{currentUser.noise_level}</p></div>
+                            {/* FIX: Corrected property name from commuteDistance to commute_distance. */}
+                            <div className="text-center"><p className="text-sm text-indigo-300 font-semibold uppercase tracking-wider">Búsqueda Máxima</p><p className="text-2xl font-bold mt-1">{currentUser.commute_distance || 'N/A'}<span className="text-lg text-white/70"> min</span></p></div>
                             <div className="text-center">
                                 <p className="text-sm text-indigo-300 font-semibold uppercase tracking-wider mb-2">Etiquetas</p>
                                 <div className="flex flex-wrap gap-2 justify-center">{currentUser.lifestyle?.map(style => (<span key={style} className="bg-indigo-500/50 backdrop-blur-sm rounded-full px-3 py-1 text-sm font-semibold">{style}</span>))}</div>
@@ -539,7 +558,8 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user: currentUser, al
                                 </div>
                                 <div>
                                     <p className="text-sm text-indigo-300 font-semibold uppercase tracking-wider">Mi Objetivo</p>
-                                    <p className="text-lg font-bold mt-1 text-white/90">{currentUser.rentalGoal ? rentalGoalText[currentUser.rentalGoal] : 'No especificado'}</p>
+                                    {/* FIX: Corrected property name from rentalGoal to rental_goal. */}
+                                    <p className="text-lg font-bold mt-1 text-white/90">{currentUser.rental_goal ? rentalGoalText[currentUser.rental_goal] : 'No especificado'}</p>
                                 </div>
                             </div>
                         </div>
@@ -556,11 +576,15 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user: currentUser, al
 
   const renderPropertyDetail = () => {
       if (!selectedProperty) return null;
-      const nextImage = () => { setCurrentPropertyImageIndex(prev => (prev + 1) % selectedProperty.imageUrls.length); };
-      const prevImage = () => { setCurrentPropertyImageIndex(prev => (prev - 1 + selectedProperty.imageUrls.length) % selectedProperty.imageUrls.length); };
+      // FIX: Corrected property name from imageUrls to image_urls.
+      const nextImage = () => { setCurrentPropertyImageIndex(prev => (prev + 1) % selectedProperty.image_urls.length); };
+      // FIX: Corrected property name from imageUrls to image_urls.
+      const prevImage = () => { setCurrentPropertyImageIndex(prev => (prev - 1 + selectedProperty.image_urls.length) % selectedProperty.image_urls.length); };
       const availableAmenities = AVAILABLE_AMENITIES.filter(amenity => selectedProperty.features && selectedProperty.features[amenity.id]);
-      const formattedDate = new Date(selectedProperty.availableFrom + 'T00:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
-      const fullAddress = [selectedProperty.address, selectedProperty.locality, selectedProperty.city, selectedProperty.postalCode].filter(Boolean).join(', ');
+      // FIX: Corrected property name from availableFrom to available_from.
+      const formattedDate = new Date(selectedProperty.available_from + 'T00:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+      // FIX: Corrected property name from postalCode to postal_code.
+      const fullAddress = [selectedProperty.address, selectedProperty.locality, selectedProperty.city, selectedProperty.postal_code].filter(Boolean).join(', ');
 
       return (
           <div className="w-full flex flex-col relative">
@@ -569,12 +593,15 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user: currentUser, al
                   <GlassCard className="!p-0 overflow-hidden">
                       <div className="grid grid-cols-1 lg:grid-cols-2">
                            <div className="relative w-full h-full min-h-[300px] lg:min-h-full">
-                                <img src={selectedProperty.imageUrls[currentPropertyImageIndex]} alt={selectedProperty.title} className="w-full h-full object-cover" />
-                                {selectedProperty.imageUrls.length > 1 && (
+                                {/* FIX: Corrected property name from imageUrls to image_urls. */}
+                                <img src={selectedProperty.image_urls[currentPropertyImageIndex]} alt={selectedProperty.title} className="w-full h-full object-cover" />
+                                {/* FIX: Corrected property name from imageUrls to image_urls. */}
+                                {selectedProperty.image_urls.length > 1 && (
                                     <>
                                         <button onClick={prevImage} className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 text-white p-2 rounded-full hover:bg-black/60"><ChevronLeftIcon className="w-6 h-6" /></button>
                                         <button onClick={nextImage} className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 text-white p-2 rounded-full hover:bg-black/60"><ChevronLeftIcon className="w-6 h-6 transform rotate-180" /></button>
-                                        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-2">{selectedProperty.imageUrls.map((_, index) => (<div key={index} className={`w-2 h-2 rounded-full transition-colors ${index === currentPropertyImageIndex ? 'bg-white' : 'bg-white/50'}`}></div>))}</div>
+                                        {/* FIX: Corrected property name from imageUrls to image_urls. */}
+                                        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-2">{selectedProperty.image_urls.map((_, index) => (<div key={index} className={`w-2 h-2 rounded-full transition-colors ${index === currentPropertyImageIndex ? 'bg-white' : 'bg-white/50'}`}></div>))}</div>
                                     </>
                                 )}
                             </div>
@@ -582,14 +609,16 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user: currentUser, al
                               <span className={`text-xs font-semibold px-2 py-1 rounded-full self-start mb-2 ${selectedProperty.visibility === 'Pública' ? 'bg-green-500' : 'bg-yellow-500'}`}>{selectedProperty.visibility}</span>
                               <h2 className="text-4xl font-bold mb-2">{selectedProperty.title}</h2>
                               <div className="flex items-baseline gap-3 mb-4">
-                                <span className="bg-indigo-500/50 text-indigo-200 font-semibold px-3 py-1 rounded-full text-sm">{selectedProperty.propertyType}</span>
+                                {/* FIX: Corrected property name from propertyType to property_type. */}
+                                <span className="bg-indigo-500/50 text-indigo-200 font-semibold px-3 py-1 rounded-full text-sm">{selectedProperty.property_type}</span>
                                 <p className="text-md text-white/70">{fullAddress}</p>
                               </div>
                               {/* FIX: Corrected currency symbol from '$' to '€' for consistency. */}
                               <p className="text-4xl font-bold mb-6 text-indigo-300">€{selectedProperty.price}<span className="text-lg font-normal text-white/70">/mes</span></p>
                               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm text-white/80 border-t border-white/20 pt-4 mb-6 text-center">
                                   <div className="flex items-center justify-center gap-2"><EyeIcon className="w-5 h-5" /><span>{selectedProperty.views.toLocaleString()} visitas</span></div>
-                                  <div className="flex items-center justify-center gap-2"><UsersIcon className="w-5 h-5" /><span>{selectedProperty.compatibleCandidates} candidatos</span></div>
+                                  {/* FIX: Corrected property name from compatibleCandidates to compatible_candidates. */}
+                                  <div className="flex items-center justify-center gap-2"><UsersIcon className="w-5 h-5" /><span>{selectedProperty.compatible_candidates} candidatos</span></div>
                                   <div className="flex items-center justify-center gap-2 text-green-300 font-semibold"><CalendarIcon className="w-5 h-5" /><span>Disponible: {formattedDate}</span></div>
                               </div>
                               {availableAmenities.length > 0 && (<div className="mb-6"><h3 className="text-xl font-bold mb-3">Comodidades</h3><div className="flex flex-wrap gap-x-6 gap-y-3">{availableAmenities.map(amenity => (<div key={amenity.id} className="flex items-center gap-2 text-white/90">{React.cloneElement(amenity.icon, { className: 'w-5 h-5 text-indigo-300' })}<span className="text-sm">{amenity.label}</span></div>))}</div></div>)}

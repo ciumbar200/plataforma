@@ -22,7 +22,7 @@ const UserProfileCard: React.FC<UserProfileCardProps> = ({ user, onCompatibility
     
     const handlePlayClick = (e: React.MouseEvent) => {
         e.stopPropagation();
-        if (user.videoUrl) {
+        if (user.video_url) {
             setIsPlayerOpen(true);
         }
     };
@@ -33,10 +33,10 @@ const UserProfileCard: React.FC<UserProfileCardProps> = ({ user, onCompatibility
         <>
             <GlassCard className="!p-0 h-full w-full overflow-hidden flex flex-col">
                 <div className="relative h-3/5">
-                    <img src={user.profilePicture} alt={user.name} className="w-full h-full object-cover" />
+                    <img src={user.profile_picture} alt={user.name} className="w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
                     
-                    {user.videoUrl && (
+                    {user.video_url && (
                         <div 
                             className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity cursor-pointer"
                             onClick={handlePlayClick}
@@ -55,7 +55,7 @@ const UserProfileCard: React.FC<UserProfileCardProps> = ({ user, onCompatibility
                     </div>
                 </div>
                 <div className="p-4 flex-grow flex flex-col">
-                     {user.rentalGoal && rentalGoalTextMap[user.rentalGoal] && <p className="text-xs font-semibold bg-indigo-500/50 text-indigo-200 px-2 py-1 rounded-full self-start mb-2">{rentalGoalTextMap[user.rentalGoal]}</p>}
+                     {user.rental_goal && rentalGoalTextMap[user.rental_goal] && <p className="text-xs font-semibold bg-indigo-500/50 text-indigo-200 px-2 py-1 rounded-full self-start mb-2">{rentalGoalTextMap[user.rental_goal]}</p>}
                     
                     <div className="flex justify-between items-center mb-3">
                         <span className="text-sm text-white/70">Compatibilidad</span>
@@ -83,11 +83,11 @@ const UserProfileCard: React.FC<UserProfileCardProps> = ({ user, onCompatibility
                 </div>
             </GlassCard>
             
-            {user.videoUrl && (
+            {user.video_url && (
                 <VideoPlayerModal 
                     isOpen={isPlayerOpen}
                     onClose={() => setIsPlayerOpen(false)}
-                    videoUrl={user.videoUrl}
+                    videoUrl={user.video_url}
                 />
             )}
         </>

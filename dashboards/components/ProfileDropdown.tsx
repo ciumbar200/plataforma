@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { User } from '../../types';
 import { LogoutIcon, PencilIcon, ChevronDownIcon } from '../../components/icons';
@@ -28,7 +29,8 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ user, onLogout, onAcc
         onClick={() => setIsOpen(prev => !prev)}
         className="flex items-center gap-2 rounded-full hover:bg-white/10 p-1 transition-colors"
       >
-        <img src={user.profilePicture} alt={user.name} className="w-10 h-10 rounded-full object-cover border-2 border-white/20" />
+        {/* FIX: Corrected property name from profilePicture to profile_picture. */}
+        <img src={user.profile_picture} alt={user.name} className="w-10 h-10 rounded-full object-cover border-2 border-white/20" />
         <span className="hidden sm:inline font-semibold text-sm">{user.name}</span>
         <ChevronDownIcon className={`w-4 h-4 text-white/70 transition-transform hidden sm:inline ${isOpen ? 'rotate-180' : ''}`} />
       </button>

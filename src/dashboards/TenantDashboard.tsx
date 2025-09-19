@@ -21,8 +21,8 @@ const NOISE_LEVEL_MAP: { [key: string]: number } = {
 
 // Max score: 30
 const calculateNoiseScore = (userA: User, userB: User): number => {
-  const levelA = NOISE_LEVEL_MAP[userA.noiseLevel] || 2;
-  const levelB = NOISE_LEVEL_MAP[userB.noiseLevel] || 2;
+  const levelA = NOISE_LEVEL_MAP[userA.noise_level] || 2;
+  const levelB = NOISE_LEVEL_MAP[userB.noise_level] || 2;
   const diff = Math.abs(levelA - levelB);
   if (diff === 0) return 30;
   if (diff === 1) return 15;
@@ -45,8 +45,8 @@ const calculateInterestScore = (userA: User, userB: User): number => {
 
 // Max score: 15
 const calculateCommuteScore = (userA: User, userB: User): number => {
-    if (userA.commuteDistance === undefined || userB.commuteDistance === undefined) return 7; // Average score if data is missing
-    const diff = Math.abs(userA.commuteDistance - userB.commuteDistance);
+    if (userA.commute_distance === undefined || userB.commute_distance === undefined) return 7; // Average score if data is missing
+    const diff = Math.abs(userA.commute_distance - userB.commute_distance);
     return Math.max(0, 15 - Math.floor(diff / 2));
 };
 
@@ -69,12 +69,12 @@ export const calculateCompatibility = (userA: User, userB: User): number => {
 const calculateProfileCompletion = (user: User): number => {
   let completion = 0;
   if (user.bio && user.bio.length > 10) completion += 15;
-  if (user.videoUrl) completion += 20;
+  if (user.video_url) completion += 20;
   if (user.interests && user.interests.length >= 3) completion += 15;
   if (user.lifestyle && user.lifestyle.length > 0) completion += 15;
-  if (user.commuteDistance !== undefined) completion += 10;
-  if (user.noiseLevel) completion += 10;
-  if (user.rentalGoal) completion += 15;
+  if (user.commute_distance !== undefined) completion += 10;
+  if (user.noise_level) completion += 10;
+  if (user.rental_goal) completion += 15;
   return Math.min(completion, 100);
 };
 // --- END: Profile Completion Logic ---
@@ -173,7 +173,7 @@ interface TenantDashboardProps {
   properties: Property[];
   onSendInterest: (property: Property) => void;
   savedSearches: SavedSearch[];
-  onSaveSearch: (searchData: Omit<SavedSearch, 'id' | 'userId'>) => void;
+  onSaveSearch: (searchData: Omit<SavedSearch, 'id' | 'user_id'>) => void;
   onDeleteSearch: (searchId: number) => void;
   userMatches: string[];
   onAddMatch: (matchedUserId: string) => void;
@@ -270,7 +270,7 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user: currentUser, al
   const isPremiumUser = currentUser.id === '1'; // TODO: Replace with actual premium check logic
 
   const userSavedSearches = useMemo(() => {
-    return savedSearches.filter(s => s.userId === currentUser.id);
+    return savedSearches.filter(s => s.user_id === currentUser.id);
   }, [savedSearches, currentUser.id]);
 
    useEffect(() => {
@@ -299,7 +299,7 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user: currentUser, al
             p.address.toLowerCase().includes(query) ||
             p.city?.toLowerCase().includes(query) ||
             p.locality?.toLowerCase().includes(query) ||
-            p.postalCode?.includes(query)
+            p.postal_code?.includes(query)
         );
     }
     if (priceRange.min) {
@@ -309,7 +309,7 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user: currentUser, al
         filtered = filtered.filter(p => p.price <= parseInt(priceRange.max, 10));
     }
     if (selectedPropertyType) {
-        filtered = filtered.filter(p => p.propertyType === selectedPropertyType);
+        filtered = filtered.filter(p => p.property_type === selectedPropertyType);
     }
     if (selectedBathrooms) {
         const minBathrooms = parseInt(selectedBathrooms, 10);
@@ -353,14 +353,14 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user: currentUser, al
 
     const newFilteredUsers = cityFilteredUsers
       .filter(user => { // Filter by compatible rental goal
-        if (!currentUser.rentalGoal || currentUser.rentalGoal === RentalGoal.BOTH) {
+        if (!currentUser.rental_goal || currentUser.rental_goal === RentalGoal.BOTH) {
           return true; // Show all if user is open to both
         }
-        if (currentUser.rentalGoal === RentalGoal.FIND_ROOM_WITH_ROOMMATES) {
-          return user.rentalGoal === RentalGoal.FIND_ROOMMATES_AND_APARTMENT || user.rentalGoal === RentalGoal.BOTH;
+        if (currentUser.rental_goal === RentalGoal.FIND_ROOM_WITH_ROOMMATES) {
+          return user.rental_goal === RentalGoal.FIND_ROOMMATES_AND_APARTMENT || user.rental_goal === RentalGoal.BOTH;
         }
-        if (currentUser.rentalGoal === RentalGoal.FIND_ROOMMATES_AND_APARTMENT) {
-          return user.rentalGoal === RentalGoal.FIND_ROOM_WITH_ROOMMATES || user.rentalGoal === RentalGoal.BOTH;
+        if (currentUser.rental_goal === RentalGoal.FIND_ROOMMATES_AND_APARTMENT) {
+          return user.rental_goal === RentalGoal.FIND_ROOM_WITH_ROOMMATES || user.rental_goal === RentalGoal.BOTH;
         }
         return false;
       })
@@ -408,10 +408,10 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user: currentUser, al
         city: selectedPropertyCity || undefined,
         locality: (selectedPropertyLocality && selectedPropertyLocality !== 'Todas las localidades') ? selectedPropertyLocality : undefined,
         keyword: propertySearchQuery || undefined,
-        minPrice: priceRange.min ? parseInt(priceRange.min, 10) : undefined,
-        maxPrice: priceRange.max ? parseInt(priceRange.max, 10) : undefined,
+        min_price: priceRange.min ? parseInt(priceRange.min, 10) : undefined,
+        max_price: priceRange.max ? parseInt(priceRange.max, 10) : undefined,
         amenities: selectedAmenities.length > 0 ? selectedAmenities : undefined,
-        propertyType: selectedPropertyType as PropertyType || undefined,
+        property_type: selectedPropertyType as PropertyType || undefined,
         bathrooms: selectedBathrooms ? parseInt(selectedBathrooms, 10) : undefined,
       }
     });
@@ -422,11 +422,11 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user: currentUser, al
     setSelectedPropertyLocality(search.filters.locality || '');
     setPropertySearchQuery(search.filters.keyword || '');
     setPriceRange({
-      min: search.filters.minPrice?.toString() || '',
-      max: search.filters.maxPrice?.toString() || '',
+      min: search.filters.min_price?.toString() || '',
+      max: search.filters.max_price?.toString() || '',
     });
     setSelectedAmenities(search.filters.amenities || []);
-    setSelectedPropertyType(search.filters.propertyType || '');
+    setSelectedPropertyType(search.filters.property_type || '');
     setSelectedBathrooms(search.filters.bathrooms?.toString() || '');
   };
   
@@ -659,11 +659,11 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user: currentUser, al
 
   const renderPropertyDetail = () => {
       if (!selectedProperty) return null;
-      const nextImage = () => { setCurrentPropertyImageIndex(prev => (prev + 1) % selectedProperty.imageUrls.length); };
-      const prevImage = () => { setCurrentPropertyImageIndex(prev => (prev - 1 + selectedProperty.imageUrls.length) % selectedProperty.imageUrls.length); };
+      const nextImage = () => { setCurrentPropertyImageIndex(prev => (prev + 1) % selectedProperty.image_urls.length); };
+      const prevImage = () => { setCurrentPropertyImageIndex(prev => (prev - 1 + selectedProperty.image_urls.length) % selectedProperty.image_urls.length); };
       const availableAmenities = AVAILABLE_AMENITIES.filter(amenity => selectedProperty.features && selectedProperty.features[amenity.id]);
-      const formattedDate = new Date(selectedProperty.availableFrom + 'T00:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
-      const fullAddress = [selectedProperty.address, selectedProperty.locality, selectedProperty.city, selectedProperty.postalCode].filter(Boolean).join(', ');
+      const formattedDate = new Date(selectedProperty.available_from + 'T00:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+      const fullAddress = [selectedProperty.address, selectedProperty.locality, selectedProperty.city, selectedProperty.postal_code].filter(Boolean).join(', ');
 
       return (
           <div className="w-full flex flex-col relative">
@@ -672,12 +672,12 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user: currentUser, al
                   <GlassCard className="!p-0 overflow-hidden">
                       <div className="grid grid-cols-1 lg:grid-cols-2">
                            <div className="relative w-full h-full min-h-[300px] lg:min-h-full">
-                                <img src={selectedProperty.imageUrls[currentPropertyImageIndex]} alt={selectedProperty.title} className="w-full h-full object-cover" />
-                                {selectedProperty.imageUrls.length > 1 && (
+                                <img src={selectedProperty.image_urls[currentPropertyImageIndex]} alt={selectedProperty.title} className="w-full h-full object-cover" />
+                                {selectedProperty.image_urls.length > 1 && (
                                     <>
                                         <button onClick={prevImage} className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 text-white p-2 rounded-full hover:bg-black/60"><ChevronLeftIcon className="w-6 h-6" /></button>
                                         <button onClick={nextImage} className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 text-white p-2 rounded-full hover:bg-black/60"><ChevronLeftIcon className="w-6 h-6 transform rotate-180" /></button>
-                                        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-2">{selectedProperty.imageUrls.map((_, index) => (<div key={index} className={`w-2 h-2 rounded-full transition-colors ${index === currentPropertyImageIndex ? 'bg-white' : 'bg-white/50'}`}></div>))}</div>
+                                        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-2">{selectedProperty.image_urls.map((_, index) => (<div key={index} className={`w-2 h-2 rounded-full transition-colors ${index === currentPropertyImageIndex ? 'bg-white' : 'bg-white/50'}`}></div>))}</div>
                                     </>
                                 )}
                             </div>
@@ -685,18 +685,17 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user: currentUser, al
                               <span className={`text-xs font-semibold px-2 py-1 rounded-full self-start mb-2 ${selectedProperty.visibility === 'Pública' ? 'bg-green-500' : 'bg-yellow-500'}`}>{selectedProperty.visibility}</span>
                               <h2 className="text-4xl font-bold mb-2">{selectedProperty.title}</h2>
                               <div className="flex items-baseline gap-3 mb-4">
-                                <span className="bg-indigo-500/50 text-indigo-200 font-semibold px-3 py-1 rounded-full text-sm">{selectedProperty.propertyType}</span>
+                                <span className="bg-indigo-500/50 text-indigo-200 font-semibold px-3 py-1 rounded-full text-sm">{selectedProperty.property_type}</span>
                                 <p className="text-md text-white/70">{fullAddress}</p>
                               </div>
                               <p className="text-4xl font-bold mb-6 text-indigo-300">€{selectedProperty.price}<span className="text-lg font-normal text-white/70">/mes</span></p>
                               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm text-white/80 border-t border-white/20 pt-4 mb-6 text-center">
                                   <div className="flex items-center justify-center gap-2"><EyeIcon className="w-5 h-5" /><span>{selectedProperty.views.toLocaleString()} visitas</span></div>
-                                  <div className="flex items-center justify-center gap-2"><UsersIcon className="w-5 h-5" /><span>{selectedProperty.compatibleCandidates} candidatos</span></div>
+                                  <div className="flex items-center justify-center gap-2"><UsersIcon className="w-5 h-5" /><span>{selectedProperty.compatible_candidates} candidatos</span></div>
                                   <div className="flex items-center justify-center gap-2 text-green-300 font-semibold"><CalendarIcon className="w-5 h-5" /><span>Disponible: {formattedDate}</span></div>
                               </div>
                               {availableAmenities.length > 0 && (<div className="mb-6"><h3 className="text-xl font-bold mb-3">Comodidades</h3><div className="flex flex-wrap gap-x-6 gap-y-3">{availableAmenities.map(amenity => (<div key={amenity.id} className="flex items-center gap-2 text-white/90">{React.cloneElement(amenity.icon, { className: 'w-5 h-5 text-indigo-300' })}<span className="text-sm">{amenity.label}</span></div>))}</div></div>)}
                               {selectedProperty.conditions && (<div className="mb-8"><h3 className="text-xl font-bold mb-3">Condiciones</h3><p className="text-sm text-white/80 whitespace-pre-wrap">{selectedProperty.conditions}</p></div>)}
-{/* FIX: Replaced truncated code with the full component logic. */}
                               {selectedProperty.lat != null && selectedProperty.lng != null && (<div className="mb-8"><h3 className="text-xl font-bold mb-3">Ubicación</h3><div className="rounded-2xl overflow-hidden border-2 border-white/10 shadow-lg"><GoogleMap lat={selectedProperty.lat} lng={selectedProperty.lng} /></div></div>)}
                               <div className="mt-auto">{interestSent ? (<div className="text-center bg-green-500/20 border border-green-500 text-green-300 font-semibold p-4 rounded-lg flex flex-col items-center gap-2"><CheckIcon className="w-8 h-8 text-green-400" /><div><p>¡Tu interés ha sido enviado!</p><p className="text-sm font-normal">El propietario se pondrá en contacto contigo.</p></div></div>) : (<button onClick={handleSendInterest} className="w-full flex items-center justify-center gap-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-lg transition-colors text-lg"><PaperAirplaneIcon className="w-6 h-6" /><span>Enviar Interés al Propietario</span></button>)}</div>
                           </div>

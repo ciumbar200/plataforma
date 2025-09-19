@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { User, RentalGoal } from '../../types';
 import GlassCard from '../../components/GlassCard';
@@ -27,7 +26,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onSave }) => {
       const file = e.target.files[0];
       const reader = new FileReader();
       reader.onload = (event) => {
-        setFormData(prev => ({ ...prev, profilePicture: event.target?.result as string }));
+        setFormData(prev => ({ ...prev, profile_picture: event.target?.result as string }));
       };
       reader.readAsDataURL(file);
     }
@@ -67,7 +66,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onSave }) => {
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="flex justify-center">
             <div className="relative">
-                <img src={formData.profilePicture} alt="Foto de perfil" className="w-40 h-40 rounded-full object-cover border-4 border-indigo-400" />
+                <img src={formData.profile_picture} alt="Foto de perfil" className="w-40 h-40 rounded-full object-cover border-4 border-indigo-400" />
                 <input 
                   type="file" 
                   ref={fileInputRef} 
@@ -118,14 +117,14 @@ const Profile: React.FC<ProfileProps> = ({ user, onSave }) => {
         {user.role === 'INQUILINO' && (
             <>
                 <div>
-                  <label htmlFor="videoUrl" className="block text-sm font-medium text-white/80 mb-1">
+                  <label htmlFor="video_url" className="block text-sm font-medium text-white/80 mb-1">
                     URL de Vídeo de Presentación (Opcional)
                   </label>
                   <input 
                     type="url" 
-                    name="videoUrl" 
-                    id="videoUrl" 
-                    value={formData.videoUrl || ''} 
+                    name="video_url" 
+                    id="video_url" 
+                    value={formData.video_url || ''} 
                     onChange={handleChange} 
                     className="w-full bg-white/10 border border-white/20 rounded-lg p-3 outline-none focus:ring-2 focus:ring-indigo-500"
                     placeholder="https://... (máx. 20 segundos)"
@@ -157,16 +156,16 @@ const Profile: React.FC<ProfileProps> = ({ user, onSave }) => {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label htmlFor="noiseLevel" className="block text-sm font-medium text-white/80 mb-1">Nivel de ruido preferido</label>
-                        <select name="noiseLevel" id="noiseLevel" value={formData.noiseLevel} onChange={handleChange} className="w-full bg-white/10 border border-white/20 rounded-lg p-3 outline-none focus:ring-2 focus:ring-indigo-500">
+                        <label htmlFor="noise_level" className="block text-sm font-medium text-white/80 mb-1">Nivel de ruido preferido</label>
+                        <select name="noise_level" id="noise_level" value={formData.noise_level} onChange={handleChange} className="w-full bg-white/10 border border-white/20 rounded-lg p-3 outline-none focus:ring-2 focus:ring-indigo-500">
                             <option value="Bajo" className="bg-gray-800">Bajo</option>
                             <option value="Medio" className="bg-gray-800">Medio</option>
                             <option value="Alto" className="bg-gray-800">Alto</option>
                         </select>
                     </div>
                     <div>
-                      <label htmlFor="commuteDistance" className="block text-sm font-medium text-white/80 mb-1">Distancia máx. de búsqueda (min)</label>
-                      <input type="number" name="commuteDistance" id="commuteDistance" value={formData.commuteDistance || ''} onChange={handleChange} className="w-full bg-white/10 border border-white/20 rounded-lg p-3 outline-none focus:ring-2 focus:ring-indigo-500" />
+                      <label htmlFor="commute_distance" className="block text-sm font-medium text-white/80 mb-1">Distancia máx. de búsqueda (min)</label>
+                      <input type="number" name="commute_distance" id="commute_distance" value={formData.commute_distance || ''} onChange={handleChange} className="w-full bg-white/10 border border-white/20 rounded-lg p-3 outline-none focus:ring-2 focus:ring-indigo-500" />
                     </div>
                 </div>
             </>

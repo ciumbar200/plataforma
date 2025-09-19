@@ -16,22 +16,22 @@ export interface User {
   id: string;
   name: string;
   email?: string;
-  lastName?: string;
+  last_name?: string;
   phone?: string;
   city?: string;
   locality?: string;
-  rentalGoal?: RentalGoal;
+  rental_goal?: RentalGoal;
   age: number;
-  profilePicture: string;
-  videoUrl?: string;
+  profile_picture: string;
+  video_url?: string;
   interests: string[];
-  noiseLevel: 'Bajo' | 'Medio' | 'Alto';
+  noise_level: 'Bajo' | 'Medio' | 'Alto';
   compatibility: number;
   role: UserRole;
   bio?: string;
   lifestyle?: string[];
-  commuteDistance?: number; // in minutes
-  isBanned?: boolean;
+  commute_distance?: number; // in minutes
+  is_banned?: boolean;
 }
 
 // FIX: Defined AmenityId here to break circular dependency with components/icons.tsx
@@ -54,23 +54,22 @@ export enum PropertyType {
 
 export interface Property {
   id: number;
-  // FIX: Added owner_id to align the type with the database schema and application logic.
   owner_id: string;
   title: string;
   address: string; // Street address
   city?: string;
   locality?: string;
-  postalCode?: string;
-  propertyType: PropertyType;
-  imageUrls: string[];
-  videoUrl?: string;
+  postal_code?: string;
+  property_type: PropertyType;
+  image_urls: string[];
+  video_url?: string;
   price: number;
   visibility: 'Pública' | 'Privada';
   views: number;
-  compatibleCandidates: number;
+  compatible_candidates: number;
   conditions?: string;
   features?: PropertyFeatures;
-  availableFrom: string;
+  available_from: string;
   lat: number;
   lng: number;
   status: 'approved' | 'pending' | 'rejected';
@@ -95,27 +94,26 @@ export enum NotificationType {
 
 export interface Notification {
   id: number;
-  userId: string;
+  user_id: string;
   type: NotificationType;
   message: string;
   timestamp: string;
   read: boolean;
-  relatedEntityId?: number;
+  related_entity_id?: number;
 }
 
 export interface SavedSearch {
   id: number;
-  userId: string;
+  user_id: string;
   name: string;
   filters: {
     city?: string;
-    // FIX: Added optional 'locality' property to align with mock data and application features.
     locality?: string;
     keyword?: string;
-    minPrice?: number;
-    maxPrice?: number;
+    min_price?: number;
+    max_price?: number;
     amenities?: AmenityId[];
-    propertyType?: PropertyType;
+    property_type?: PropertyType;
     bathrooms?: number;
   };
 }
@@ -125,9 +123,9 @@ export interface BlogPost {
   slug: string;
   title: string;
   excerpt: string;
-  imageUrl: string;
+  image_url: string;
   content: string; 
   author: string;
-  authorImageUrl: string;
+  author_image_url: string;
   publish_date: string;
 }
