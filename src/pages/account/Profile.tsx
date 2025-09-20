@@ -76,7 +76,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onSave }) => {
 
         if (uploadError) {
             console.error('Error uploading image:', uploadError);
-            alert('Hubo un error al subir la nueva imagen de perfil.');
+            alert(`Hubo un error al subir la nueva imagen de perfil: ${uploadError.message}`);
             // Revert preview to original image on failure
             setFormData(prev => ({ ...prev, profile_picture: user.profile_picture }));
             setIsUploading(false);
