@@ -4,16 +4,16 @@ import Footer from '../components/Footer';
 import { User, UserRole, RentalGoal, PropertyType } from '../types';
 import { GoogleIcon, FacebookIcon, MoonIcon } from '../components/icons';
 import GlassCard from '../components/GlassCard';
+import { supabase } from '../lib/supabaseClient';
 
 type RegistrationData = { rentalGoal: RentalGoal; city: string; locality: string };
 type PublicationData = { property_type: PropertyType; city: string; locality: string };
 
 interface LoginPageProps {
   onLogin: (user: User) => void;
-  onRegister: (userData: Partial<User>) => void;
+  onRegister: (userData: Partial<User>, password?: string) => void;
   onHomeClick: () => void;
   onOwnersClick: () => void;
-  users: User[];
   registrationData?: RegistrationData | null;
   publicationData?: PublicationData | null;
   onBlogClick: () => void;
@@ -24,7 +24,7 @@ interface LoginPageProps {
 }
 
 const LoginPage: React.FC<LoginPageProps> = (props) => {
-  const { onLogin, onRegister, onHomeClick, onOwnersClick, users, registrationData, publicationData, ...footerProps } = props;
+  const { onLogin, onRegister, onHomeClick, onOwnersClick, registrationData, publicationData, ...footerProps } = props;
   
   const isRegisterMode = !!registrationData || !!publicationData;
   
@@ -33,36 +33,49 @@ const LoginPage: React.FC<LoginPageProps> = (props) => {
   const [name, setName] = useState('');
   const [age, setAge] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
 
     if (isRegisterMode) {
         if (!name || !age || !email || !password) {
             setError("Por favor, completa todos los campos.");
+            setLoading(false);
             return;
         }
-        onRegister({ email, name, age: parseInt(age, 10) });
+        await onRegister({ email, name, age: parseInt(age, 10) }, password);
     } else {
-        if (email === 'admin@moon.com') { // Hardcoded admin login
-            const adminUser = users.find(u => u.email === 'admin@moon.com');
-            if (adminUser) {
-                onLogin(adminUser);
-                return;
+        const { data, error: signInError } = await supabase.auth.signInWithPassword({
+            email: email,
+            password: password,
+        });
+
+        if (signInError) {
+            setError('Credenciales inválidas. Por favor, inténtalo de nuevo.');
+        } else if (data.user) {
+            const { data: profileData, error: profileError } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', data.user.id)
+                .single();
+            
+            if (profileError) {
+                setError("No se pudo encontrar el perfil de usuario asociado a esta cuenta.");
+                await supabase.auth.signOut();
+            } else if (profileData) {
+                if (profileData.is_banned) {
+                    setError('Esta cuenta ha sido suspendida.');
+                    await supabase.auth.signOut();
+                } else {
+                    onLogin(profileData as User);
+                }
             }
         }
-        const user = users.find(u => u.email === email);
-        if (user) {
-          if (user.is_banned) {
-            setError('Esta cuenta ha sido baneada.');
-          } else {
-            onLogin(user);
-          }
-        } else {
-          setError('Usuario no encontrado. Para registrarte, inicia el proceso desde la página principal.');
-        }
     }
+    setLoading(false);
   };
 
   const getRegistrationSubtitle = () => {
@@ -117,8 +130,8 @@ const LoginPage: React.FC<LoginPageProps> = (props) => {
                 </div>
             )}
 
-            <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition-colors">
-              {isRegisterMode ? 'Completar Registro' : 'Iniciar Sesión'}
+            <button type="submit" disabled={loading} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition-colors disabled:bg-indigo-800 disabled:cursor-not-allowed">
+              {loading ? 'Cargando...' : isRegisterMode ? 'Completar Registro' : 'Iniciar Sesión'}
             </button>
 
             <div className="relative my-4">

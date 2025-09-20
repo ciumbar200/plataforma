@@ -39,7 +39,6 @@ function App() {
   
   useEffect(() => {
     const fetchData = async () => {
-      setLoading(true);
       try {
         const { data: usersData, error: usersError } = await supabase.from('profiles').select('*');
         if (usersError) throw usersError;
@@ -51,11 +50,39 @@ function App() {
         
       } catch (error: any) {
         console.error("Error al obtener datos de Supabase:", error.message || error);
-      } finally {
-        setLoading(false);
       }
     };
+    
     fetchData();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+        
+        if (profile) {
+          const user = profile as User;
+          setCurrentUser(user);
+          if (user.role === UserRole.ADMIN) setPage('admin-dashboard');
+          else if (user.role === UserRole.PROPIETARIO) setPage('owner-dashboard');
+          else setPage('tenant-dashboard');
+        } else {
+          // If profile doesn't exist, sign out user.
+          await supabase.auth.signOut();
+        }
+      } else {
+        setCurrentUser(null);
+        setPage('home');
+      }
+      setLoading(false);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const handleLogin = (user: User) => {
@@ -67,72 +94,80 @@ function App() {
     else setPage('tenant-dashboard');
   };
   
-  const handleRegister = async (userData: Partial<User>) => {
-    let newUserPayload;
-    let targetRole: UserRole;
-
-    if (publicationData) { // Owner registration flow
-        targetRole = UserRole.PROPIETARIO;
-        newUserPayload = {
-            name: userData.name,
-            last_name: userData.last_name || '',
-            email: userData.email,
-            age: userData.age,
-            city: publicationData.city,
-            locality: publicationData.locality,
-            profile_picture: `https://placehold.co/200x200/a78bfa/4c1d95?text=${userData.name?.charAt(0)}`,
-            role: targetRole,
-        };
-    } else if (registrationData) { // Tenant registration flow
-        targetRole = UserRole.INQUILINO;
-        newUserPayload = {
-            name: userData.name,
-            last_name: userData.last_name || '',
-            email: userData.email,
-            age: userData.age,
-            city: registrationData.city,
-            locality: registrationData.locality,
-            rental_goal: registrationData.rentalGoal,
-            profile_picture: `https://placehold.co/200x200/93c5fd/1e3a8a?text=${userData.name?.charAt(0)}`,
-            interests: [],
-            lifestyle: [],
-            noise_level: 'Medio' as const,
-            role: targetRole,
-        };
-    } else {
-        alert("Error: No se ha iniciado ningún flujo de registro.");
+  const handleRegister = async (userData: Partial<User>, password?: string) => {
+    if (!password || !userData.email) {
+        alert("Email y contraseña son requeridos para el registro.");
         return;
     }
 
-    // NOTE: This flow bypasses Supabase Auth for demo purposes.
-    // A real app would integrate with supabase.auth.signUp
-    const { data, error } = await supabase
-      .from('profiles')
-      .insert(newUserPayload)
-      .select();
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: userData.email,
+        password: password,
+    });
 
-    if (error) {
-        console.error('Error en el registro:', error);
-        alert(`Error al registrar el perfil: ${error.message}`);
-    } else if (data) {
-        const newUser = data[0] as User;
-        setUsers(prev => [...prev, newUser]);
-        setCurrentUser(newUser);
+    if (authError) {
+        console.error('Error en el registro de Auth:', authError);
+        alert(`Error al registrar: ${authError.message}`);
+        return;
+    }
 
-        if (targetRole === UserRole.PROPIETARIO) {
-            setPage('owner-dashboard');
-            // publicationData remains set, OwnerDashboard will use it
+    if (authData.user) {
+        let newUserPayload: Omit<User, 'compatibility'>;
+        let targetRole: UserRole;
+
+        if (publicationData) {
+            targetRole = UserRole.PROPIETARIO;
+            newUserPayload = {
+                id: authData.user.id,
+                name: userData.name || '',
+                email: userData.email,
+                age: userData.age || 18,
+                city: publicationData.city,
+                locality: publicationData.locality,
+                profile_picture: `https://placehold.co/200x200/a78bfa/4c1d95?text=${(userData.name || 'P').charAt(0)}`,
+                role: targetRole,
+                interests: [],
+                noise_level: 'Medio',
+            };
+        } else if (registrationData) {
+            targetRole = UserRole.INQUILINO;
+            newUserPayload = {
+                id: authData.user.id,
+                name: userData.name || '',
+                email: userData.email,
+                age: userData.age || 18,
+                city: registrationData.city,
+                locality: registrationData.locality,
+                rental_goal: registrationData.rentalGoal,
+                profile_picture: `https://placehold.co/200x200/93c5fd/1e3a8a?text=${(userData.name || 'I').charAt(0)}`,
+                interests: [],
+                lifestyle: [],
+                noise_level: 'Medio',
+                role: targetRole,
+            };
         } else {
-            setPage('tenant-dashboard');
-            setRegistrationData(null); // Clear tenant registration data
+            alert("Error: No se ha iniciado ningún flujo de registro.");
+            return;
+        }
+
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .insert(newUserPayload)
+          .select()
+          .single();
+
+        if (profileError) {
+            console.error('Error en la creación del perfil:', profileError);
+            alert(`Error al crear el perfil: ${profileError.message}`);
+        } else if (profileData) {
+            setUsers(prev => [...prev, profileData as User]);
         }
     }
   };
 
 
-  const handleLogout = () => {
-    setCurrentUser(null);
-    setPage('home');
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
   };
 
   const handleStartRegistration = (data: RegistrationData) => {
@@ -304,14 +339,14 @@ function App() {
     switch (page) {
       case 'home': return <HomePage onStartRegistration={handleStartRegistration} {...pageNavigationProps} />;
       case 'owners': return <OwnerLandingPage onStartPublication={handleStartPublication} {...pageNavigationProps} />;
-      case 'login': return <LoginPage onLogin={handleLogin} onRegister={handleRegister} users={users} registrationData={registrationData} publicationData={publicationData} {...pageNavigationProps} />;
+      case 'login': return <LoginPage onLogin={handleLogin} onRegister={handleRegister} registrationData={registrationData} publicationData={publicationData} {...pageNavigationProps} />;
       case 'blog': return <BlogPage posts={blogPosts} {...pageNavigationProps} />;
       case 'about': return <AboutPage {...pageNavigationProps} />;
       case 'privacy': return <PrivacyPolicyPage {...pageNavigationProps} />;
       case 'terms': return <TermsPage {...pageNavigationProps} />;
       case 'contact': return <ContactPage {...pageNavigationProps} />;
       case 'tenant-dashboard':
-        if (!currentUser) return <LoginPage onLogin={handleLogin} onRegister={handleRegister} users={users} {...pageNavigationProps} />;
+        if (!currentUser) return <LoginPage onLogin={handleLogin} onRegister={handleRegister} {...pageNavigationProps} />;
         return <TenantDashboard 
             user={currentUser} 
             allUsers={users}
@@ -325,7 +360,7 @@ function App() {
             onGoToAccountSettings={() => { setAccountInitialTab('profile'); setPage('account'); }}
         />;
       case 'owner-dashboard':
-        if (!currentUser) return <LoginPage onLogin={handleLogin} onRegister={handleRegister} users={users} {...pageNavigationProps} />;
+        if (!currentUser) return <LoginPage onLogin={handleLogin} onRegister={handleRegister} {...pageNavigationProps} />;
         return <OwnerDashboard 
             user={currentUser}
             properties={properties.filter(p => p.owner_id === currentUser.id)}
@@ -336,7 +371,7 @@ function App() {
             matches={matches}
         />;
       case 'admin-dashboard':
-        if (!currentUser || currentUser.role !== UserRole.ADMIN) return <LoginPage onLogin={handleLogin} onRegister={handleRegister} users={users} {...pageNavigationProps} />;
+        if (!currentUser || currentUser.role !== UserRole.ADMIN) return <LoginPage onLogin={handleLogin} onRegister={handleRegister} {...pageNavigationProps} />;
         return <AdminDashboard 
             users={users}
             properties={properties}
@@ -349,7 +384,7 @@ function App() {
             onLogout={handleLogout}
         />;
       case 'account':
-        if (!currentUser) return <LoginPage onLogin={handleLogin} onRegister={handleRegister} users={users} {...pageNavigationProps} />;
+        if (!currentUser) return <LoginPage onLogin={handleLogin} onRegister={handleRegister} {...pageNavigationProps} />;
         const backPage = currentUser.role === UserRole.INQUILINO ? 'tenant-dashboard' : 'owner-dashboard';
         return <AccountLayout 
             user={currentUser}
