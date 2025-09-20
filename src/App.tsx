@@ -200,7 +200,13 @@ function App() {
 
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+        console.error("Error al cerrar sesión:", error.message);
+        alert(`Error al cerrar sesión: ${error.message}`);
+    }
+    setCurrentUser(null);
+    setPage('home');
   };
 
   const handleStartRegistration = (data: RegistrationData) => {
@@ -406,18 +412,19 @@ function App() {
   }
 
   const renderPage = () => {
-    const commonPageProps = { ...pageNavigationProps, onRegisterClick: () => { setLoginInitialMode('register'); setPage('login'); } };
+    const loginPageProps = { ...pageNavigationProps, onRegisterClick: () => { setLoginInitialMode('register'); setPage('login'); } };
+    
     switch (page) {
       case 'home': return <HomePage onStartRegistration={handleStartRegistration} {...pageNavigationProps} />;
       case 'owners': return <OwnerLandingPage onStartPublication={handleStartPublication} {...pageNavigationProps} />;
-      case 'login': return <LoginPage onLogin={handleLogin} onRegister={handleRegister} registrationData={registrationData} publicationData={publicationData} initialMode={loginInitialMode} {...commonPageProps} />;
-      case 'blog': return <BlogPage posts={blogPosts} onOwnersClick={() => setPage('owners')} {...commonPageProps} />;
-      case 'about': return <AboutPage onOwnersClick={() => setPage('owners')} {...commonPageProps} />;
-      case 'privacy': return <PrivacyPolicyPage onOwnersClick={() => setPage('owners')} {...commonPageProps} />;
-      case 'terms': return <TermsPage onOwnersClick={() => setPage('owners')} {...commonPageProps} />;
-      case 'contact': return <ContactPage onOwnersClick={() => setPage('owners')} {...commonPageProps} />;
+      case 'login': return <LoginPage onLogin={handleLogin} onRegister={handleRegister} registrationData={registrationData} publicationData={publicationData} initialMode={loginInitialMode} {...loginPageProps} />;
+      case 'blog': return <BlogPage posts={blogPosts} {...pageNavigationProps} />;
+      case 'about': return <AboutPage {...pageNavigationProps} />;
+      case 'privacy': return <PrivacyPolicyPage {...pageNavigationProps} />;
+      case 'terms': return <TermsPage {...pageNavigationProps} />;
+      case 'contact': return <ContactPage {...pageNavigationProps} />;
       case 'tenant-dashboard':
-        if (!currentUser) return <LoginPage onLogin={handleLogin} onRegister={handleRegister} initialMode="login" {...commonPageProps} />;
+        if (!currentUser) return <LoginPage onLogin={handleLogin} onRegister={handleRegister} initialMode="login" {...loginPageProps} />;
         return <TenantDashboard 
             user={currentUser} 
             allUsers={users}
@@ -431,7 +438,7 @@ function App() {
             onGoToAccountSettings={() => { setAccountInitialTab('profile'); setPage('account'); }}
         />;
       case 'owner-dashboard':
-        if (!currentUser) return <LoginPage onLogin={handleLogin} onRegister={handleRegister} initialMode="login" {...commonPageProps}/>;
+        if (!currentUser) return <LoginPage onLogin={handleLogin} onRegister={handleRegister} initialMode="login" {...loginPageProps}/>;
         return <OwnerDashboard 
             user={currentUser}
             properties={properties.filter(p => p.owner_id === currentUser.id)}
@@ -442,7 +449,7 @@ function App() {
             matches={matches}
         />;
       case 'admin-dashboard':
-        if (!currentUser || currentUser.role !== UserRole.ADMIN) return <LoginPage onLogin={handleLogin} onRegister={handleRegister} initialMode="login" {...commonPageProps} />;
+        if (!currentUser || currentUser.role !== UserRole.ADMIN) return <LoginPage onLogin={handleLogin} onRegister={handleRegister} initialMode="login" {...loginPageProps} />;
         return <AdminDashboard 
             users={users}
             properties={properties}
@@ -455,7 +462,7 @@ function App() {
             onLogout={handleLogout}
         />;
       case 'account':
-        if (!currentUser) return <LoginPage onLogin={handleLogin} onRegister={handleRegister} initialMode="login" {...commonPageProps} />;
+        if (!currentUser) return <LoginPage onLogin={handleLogin} onRegister={handleRegister} initialMode="login" {...loginPageProps} />;
         const backPage = currentUser.role === UserRole.INQUILINO ? 'tenant-dashboard' : 'owner-dashboard';
         return <AccountLayout 
             user={currentUser}
