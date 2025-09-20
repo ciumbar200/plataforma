@@ -233,50 +233,62 @@ function App() {
 
 const handleUpdateUser = async (updatedUser: User) => {
     if (!currentUser) {
-        throw new Error("Usuario no autenticado.");
+        throw new Error("No hay un usuario autenticado para actualizar.");
     }
 
     try {
-        const { id, avatar_url, ...profileData } = updatedUser;
+        const { id, ...dataFromForm } = updatedUser;
 
-        // Update auth metadata if avatar changed
-        if (avatar_url && avatar_url !== currentUser.avatar_url) {
+        // Update auth user metadata if avatar has changed.
+        if (dataFromForm.avatar_url && dataFromForm.avatar_url !== currentUser.avatar_url) {
             const { error: authError } = await supabase.auth.updateUser({
-                data: { avatar_url: avatar_url }
+                data: { avatar_url: dataFromForm.avatar_url }
             });
             if (authError) {
-                // Throw to be caught by the outer catch block
-                throw authError;
+                throw new Error(`Error al actualizar metadatos de autenticación: ${authError.message}`);
             }
         }
-        
-        // Update profiles table. Ensure the new avatar_url is included if it changed.
-        const dataToUpdate = { ...profileData, avatar_url };
-        
+
+        // Prepare a safe payload for the 'profiles' table, only including user-editable fields.
+        // This prevents RLS errors from trying to update protected columns like 'role' or 'email'.
+        const profileDataToUpdate = {
+            name: dataFromForm.name,
+            age: dataFromForm.age,
+            bio: dataFromForm.bio,
+            city: dataFromForm.city,
+            locality: dataFromForm.locality,
+            video_url: dataFromForm.video_url,
+            interests: dataFromForm.interests,
+            lifestyle: dataFromForm.lifestyle,
+            noise_level: dataFromForm.noise_level,
+            commute_distance: dataFromForm.commute_distance,
+            avatar_url: dataFromForm.avatar_url, // Also update in profiles table for consistency
+        };
+
         const { data: updatedProfile, error: profileError } = await supabase
             .from('profiles')
-            .update(dataToUpdate)
+            .update(profileDataToUpdate)
             .eq('id', id)
             .select()
             .single();
 
         if (profileError) {
-            throw profileError;
+            throw new Error(`Error de base de datos al actualizar el perfil: ${profileError.message}`);
         }
 
         if (!updatedProfile) {
-            throw new Error("La actualización del perfil no devolvió los datos actualizados.");
+            throw new Error("La base de datos no devolvió el perfil actualizado.");
         }
         
-        // Success: update local state
-        const finalUser = updatedProfile as User;
+        // Merge with currentUser to preserve any client-side state (like compatibility score).
+        const finalUser = { ...currentUser, ...updatedProfile } as User;
         setCurrentUser(finalUser);
         setUsers(currentUsers => currentUsers.map(u => (u.id === finalUser.id ? finalUser : u)));
 
     } catch (error: any) {
-        console.error("Error de Supabase al actualizar el usuario:", error);
-        // This is the key part: create a clean error to throw upwards.
-        throw new Error(error.message || "Se produjo un error en la base de datos.");
+        // This block catches any error from the process and ensures a clean Error object is thrown.
+        console.error("Error detallado al actualizar el perfil:", error);
+        throw error; // Re-throw the already well-formed Error object for the UI to catch.
     }
 };
 
@@ -416,11 +428,11 @@ const handleUpdateUser = async (updatedUser: User) => {
       case 'home': return <HomePage onStartRegistration={handleStartRegistration} {...pageNavigationProps} />;
       case 'owners': return <OwnerLandingPage onStartPublication={handleStartPublication} {...pageNavigationProps} />;
       case 'login': return <LoginPage onLogin={handleLogin} onRegister={handleRegister} registrationData={registrationData} publicationData={publicationData} initialMode={loginInitialMode} {...loginPageProps} />;
-      case 'blog': return <BlogPage posts={blogPosts} onOwnersClick={() => setPage('owners')} {...loginPageProps} />;
-      case 'about': return <AboutPage onOwnersClick={() => setPage('owners')} {...loginPageProps} />;
-      case 'privacy': return <PrivacyPolicyPage onOwnersClick={() => setPage('owners')} {...loginPageProps} />;
-      case 'terms': return <TermsPage onOwnersClick={() => setPage('owners')} {...loginPageProps} />;
-      case 'contact': return <ContactPage onOwnersClick={() => setPage('owners')} {...loginPageProps} />;
+      case 'blog': return <BlogPage posts={blogPosts} {...pageNavigationProps} onOwnersClick={() => setPage('owners')} />;
+      case 'about': return <AboutPage {...pageNavigationProps} onOwnersClick={() => setPage('owners')} />;
+      case 'privacy': return <PrivacyPolicyPage {...pageNavigationProps} onOwnersClick={() => setPage('owners')} />;
+      case 'terms': return <TermsPage {...pageNavigationProps} onOwnersClick={() => setPage('owners')} />;
+      case 'contact': return <ContactPage {...pageNavigationProps} onOwnersClick={() => setPage('owners')} />;
       case 'tenant-dashboard':
         if (!currentUser) return <LoginPage onLogin={handleLogin} onRegister={handleRegister} initialMode="login" {...loginPageProps} />;
         return <TenantDashboard 

@@ -63,10 +63,10 @@ const Profile: React.FC<ProfileProps> = ({ user, onSave }) => {
     try {
       let finalUserData = { ...formData };
 
-      // Image upload logic...
+      // Image upload logic
       if (profileImageFile) {
         const fileExt = profileImageFile.name.split('.').pop();
-        const filePath = `${user.id}-${new Date().getTime()}.${fileExt}`;
+        const filePath = `${user.id}/${new Date().getTime()}.${fileExt}`;
         const { error: uploadError } = await supabase.storage
           .from('avatars')
           .upload(filePath, profileImageFile, { upsert: true });
@@ -83,17 +83,17 @@ const Profile: React.FC<ProfileProps> = ({ user, onSave }) => {
       }
       
       const safeNumber = (value: any): number | undefined => {
-          const num = Number(value);
           if (value === '' || value === null || value === undefined) return undefined;
+          const num = Number(value);
           if (isNaN(num)) {
-            throw new Error(`El valor '${value}' no es un número válido.`);
+            throw new Error(`El valor '${value}' para un campo numérico no es válido.`);
           }
           return num;
       };
 
       const finalDataForSave: User = {
         ...finalUserData,
-        age: safeNumber(finalUserData.age)!, // Age is required
+        age: safeNumber(finalUserData.age)!,
         commute_distance: safeNumber(finalUserData.commute_distance),
       };
       
@@ -102,9 +102,11 @@ const Profile: React.FC<ProfileProps> = ({ user, onSave }) => {
       
     } catch (error: any) {
       // Centralized error display for the user.
-      alert(`Fallo al guardar el perfil:\n${error.message}`);
+      console.error("Fallo al guardar el perfil:", error);
+      alert(`Fallo al guardar el perfil:\n${error.message || 'Se produjo un error inesperado.'}`);
+      
       if (profileImageFile) {
-          // Revert preview image if save fails
+          // Revert preview image if the entire save process fails
           setFormData(prev => ({ ...prev, avatar_url: user.avatar_url }));
       }
     } finally {
