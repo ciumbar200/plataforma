@@ -20,7 +20,8 @@ const CandidateGroupCard: React.FC<CandidateGroupCardProps> = ({ group, onInvite
             {group.map(user => (
               <img
                 key={user.id}
-                src={user.profile_picture}
+                // FIX: Corrected property name from profile_picture to avatar_url to match the User type.
+                src={user.avatar_url}
                 alt={user.name}
                 className="w-10 h-10 rounded-full object-cover border-2 border-slate-800"
                 title={user.name}

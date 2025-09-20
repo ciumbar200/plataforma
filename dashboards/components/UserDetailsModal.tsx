@@ -1,4 +1,6 @@
 
+
+
 import React from 'react';
 import GlassCard from '../../components/GlassCard';
 import { XIcon } from '../../components/icons';
@@ -52,8 +54,8 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ isOpen, onClose, us
 
         <div className="p-6 max-h-[75vh] overflow-y-auto">
             <div className="flex flex-col md:flex-row items-center gap-8 text-center md:text-left mb-6">
-                {/* FIX: Corrected property name from profilePicture to profile_picture. */}
-                <img src={user.profile_picture} alt={user.name} className="w-32 h-32 rounded-full object-cover border-4 border-indigo-400 shadow-lg flex-shrink-0" />
+                {/* FIX: Corrected property name from profile_picture to avatar_url to match the User type. */}
+                <img src={user.avatar_url} alt={user.name} className="w-32 h-32 rounded-full object-cover border-4 border-indigo-400 shadow-lg flex-shrink-0" />
                 <div>
                     <h3 className="text-3xl font-bold">{user.name}, {user.age}</h3>
                     {user.bio && <p className="text-white/80 mt-2 text-md italic">"{user.bio}"</p>}

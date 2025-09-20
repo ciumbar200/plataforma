@@ -295,7 +295,7 @@ const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ user, properties, onSav
             <div className="w-full max-w-4xl mx-auto">
                 <GlassCard className="!p-8">
                     <div className="flex flex-col md:flex-row items-center gap-8 text-center md:text-left">
-                        <img src={user.profile_picture} alt={user.name} className="w-40 h-40 rounded-full object-cover border-4 border-purple-400 shadow-lg" />
+                        <img src={user.avatar_url} alt={user.name} className="w-40 h-40 rounded-full object-cover border-4 border-purple-400 shadow-lg" />
                         <div>
                             <h3 className="text-4xl font-bold">{user.name}</h3>
                             {user.city && <p className="text-lg text-cyan-400 mt-1">{user.city}, {user.locality}</p>}

@@ -1,11 +1,11 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 // FIX: Corrected import paths to point within the src directory.
 import { CITIES_DATA, showNotification } from '../constants';
-import { AVAILABLE_AMENITIES } from '../../components/icons';
+import { AVAILABLE_AMENITIES } from '../components/icons';
 import UserProfileCard from './components/UserProfileCard';
 import PropertyCard from './components/PropertyCard';
-import { CheckIcon, XIcon, CompassIcon, BuildingIcon, HeartIcon, UserCircleIcon, ChevronLeftIcon, PaperAirplaneIcon, EyeIcon, UsersIcon, CalendarIcon, PieChartIcon, AlertTriangleIcon, PawPrintIcon } from '../../components/icons';
-import GlassCard from '../../components/GlassCard';
+import { CheckIcon, XIcon, CompassIcon, BuildingIcon, HeartIcon, UserCircleIcon, ChevronLeftIcon, PaperAirplaneIcon, EyeIcon, UsersIcon, CalendarIcon, PieChartIcon, AlertTriangleIcon, PawPrintIcon } from '../components/icons';
+import GlassCard from '../components/GlassCard';
 import { User, Property, AmenityId, SavedSearch, UserRole, RentalGoal, PropertyType } from '../types';
 import GoogleMap from './components/GoogleMap';
 import SaveSearchModal from './components/SaveSearchModal';

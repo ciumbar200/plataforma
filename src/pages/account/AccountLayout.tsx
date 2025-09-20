@@ -20,7 +20,7 @@ const QuestionMarkCircleIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) 
 
 interface AccountLayoutProps {
   user: User;
-  onUpdateUser: (updatedUser: User) => void;
+  onUpdateUser: (updatedUser: User) => Promise<void>;
   onLogout: () => void;
   onBack: () => void;
   onBlogClick: () => void;

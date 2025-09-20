@@ -7,7 +7,7 @@ import { supabase } from '../../lib/supabaseClient';
 
 interface ProfileProps {
   user: User;
-  onSave: (updatedUser: User) => void;
+  onSave: (updatedUser: User) => Promise<void>;
 }
 
 const ALL_INTERESTS = ['Yoga', 'Cocina Vegana', 'Viajar', 'Fotografía', 'Senderismo', 'Música Indie', 'Música en vivo', 'Cine', 'Salir de tapas', 'Arte Urbano', 'Videojuegos', 'Lectura', 'Teatro', 'Museos', 'Brunch', 'Deportes', 'Series', 'Fitness', 'Cocinar'];
@@ -29,7 +29,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onSave }) => {
       const file = e.target.files[0];
       setProfileImageFile(file);
       // Create a temporary URL for instant preview
-      setFormData(prev => ({ ...prev, profile_picture: URL.createObjectURL(file) }));
+      setFormData(prev => ({ ...prev, avatar_url: URL.createObjectURL(file) }));
     }
   };
   
@@ -60,41 +60,54 @@ const Profile: React.FC<ProfileProps> = ({ user, onSave }) => {
     e.preventDefault();
     setIsUploading(true);
     
-    let finalUserData = { ...formData };
+    try {
+        const dataToSave: any = { ...formData };
 
-    if (profileImageFile) {
-        const fileExt = profileImageFile.name.split('.').pop();
-        // Use a simple, robust path. user.id is unique. Appending timestamp prevents caching issues.
-        const filePath = `${user.id}-${new Date().getTime()}.${fileExt}`;
+        // Forzar la conversión de tipos numéricos para evitar errores en la base de datos
+        const parsedAge = parseInt(String(dataToSave.age || '0'), 10);
+        if (isNaN(parsedAge) || parsedAge < 18) {
+            throw new Error('Por favor, introduce una edad válida (mayor de 18).');
+        }
+        dataToSave.age = parsedAge;
 
-        const { error: uploadError } = await supabase.storage
-            .from('avatars')
-            .upload(filePath, profileImageFile, {
-                cacheControl: '3600',
-                upsert: true, // Overwrite if file with same name exists
-            });
-
-        if (uploadError) {
-            console.error('Error uploading image:', uploadError);
-            alert(`Hubo un error al subir la nueva imagen de perfil: ${uploadError.message}`);
-            // Revert preview to original image on failure
-            setFormData(prev => ({ ...prev, profile_picture: user.profile_picture }));
-            setIsUploading(false);
-            return;
+        const commuteValue = String(dataToSave.commute_distance || '').trim();
+        if (commuteValue) {
+            const parsedCommute = parseInt(commuteValue, 10);
+            dataToSave.commute_distance = isNaN(parsedCommute) ? undefined : parsedCommute;
+        } else {
+            dataToSave.commute_distance = undefined;
         }
 
-        // Get public URL of the uploaded file
-        const { data: urlData } = supabase.storage
-            .from('avatars')
-            .getPublicUrl(filePath);
-        
-        // Update the profile picture with the permanent URL
-        finalUserData.profile_picture = urlData.publicUrl;
-    }
+        if (profileImageFile) {
+            const fileExt = profileImageFile.name.split('.').pop();
+            const filePath = `${user.id}-${new Date().getTime()}.${fileExt}`;
 
-    // Call the parent onSave function with the updated user data
-    onSave(finalUserData);
-    setIsUploading(false);
+            const { error: uploadError } = await supabase.storage
+                .from('avatars')
+                .upload(filePath, profileImageFile, {
+                    cacheControl: '3600',
+                    upsert: true,
+                });
+
+            if (uploadError) {
+                setFormData(prev => ({ ...prev, avatar_url: user.avatar_url }));
+                throw new Error(`Hubo un error al subir la nueva imagen de perfil: ${uploadError.message}`);
+            }
+
+            const { data: urlData } = supabase.storage
+                .from('avatars')
+                .getPublicUrl(filePath);
+            
+            dataToSave.avatar_url = urlData.publicUrl;
+        }
+
+        await onSave(dataToSave as User);
+    } catch (error: any) {
+        alert(`Fallo al guardar el perfil:\n${error.message || 'Ocurrió un error desconocido.'}`);
+        console.error("Fallo al guardar el perfil:", error);
+    } finally {
+        setIsUploading(false);
+    }
   };
 
   return (
@@ -103,7 +116,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onSave }) => {
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="flex justify-center">
             <div className="relative">
-                <img src={formData.profile_picture} alt="Foto de perfil" className="w-40 h-40 rounded-full object-cover border-4 border-indigo-400" />
+                <img src={formData.avatar_url} alt="Foto de perfil" className="w-40 h-40 rounded-full object-cover border-4 border-indigo-400" />
                 <input 
                   type="file" 
                   ref={fileInputRef} 

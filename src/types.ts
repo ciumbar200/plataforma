@@ -22,7 +22,7 @@ export interface User {
   locality?: string;
   rental_goal?: RentalGoal;
   age: number;
-  profile_picture: string;
+  avatar_url: string;
   video_url?: string;
   interests: string[];
   noise_level: 'Bajo' | 'Medio' | 'Alto';
