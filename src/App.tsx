@@ -204,9 +204,10 @@ function App() {
     if (error) {
         console.error("Error al cerrar sesión:", error.message);
         alert(`Error al cerrar sesión: ${error.message}`);
+    } else {
+        setCurrentUser(null);
+        setPage('home');
     }
-    setCurrentUser(null);
-    setPage('home');
   };
 
   const handleStartRegistration = (data: RegistrationData) => {
@@ -230,57 +231,54 @@ function App() {
     setPage('login');
   };
 
-  const handleUpdateUser = async (updatedUser: User) => {
-    if (!currentUser) throw new Error("No hay un usuario actualmente autenticado.");
+const handleUpdateUser = async (updatedUser: User) => {
+    if (!currentUser) {
+        throw new Error("Usuario no autenticado.");
+    }
 
     try {
-        const {
-            id,
-            compatibility,
-            email,
-            role,
-            is_banned,
-            avatar_url, // Separamos avatar_url
-            ...profileUpdateData
-        } = updatedUser;
+        const { id, avatar_url, ...profileData } = updatedUser;
 
-        // 1. Si la URL del avatar ha cambiado, la actualizamos en auth.users
+        // Update auth metadata if avatar changed
         if (avatar_url && avatar_url !== currentUser.avatar_url) {
             const { error: authError } = await supabase.auth.updateUser({
                 data: { avatar_url: avatar_url }
             });
             if (authError) {
-                throw new Error(`Error al actualizar la foto de perfil: ${authError.message}`);
+                // Throw to be caught by the outer catch block
+                throw authError;
             }
         }
         
-        // 2. Actualizamos el resto de los datos del perfil en public.profiles
-        const { data, error } = await supabase
+        // Update profiles table. Ensure the new avatar_url is included if it changed.
+        const dataToUpdate = { ...profileData, avatar_url };
+        
+        const { data: updatedProfile, error: profileError } = await supabase
             .from('profiles')
-            .update(profileUpdateData)
+            .update(dataToUpdate)
             .eq('id', id)
-            .select();
+            .select()
+            .single();
 
-        if (error) {
-            throw error;
+        if (profileError) {
+            throw profileError;
         }
 
-        if (data) {
-            const updatedProfile = data[0] as User;
-            const finalUser = { ...updatedProfile, avatar_url: updatedUser.avatar_url, compatibility: currentUser.compatibility };
-            
-            setCurrentUser(finalUser);
-            setUsers(users.map(u => u.id === finalUser.id ? finalUser : u));
-            
-            alert('Perfil actualizado con éxito');
-            setPage(currentUser.role === UserRole.INQUILINO ? 'tenant-dashboard' : 'owner-dashboard');
+        if (!updatedProfile) {
+            throw new Error("La actualización del perfil no devolvió los datos actualizados.");
         }
+        
+        // Success: update local state
+        const finalUser = updatedProfile as User;
+        setCurrentUser(finalUser);
+        setUsers(currentUsers => currentUsers.map(u => (u.id === finalUser.id ? finalUser : u)));
+
     } catch (error: any) {
-        console.error('Error de Supabase al actualizar el usuario:', error);
-        // Volvemos a lanzar el error para que el componente que llama pueda manejarlo
-        throw error;
+        console.error("Error de Supabase al actualizar el usuario:", error);
+        // This is the key part: create a clean error to throw upwards.
+        throw new Error(error.message || "Se produjo un error en la base de datos.");
     }
-  };
+};
 
   const handleSaveProperty = async (propertyData: Omit<Property, 'id' | 'views' | 'compatible_candidates' | 'owner_id'> & { id?: number }) => {
     if (!currentUser) return;
@@ -418,11 +416,11 @@ function App() {
       case 'home': return <HomePage onStartRegistration={handleStartRegistration} {...pageNavigationProps} />;
       case 'owners': return <OwnerLandingPage onStartPublication={handleStartPublication} {...pageNavigationProps} />;
       case 'login': return <LoginPage onLogin={handleLogin} onRegister={handleRegister} registrationData={registrationData} publicationData={publicationData} initialMode={loginInitialMode} {...loginPageProps} />;
-      case 'blog': return <BlogPage posts={blogPosts} {...pageNavigationProps} />;
-      case 'about': return <AboutPage {...pageNavigationProps} />;
-      case 'privacy': return <PrivacyPolicyPage {...pageNavigationProps} />;
-      case 'terms': return <TermsPage {...pageNavigationProps} />;
-      case 'contact': return <ContactPage {...pageNavigationProps} />;
+      case 'blog': return <BlogPage posts={blogPosts} onOwnersClick={() => setPage('owners')} {...loginPageProps} />;
+      case 'about': return <AboutPage onOwnersClick={() => setPage('owners')} {...loginPageProps} />;
+      case 'privacy': return <PrivacyPolicyPage onOwnersClick={() => setPage('owners')} {...loginPageProps} />;
+      case 'terms': return <TermsPage onOwnersClick={() => setPage('owners')} {...loginPageProps} />;
+      case 'contact': return <ContactPage onOwnersClick={() => setPage('owners')} {...loginPageProps} />;
       case 'tenant-dashboard':
         if (!currentUser) return <LoginPage onLogin={handleLogin} onRegister={handleRegister} initialMode="login" {...loginPageProps} />;
         return <TenantDashboard 

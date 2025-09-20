@@ -61,52 +61,54 @@ const Profile: React.FC<ProfileProps> = ({ user, onSave }) => {
     setIsUploading(true);
     
     try {
-        const dataToSave: any = { ...formData };
+      let finalUserData = { ...formData };
 
-        // Forzar la conversión de tipos numéricos para evitar errores en la base de datos
-        const parsedAge = parseInt(String(dataToSave.age || '0'), 10);
-        if (isNaN(parsedAge) || parsedAge < 18) {
-            throw new Error('Por favor, introduce una edad válida (mayor de 18).');
-        }
-        dataToSave.age = parsedAge;
+      // Image upload logic...
+      if (profileImageFile) {
+        const fileExt = profileImageFile.name.split('.').pop();
+        const filePath = `${user.id}-${new Date().getTime()}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage
+          .from('avatars')
+          .upload(filePath, profileImageFile, { upsert: true });
 
-        const commuteValue = String(dataToSave.commute_distance || '').trim();
-        if (commuteValue) {
-            const parsedCommute = parseInt(commuteValue, 10);
-            dataToSave.commute_distance = isNaN(parsedCommute) ? undefined : parsedCommute;
-        } else {
-            dataToSave.commute_distance = undefined;
+        if (uploadError) {
+          throw new Error(`Error al subir la imagen: ${uploadError.message}`);
         }
 
-        if (profileImageFile) {
-            const fileExt = profileImageFile.name.split('.').pop();
-            const filePath = `${user.id}-${new Date().getTime()}.${fileExt}`;
+        const { data: urlData } = supabase.storage
+          .from('avatars')
+          .getPublicUrl(filePath);
+        
+        finalUserData.avatar_url = urlData.publicUrl;
+      }
+      
+      const safeNumber = (value: any): number | undefined => {
+          const num = Number(value);
+          if (value === '' || value === null || value === undefined) return undefined;
+          if (isNaN(num)) {
+            throw new Error(`El valor '${value}' no es un número válido.`);
+          }
+          return num;
+      };
 
-            const { error: uploadError } = await supabase.storage
-                .from('avatars')
-                .upload(filePath, profileImageFile, {
-                    cacheControl: '3600',
-                    upsert: true,
-                });
-
-            if (uploadError) {
-                setFormData(prev => ({ ...prev, avatar_url: user.avatar_url }));
-                throw new Error(`Hubo un error al subir la nueva imagen de perfil: ${uploadError.message}`);
-            }
-
-            const { data: urlData } = supabase.storage
-                .from('avatars')
-                .getPublicUrl(filePath);
-            
-            dataToSave.avatar_url = urlData.publicUrl;
-        }
-
-        await onSave(dataToSave as User);
+      const finalDataForSave: User = {
+        ...finalUserData,
+        age: safeNumber(finalUserData.age)!, // Age is required
+        commute_distance: safeNumber(finalUserData.commute_distance),
+      };
+      
+      await onSave(finalDataForSave);
+      alert('Perfil actualizado con éxito');
+      
     } catch (error: any) {
-        alert(`Fallo al guardar el perfil:\n${error.message || 'Ocurrió un error desconocido.'}`);
-        console.error("Fallo al guardar el perfil:", error);
+      // Centralized error display for the user.
+      alert(`Fallo al guardar el perfil:\n${error.message}`);
+      if (profileImageFile) {
+          // Revert preview image if save fails
+          setFormData(prev => ({ ...prev, avatar_url: user.avatar_url }));
+      }
     } finally {
-        setIsUploading(false);
+      setIsUploading(false);
     }
   };
 
