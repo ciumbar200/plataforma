@@ -64,14 +64,14 @@ const Profile: React.FC<ProfileProps> = ({ user, onSave }) => {
 
     if (profileImageFile) {
         const fileExt = profileImageFile.name.split('.').pop();
-        // Simplified file path for robustness and to ensure uniqueness
+        // Use a simple, robust path. user.id is unique. Appending timestamp prevents caching issues.
         const filePath = `${user.id}-${new Date().getTime()}.${fileExt}`;
 
         const { error: uploadError } = await supabase.storage
             .from('avatars')
             .upload(filePath, profileImageFile, {
                 cacheControl: '3600',
-                upsert: true,
+                upsert: true, // Overwrite if file with same name exists
             });
 
         if (uploadError) {
@@ -83,13 +83,16 @@ const Profile: React.FC<ProfileProps> = ({ user, onSave }) => {
             return;
         }
 
+        // Get public URL of the uploaded file
         const { data: urlData } = supabase.storage
             .from('avatars')
             .getPublicUrl(filePath);
         
+        // Update the profile picture with the permanent URL
         finalUserData.profile_picture = urlData.publicUrl;
     }
 
+    // Call the parent onSave function with the updated user data
     onSave(finalUserData);
     setIsUploading(false);
   };
