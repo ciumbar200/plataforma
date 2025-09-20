@@ -41,7 +41,6 @@ function App() {
   useEffect(() => {
     const initializeApp = async () => {
       try {
-        // Fetch session, users, and properties concurrently to speed up loading
         const [{ data: { session } }, usersRes, propertiesRes] = await Promise.all([
           supabase.auth.getSession(),
           supabase.from('profiles').select('*'),
@@ -51,52 +50,53 @@ function App() {
         if (usersRes.error) throw usersRes.error;
         if (propertiesRes.error) throw propertiesRes.error;
 
-        // Set all required data into state at once
         const allUsers = usersRes.data as User[];
         setUsers(allUsers);
         setProperties(propertiesRes.data as Property[]);
 
         if (session?.user) {
-          // If a session exists, find the user's profile from the prefetched list
           const profile = allUsers.find(u => u.id === session.user.id);
           
           if (profile) {
-            setCurrentUser(profile);
-            if (profile.role === UserRole.ADMIN) setPage('admin-dashboard');
-            else if (profile.role === UserRole.PROPIETARIO) setPage('owner-dashboard');
+            // Sync avatar_url from auth metadata to profile state on load
+            const avatar_url = session.user.user_metadata?.avatar_url || profile.avatar_url;
+            const syncedProfile = { ...profile, avatar_url };
+
+            setCurrentUser(syncedProfile);
+            if (syncedProfile.role === UserRole.ADMIN) setPage('admin-dashboard');
+            else if (syncedProfile.role === UserRole.PROPIETARIO) setPage('owner-dashboard');
             else setPage('tenant-dashboard');
           } else {
-            // If profile is not found (edge case), sign out to prevent broken states
             await supabase.auth.signOut();
             setCurrentUser(null);
             setPage('home');
           }
         } else {
-          // No active session
           setCurrentUser(null);
           setPage('home');
         }
       } catch (error: any) {
         console.error("Error al inicializar la aplicación:", error.message || error);
         setCurrentUser(null);
-        setPage('home'); // Fallback to home page on any initialization error
+        setPage('home');
       } finally {
-        // Only stop loading once all initial data is fetched and state is set
         setLoading(false);
       }
     };
 
     initializeApp();
 
-    // Set up a listener for subsequent auth changes (e.g., user logs in/out in another tab)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
         const userInState = users.find(u => u.id === session?.user?.id);
         
         if (session?.user && userInState) {
           if (currentUser?.id !== userInState.id) {
-            setCurrentUser(userInState);
-            if (userInState.role === UserRole.ADMIN) setPage('admin-dashboard');
-            else if (userInState.role === UserRole.PROPIETARIO) setPage('owner-dashboard');
+            const avatar_url = session.user.user_metadata?.avatar_url || userInState.avatar_url;
+            const syncedProfile = { ...userInState, avatar_url };
+            setCurrentUser(syncedProfile);
+
+            if (syncedProfile.role === UserRole.ADMIN) setPage('admin-dashboard');
+            else if (syncedProfile.role === UserRole.PROPIETARIO) setPage('owner-dashboard');
             else setPage('tenant-dashboard');
           }
         } else if (!session?.user && currentUser !== null) {
@@ -108,7 +108,7 @@ function App() {
     return () => {
       subscription.unsubscribe();
     };
-  }, []); // The empty dependency array ensures this runs only once on mount.
+  }, []);
 
   const handleLogin = (user: User) => {
     setCurrentUser(user);
@@ -124,59 +124,34 @@ function App() {
       alert("Email y contraseña son requeridos para el registro.");
       return;
     }
-
-    // 1. Prepare the data payload first
     let profileDataPayload: any;
     let targetRole: UserRole;
 
     if (publicationData) {
       targetRole = UserRole.PROPIETARIO;
       profileDataPayload = {
-        name: userData.name || '',
-        age: userData.age || 18,
-        city: publicationData.city,
-        locality: publicationData.locality,
-        avatar_url: `https://placehold.co/200x200/a78bfa/4c1d95?text=${(userData.name || 'P').charAt(0)}`,
-        role: targetRole,
-        interests: [],
-        noise_level: 'Medio',
+        name: userData.name || '', age: userData.age || 18, city: publicationData.city, locality: publicationData.locality, role: targetRole,
+        avatar_url: `https://placehold.co/200x200/a78bfa/4c1d95?text=${(userData.name || 'P').charAt(0)}`, interests: [], noise_level: 'Medio',
       };
     } else if (registrationData) {
       targetRole = UserRole.INQUILINO;
       profileDataPayload = {
-        name: userData.name || '',
-        age: userData.age || 18,
-        city: registrationData.city,
-        locality: registrationData.locality,
-        rental_goal: registrationData.rentalGoal,
-        avatar_url: `https://placehold.co/200x200/93c5fd/1e3a8a?text=${(userData.name || 'I').charAt(0)}`,
-        interests: [],
-        lifestyle: [],
-        noise_level: 'Medio',
-        role: targetRole,
+        name: userData.name || '', age: userData.age || 18, city: registrationData.city, locality: registrationData.locality, rental_goal: registrationData.rentalGoal, role: targetRole,
+        avatar_url: `https://placehold.co/200x200/93c5fd/1e3a8a?text=${(userData.name || 'I').charAt(0)}`, interests: [], lifestyle: [], noise_level: 'Medio',
       };
-    } else if (role) { // Generic registration
+    } else if (role) {
       targetRole = role;
       profileDataPayload = {
-        name: userData.name || '',
-        age: userData.age || 18,
-        avatar_url: `https://placehold.co/200x200/9ca3af/1f2937?text=${(userData.name || '?').charAt(0)}`,
-        role: targetRole,
-        interests: [],
-        noise_level: 'Medio',
+        name: userData.name || '', age: userData.age || 18, role: targetRole,
+        avatar_url: `https://placehold.co/200x200/9ca3af/1f2937?text=${(userData.name || '?').charAt(0)}`, interests: [], noise_level: 'Medio',
       };
     } else {
       alert("Error: No se ha podido determinar el rol del usuario durante el registro.");
       return;
     }
 
-    // 2. Call signUp with the data in options
     const { data: authData, error: authError } = await supabase.auth.signUp({
-      email: userData.email,
-      password: password,
-      options: {
-        data: profileDataPayload,
-      },
+      email: userData.email, password: password, options: { data: profileDataPayload },
     });
 
     if (authError) {
@@ -185,12 +160,8 @@ function App() {
       return;
     }
 
-    // 3. After successful signup, show a confirmation message.
-    // The onAuthStateChange listener will handle user state when they eventually log in after verification.
     if (authData.user) {
       alert('¡Registro exitoso! Por favor, revisa tu correo electrónico para verificar tu cuenta.');
-      
-      // Reset state and navigate to login page, so user can log in after verification
       setRegistrationData(null);
       setPublicationData(null);
       setPage('login');
@@ -237,20 +208,19 @@ const handleUpdateUser = async (updatedUser: User) => {
     }
 
     try {
-        const { id, ...dataFromForm } = updatedUser;
+        const { id, avatar_url, ...dataFromForm } = updatedUser;
 
-        // Update auth user metadata if avatar has changed.
-        if (dataFromForm.avatar_url && dataFromForm.avatar_url !== currentUser.avatar_url) {
-            const { error: authError } = await supabase.auth.updateUser({
-                data: { avatar_url: dataFromForm.avatar_url }
+        // 1. Update auth user metadata if avatar has changed.
+        if (avatar_url && avatar_url !== currentUser.avatar_url) {
+            const { data: authUpdateData, error: authError } = await supabase.auth.updateUser({
+                data: { avatar_url: avatar_url }
             });
             if (authError) {
                 throw new Error(`Error al actualizar metadatos de autenticación: ${authError.message}`);
             }
         }
-
-        // Prepare a safe payload for the 'profiles' table, only including user-editable fields.
-        // This prevents RLS errors from trying to update protected columns like 'role' or 'email'.
+        
+        // 2. Prepare a safe payload for the 'profiles' table, excluding avatar_url and other protected fields.
         const profileDataToUpdate = {
             name: dataFromForm.name,
             age: dataFromForm.age,
@@ -262,7 +232,6 @@ const handleUpdateUser = async (updatedUser: User) => {
             lifestyle: dataFromForm.lifestyle,
             noise_level: dataFromForm.noise_level,
             commute_distance: dataFromForm.commute_distance,
-            avatar_url: dataFromForm.avatar_url, // Also update in profiles table for consistency
         };
 
         const { data: updatedProfile, error: profileError } = await supabase
@@ -280,15 +249,19 @@ const handleUpdateUser = async (updatedUser: User) => {
             throw new Error("La base de datos no devolvió el perfil actualizado.");
         }
         
-        // Merge with currentUser to preserve any client-side state (like compatibility score).
-        const finalUser = { ...currentUser, ...updatedProfile } as User;
+        // 3. Construct final user state, merging the DB result with the new avatar_url from the form.
+        const finalUser: User = { 
+            ...currentUser, 
+            ...updatedProfile, 
+            avatar_url: avatar_url // Ensure the new avatar is reflected immediately
+        };
+
         setCurrentUser(finalUser);
         setUsers(currentUsers => currentUsers.map(u => (u.id === finalUser.id ? finalUser : u)));
 
     } catch (error: any) {
-        // This block catches any error from the process and ensures a clean Error object is thrown.
         console.error("Error detallado al actualizar el perfil:", error);
-        throw error; // Re-throw the already well-formed Error object for the UI to catch.
+        throw error;
     }
 };
 
