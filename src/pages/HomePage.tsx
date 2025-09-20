@@ -55,7 +55,7 @@ const HomePage: React.FC<HomePageProps> = ({ onLoginClick, onStartRegistration, 
 
     return (
         <div className="min-h-screen w-full bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-900 text-white flex flex-col">
-            <Header onLoginClick={onLoginClick} onHomeClick={() => {}} onOwnersClick={onOwnersClick} pageContext="inquilino" />
+            <Header onLoginClick={onLoginClick} onHomeClick={() => {}} onOwnersClick={onOwnersClick} />
             
             <main className="flex-grow">
                 {/* Hero Section */}

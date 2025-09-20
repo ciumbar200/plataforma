@@ -8,6 +8,7 @@ import { getSupabaseUrl } from '../constants';
 interface PageProps {
   onHomeClick: () => void;
   onLoginClick: () => void;
+  onOwnersClick: () => void;
   onBlogClick: () => void;
   onAboutClick: () => void;
   onPrivacyClick: () => void;
@@ -23,13 +24,13 @@ const TeamMemberCard: React.FC<{ imgSrc: string; name: string; title: string; }>
     </div>
 );
 
-const AboutPage: React.FC<PageProps> = ({ onHomeClick, onLoginClick, onBlogClick, onAboutClick, onPrivacyClick, onTermsClick, onContactClick }) => {
+const AboutPage: React.FC<PageProps> = ({ onHomeClick, onLoginClick, onOwnersClick, onBlogClick, onAboutClick, onPrivacyClick, onTermsClick, onContactClick }) => {
     
     const footerProps = { onBlogClick, onAboutClick, onPrivacyClick, onTermsClick, onContactClick };
     
     return (
         <div className="min-h-screen w-full bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-900 text-white flex flex-col">
-            <Header onLoginClick={onLoginClick} onHomeClick={onHomeClick} pageContext="inquilino" />
+            <Header onLoginClick={onLoginClick} onHomeClick={onHomeClick} onOwnersClick={onOwnersClick} />
             
             <main className="flex-grow">
                 {/* Hero Section */}

@@ -97,7 +97,7 @@ const LoginPage: React.FC<LoginPageProps> = (props) => {
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-900 text-white flex flex-col">
-      <Header onLoginClick={() => {}} onHomeClick={onHomeClick} onOwnersClick={onOwnersClick} pageContext={publicationData ? 'propietario' : 'inquilino'} hideAuthActions={true} />
+      <Header onLoginClick={() => {}} onHomeClick={onHomeClick} onOwnersClick={onOwnersClick} hideAuthActions={true} />
       <main className="flex-grow flex items-center justify-center p-4">
         <GlassCard className="w-full max-w-md">
           <div className="text-center mb-8">
