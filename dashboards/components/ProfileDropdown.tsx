@@ -1,6 +1,8 @@
 
+
 import React, { useState, useEffect, useRef } from 'react';
-import { User } from '../../types';
+// FIX: Corrected import path for types.ts to point to the file inside the /src directory.
+import { User } from '../../src/types';
 import { LogoutIcon, PencilIcon, ChevronDownIcon } from '../../components/icons';
 
 interface ProfileDropdownProps {

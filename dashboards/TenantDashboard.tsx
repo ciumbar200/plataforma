@@ -1,12 +1,15 @@
+
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
-// FIX: Import AVAILABLE_AMENITIES from components/icons and other constants from the main constants file.
-import { CITIES_DATA, showNotification } from '../constants';
-import { AVAILABLE_AMENITIES } from '../components/icons';
+// FIX: Corrected import path for constants.ts to point to the file inside the /src directory.
+import { CITIES_DATA, showNotification } from '../src/constants';
+// FIX: Corrected import path for icons.tsx to be relative to the dashboards directory.
+import { AVAILABLE_AMENITIES } from '../../components/icons';
 import UserProfileCard from './components/UserProfileCard';
 import PropertyCard from './components/PropertyCard';
-import { CheckIcon, XIcon, CompassIcon, BuildingIcon, HeartIcon, UserCircleIcon, ChevronLeftIcon, PaperAirplaneIcon, EyeIcon, UsersIcon, CalendarIcon, PieChartIcon, AlertTriangleIcon, PawPrintIcon } from '../components/icons';
-import GlassCard from '../components/GlassCard';
-import { User, Property, AmenityId, SavedSearch, UserRole, RentalGoal, PropertyType } from '../types';
+import { CheckIcon, XIcon, CompassIcon, BuildingIcon, HeartIcon, UserCircleIcon, ChevronLeftIcon, PaperAirplaneIcon, EyeIcon, UsersIcon, CalendarIcon, PieChartIcon, AlertTriangleIcon, PawPrintIcon } from '../../components/icons';
+import GlassCard from '../../components/GlassCard';
+// FIX: Corrected import path for types.ts to point to the file inside the /src directory.
+import { User, Property, AmenityId, SavedSearch, UserRole, RentalGoal, PropertyType } from '../src/types';
 import GoogleMap from './components/GoogleMap';
 import SaveSearchModal from './components/SaveSearchModal';
 import MoonSplit from './components/MoonSplit';
@@ -600,9 +603,10 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user: currentUser, al
                     </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    {/* FIX: Add explicit type annotation to fix 'unknown' key error. */}
                     <select value={selectedPropertyType} onChange={(e) => setSelectedPropertyType(e.target.value)} className="w-full bg-white/10 border border-white/20 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-indigo-500">
                         <option value="" className="bg-gray-800">Todos los tipos</option>
-                        {Object.values(PropertyType).map(type => <option key={type} value={type} className="bg-gray-800">{type}</option>)}
+                        {Object.values(PropertyType).map((type: PropertyType) => <option key={type} value={type} className="bg-gray-800">{type}</option>)}
                     </select>
                     <select value={selectedBathrooms} onChange={(e) => setSelectedBathrooms(e.target.value)} className="w-full bg-white/10 border border-white/20 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-indigo-500">
                         <option value="" className="bg-gray-800">Baños (cualquiera)</option>

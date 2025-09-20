@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -9,8 +10,10 @@ import {
     SignatureIcon,
     ChevronLeftIcon
 } from '../components/icons';
-import { PropertyType } from '../types';
-import { CITIES_DATA, getSupabaseUrl } from '../constants';
+// FIX: Corrected import path for types.ts to point to the file inside the /src directory.
+import { PropertyType } from '../src/types';
+// FIX: Corrected import path for constants.ts to point to the file inside the /src directory.
+import { CITIES_DATA, getSupabaseUrl } from '../src/constants';
 
 
 interface OwnerLandingPageProps {
@@ -113,7 +116,8 @@ const OwnerLandingPage: React.FC<OwnerLandingPageProps> = ({ onStartPublication,
                                     <label htmlFor="propertyType" className="text-xs text-white/70">Tipo de Propiedad</label>
                                     <select id="propertyType" value={propertyType} onChange={(e) => setPropertyType(e.target.value as PropertyType)} className={`w-full bg-transparent font-semibold focus:outline-none ${!propertyType ? 'text-white/60' : 'text-white'}`}>
                                         <option value="" disabled>Tipo de propiedad</option>
-                                        {Object.values(PropertyType).map(type => <option key={type} value={type} className="bg-gray-800 text-white">{type}</option>)}
+                                        {/* FIX: Add explicit type annotation to fix 'unknown' key error. */}
+                                        {Object.values(PropertyType).map((type: PropertyType) => <option key={type} value={type} className="bg-gray-800 text-white">{type}</option>)}
                                     </select>
                                 </div>
                                 <div className="w-px h-10 bg-white/20 hidden md:block"></div>

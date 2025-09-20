@@ -1,5 +1,7 @@
+
 import React, { useState } from 'react';
-import { Property } from '../../types';
+// FIX: Corrected import path for types.ts to point to the file inside the /src directory.
+import { Property } from '../../src/types';
 import { EyeIcon, UsersIcon, PlayIcon, PencilIcon, CalendarIcon } from '../../components/icons';
 import VideoPlayerModal from './VideoPlayerModal';
 

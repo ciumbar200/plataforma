@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 // FIX: Removed import for MOCK_OWNER_STATS which does not exist in constants.ts.
@@ -5,9 +6,10 @@ import StatCard from './components/StatCard';
 import { BuildingIcon, ChartBarIcon, EyeIcon, UsersIcon, UserCircleIcon, PlusIcon } from '../components/icons';
 import PropertyCard from './components/PropertyCard';
 import AddPropertyModal from './components/AddPropertyModal';
-// FIX: Added OwnerStats to import to use for the mock data type.
-import { Property, User, PropertyType, OwnerStats } from '../types';
-import GlassCard from '../components/GlassCard';
+// FIX: Corrected import path for types.ts to point to the file inside the /src directory.
+import { Property, User, PropertyType, OwnerStats } from '../src/types';
+// FIX: Corrected import path for GlassCard.
+import GlassCard from '../../components/GlassCard';
 
 // FIX: Added MOCK_OWNER_STATS constant locally as it was missing from the imported file.
 const MOCK_OWNER_STATS: OwnerStats = {

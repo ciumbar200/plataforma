@@ -1,9 +1,12 @@
+
 import React, { useState, useEffect } from 'react';
 import GlassCard from '../../components/GlassCard';
 import { XIcon, CameraIcon } from '../../components/icons';
-import { Property, AmenityId, PropertyFeatures, PropertyType } from '../../types';
-// FIX: Update imports to resolve from correct files.
-import { CITIES_DATA } from '../../constants';
+// FIX: Corrected import path for types.ts to point to the file inside the /src directory.
+import { Property, AmenityId, PropertyFeatures, PropertyType } from '../../src/types';
+// FIX: Corrected import path for constants.ts to point to the file inside the /src directory.
+import { CITIES_DATA } from '../../src/constants';
+// FIX: Corrected import path for icons.tsx.
 import { AVAILABLE_AMENITIES } from '../../components/icons';
 
 type InitialPropertyData = { property_type: PropertyType; city: string; locality: string };
@@ -178,7 +181,8 @@ const AddPropertyModal: React.FC<AddPropertyModalProps> = ({ isOpen, onClose, on
             <div>
               <label htmlFor="property_type" className="block text-sm font-medium text-white/80 mb-1">Tipo de Propiedad</label>
               <select name="property_type" id="property_type" value={formData.property_type} onChange={handleChange} className="w-full bg-white/10 border border-white/20 rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 outline-none">
-                  {Object.values(PropertyType).map(type => (
+                  {/* FIX: Add explicit type annotation to fix 'unknown' key error. */}
+                  {Object.values(PropertyType).map((type: PropertyType) => (
                       <option key={type} value={type} className="bg-gray-800">{type}</option>
                   ))}
               </select>

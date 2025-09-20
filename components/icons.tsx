@@ -1,5 +1,7 @@
+
 import React from 'react';
-import { AmenityId } from '../types';
+// FIX: Corrected import path for types.ts to point to the file inside the /src directory.
+import { AmenityId } from '../src/types';
 
 // Common props for icons
 interface IconProps extends React.SVGProps<SVGSVGElement> {}

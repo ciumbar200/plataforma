@@ -1,10 +1,13 @@
+
 import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { CompassIcon, UsersIcon, BuildingIcon, ChevronDownIcon, PencilIcon, SearchIcon, SignatureIcon } from '../components/icons';
 import GlassCard from '../components/GlassCard';
-import { RentalGoal } from '../types';
-import { CITIES_DATA, getSupabaseUrl } from '../constants';
+// FIX: Corrected import path for types.ts to point to the file inside the /src directory.
+import { RentalGoal } from '../src/types';
+// FIX: Corrected import path for constants.ts to point to the file inside the /src directory.
+import { CITIES_DATA, getSupabaseUrl } from '../src/constants';
 
 interface HomePageProps {
     onLoginClick: () => void;

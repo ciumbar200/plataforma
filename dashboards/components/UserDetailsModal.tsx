@@ -1,7 +1,9 @@
+
 import React from 'react';
 import GlassCard from '../../components/GlassCard';
 import { XIcon } from '../../components/icons';
-import { User, RentalGoal } from '../../types';
+// FIX: Corrected import path for types.ts to point to the file inside the /src directory.
+import { User, RentalGoal } from '../../src/types';
 
 interface UserDetailsModalProps {
   isOpen: boolean;

@@ -138,12 +138,12 @@ export const addToFluentCRM = async (user: { name: string; last_name?: string; e
 // The application will now fetch this data directly from Supabase.
 
 export const MOCK_NOTIFICATIONS: Notification[] = [
-    { id: 1, user_id: '1', type: NotificationType.NEW_MATCH, message: '¡Tienes un nuevo match con Javier! Compatibilidad del 85%.', timestamp: '2024-07-25T10:30:00Z', read: false, related_entity_id: 2 },
-    { id: 2, user_id: '3', type: NotificationType.PROPERTY_INQUIRY, message: 'Elena está interesada en tu "Habitación luminosa en Gràcia".', timestamp: '2024-07-25T09:00:00Z', read: true, related_entity_id: 1 },
+    { id: 1, user_id: '8a65e909-7a54-4e81-872f-488f5f1a3ba2', type: NotificationType.NEW_MATCH, message: '¡Tienes un nuevo match con Javier! Compatibilidad del 85%.', timestamp: '2024-07-25T10:30:00Z', read: false, related_entity_id: 2 },
+    { id: 2, user_id: '2c9f8a6a-3e4b-4b1a-9f5a-3e1b3a3b3c4c', type: NotificationType.PROPERTY_INQUIRY, message: 'Elena está interesada en tu "Habitación luminosa en Gràcia".', timestamp: '2024-07-25T09:00:00Z', read: true, related_entity_id: 1 },
 ];
 
 export const MOCK_SAVED_SEARCHES: SavedSearch[] = [
-    { id: 1, user_id: '1', name: 'Pisos en Malasaña', filters: { city: 'Madrid', locality: 'Malasaña', max_price: 600 } }
+    { id: 1, user_id: '8a65e909-7a54-4e81-872f-488f5f1a3ba2', name: 'Pisos en Malasaña', filters: { city: 'Madrid', locality: 'Malasaña', max_price: 600 } }
 ];
 
 export const MOCK_BLOG_POSTS: BlogPost[] = [

@@ -1,9 +1,12 @@
+
 import React, { useState } from 'react';
-import { User, Property, UserRole, BlogPost } from '../types';
+// FIX: Corrected import path for types.ts to point to the file inside the /src directory.
+import { User, Property, UserRole, BlogPost } from '../src/types';
 import StatCard from './components/StatCard';
 // FIX: Added 'LogoutIcon' to imports for the new logout button.
 import { UsersIcon, CheckCircleIcon, BuildingIcon, HeartIcon, ChartBarIcon, ClockIcon, FileTextIcon, SettingsIcon, EyeIcon, TrashIcon, BanIcon, PencilIcon, CheckIcon as CheckMarkIcon, XIcon, PlusIcon, AlertTriangleIcon, MoonIcon, LogoutIcon } from '../components/icons';
-import GlassCard from '../components/GlassCard';
+// FIX: Corrected import path for GlassCard.
+import GlassCard from '../../components/GlassCard';
 import UserDetailsModal from './components/UserDetailsModal';
 import PropertyDetailsModal from './components/PropertyDetailsModal';
 import ConfirmationModal from './components/ConfirmationModal';
