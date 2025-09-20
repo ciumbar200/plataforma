@@ -208,11 +208,12 @@ const handleUpdateUser = async (updatedUser: User) => {
     }
 
     try {
-        const { id, avatar_url, ...dataFromForm } = updatedUser;
+        const { id, ...dataFromForm } = updatedUser;
+        const { avatar_url } = dataFromForm;
 
         // 1. Update auth user metadata if avatar has changed.
         if (avatar_url && avatar_url !== currentUser.avatar_url) {
-            const { data: authUpdateData, error: authError } = await supabase.auth.updateUser({
+            const { error: authError } = await supabase.auth.updateUser({
                 data: { avatar_url: avatar_url }
             });
             if (authError) {
@@ -220,7 +221,8 @@ const handleUpdateUser = async (updatedUser: User) => {
             }
         }
         
-        // 2. Prepare a safe payload for the 'profiles' table, excluding avatar_url and other protected fields.
+        // 2. Prepare payload for the 'profiles' table, EXCLUDING avatar_url.
+        // The error indicates the 'avatar_url' column does not exist in the profiles table.
         const profileDataToUpdate = {
             name: dataFromForm.name,
             age: dataFromForm.age,
@@ -249,11 +251,11 @@ const handleUpdateUser = async (updatedUser: User) => {
             throw new Error("La base de datos no devolvió el perfil actualizado.");
         }
         
-        // 3. Construct final user state, merging the DB result with the new avatar_url from the form.
+        // 3. Construct final user state with the new avatar_url from the form/upload.
         const finalUser: User = { 
             ...currentUser, 
-            ...updatedProfile, 
-            avatar_url: avatar_url // Ensure the new avatar is reflected immediately
+            ...updatedProfile,
+            avatar_url: dataFromForm.avatar_url, // Use the potentially new avatar URL
         };
 
         setCurrentUser(finalUser);
@@ -401,11 +403,11 @@ const handleUpdateUser = async (updatedUser: User) => {
       case 'home': return <HomePage onStartRegistration={handleStartRegistration} {...pageNavigationProps} />;
       case 'owners': return <OwnerLandingPage onStartPublication={handleStartPublication} {...pageNavigationProps} />;
       case 'login': return <LoginPage onLogin={handleLogin} onRegister={handleRegister} registrationData={registrationData} publicationData={publicationData} initialMode={loginInitialMode} {...loginPageProps} />;
-      case 'blog': return <BlogPage posts={blogPosts} {...pageNavigationProps} onOwnersClick={() => setPage('owners')} />;
-      case 'about': return <AboutPage {...pageNavigationProps} onOwnersClick={() => setPage('owners')} />;
-      case 'privacy': return <PrivacyPolicyPage {...pageNavigationProps} onOwnersClick={() => setPage('owners')} />;
-      case 'terms': return <TermsPage {...pageNavigationProps} onOwnersClick={() => setPage('owners')} />;
-      case 'contact': return <ContactPage {...pageNavigationProps} onOwnersClick={() => setPage('owners')} />;
+      case 'blog': return <BlogPage posts={blogPosts} {...pageNavigationProps} />;
+      case 'about': return <AboutPage {...pageNavigationProps} />;
+      case 'privacy': return <PrivacyPolicyPage {...pageNavigationProps} />;
+      case 'terms': return <TermsPage {...pageNavigationProps} />;
+      case 'contact': return <ContactPage {...pageNavigationProps} />;
       case 'tenant-dashboard':
         if (!currentUser) return <LoginPage onLogin={handleLogin} onRegister={handleRegister} initialMode="login" {...loginPageProps} />;
         return <TenantDashboard 
