@@ -22,7 +22,7 @@ interface LoginPageProps {
   onPrivacyClick: () => void;
   onTermsClick: () => void;
   onContactClick: () => void;
-  onLoginClick: () => void;
+  onRegisterClick: () => void;
 }
 
 const LoginPage: React.FC<LoginPageProps> = (props) => {
@@ -38,22 +38,72 @@ const LoginPage: React.FC<LoginPageProps> = (props) => {
   const [selectedRole, setSelectedRole] = useState<UserRole>(UserRole.INQUILINO);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<{ [key: string]: string | null }>({});
+  const [roleSelectedForSocial, setRoleSelectedForSocial] = useState(false);
+
 
   useEffect(() => {
     setMode(isGuidedRegisterMode ? 'register' : initialMode);
+    setErrors({});
   }, [initialMode, isGuidedRegisterMode]);
+
+  const validateField = (name: string, value: string) => {
+    let fieldError: string | null = null;
+    switch (name) {
+      case 'name':
+        if (!value) fieldError = 'El nombre es obligatorio.';
+        else if (value.length < 3) fieldError = 'El nombre debe tener al menos 3 caracteres.';
+        break;
+      case 'age':
+        if (!value) fieldError = 'La edad es obligatoria.';
+        else if (isNaN(Number(value)) || Number(value) < 18 || Number(value) > 120) {
+          fieldError = 'Debes tener entre 18 y 120 años.';
+        }
+        break;
+      case 'email':
+        if (!value) fieldError = 'El email es obligatorio.';
+        else if (!/\S+@\S+\.\S+/.test(value)) fieldError = 'El formato del email es inválido.';
+        break;
+      case 'password':
+        if (!value) fieldError = 'La contraseña es obligatoria.';
+        else if (value.length < 6) fieldError = 'La contraseña debe tener al menos 6 caracteres.';
+        break;
+      default:
+        break;
+    }
+    setErrors(prev => ({ ...prev, [name]: fieldError }));
+  };
+
+  const validateForm = () => {
+    const newErrors: { [key: string]: string | null } = {};
+    if (mode === 'register') {
+        validateField('name', name);
+        validateField('age', age);
+        validateField('email', email);
+        validateField('password', password);
+        // Re-check after setting errors
+        if (!name || name.length < 3 || !age || Number(age) < 18 || !email || !/\S+@\S+\.\S+/.test(email) || !password || password.length < 6) {
+            return false;
+        }
+    } else {
+        validateField('email', email);
+        validateField('password', password);
+        if (!email || !/\S+@\S+\.\S+/.test(email) || !password) {
+            return false;
+        }
+    }
+    return Object.values(errors).every(e => e === null);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateForm()) {
+        return;
+    }
     setError('');
     setLoading(true);
 
     if (mode === 'register') {
-        if (!name || !age || !email || !password) {
-            setError("Por favor, completa todos los campos.");
-            setLoading(false);
-            return;
-        }
         await onRegister({ email, name, age: parseInt(age, 10) }, password, isGuidedRegisterMode ? undefined : selectedRole);
     } else {
         const { data, error: signInError } = await supabase.auth.signInWithPassword({
@@ -97,7 +147,7 @@ const LoginPage: React.FC<LoginPageProps> = (props) => {
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-900 text-white flex flex-col">
-      <Header onLoginClick={() => {}} onHomeClick={onHomeClick} onOwnersClick={onOwnersClick} hideAuthActions={true} />
+      <Header onLoginClick={() => setMode('login')} onRegisterClick={() => setMode('register')} onHomeClick={onHomeClick} onOwnersClick={onOwnersClick} pageContext={publicationData ? 'propietario' : 'inquilino'} />
       <main className="flex-grow flex items-center justify-center p-4">
         <GlassCard className="w-full max-w-md">
           <div className="text-center mb-8">
@@ -113,11 +163,11 @@ const LoginPage: React.FC<LoginPageProps> = (props) => {
                   <div>
                     <label className="block text-sm font-medium text-white/80 mb-2">Quiero registrarme como:</label>
                     <div className="grid grid-cols-2 gap-3">
-                      <button type="button" onClick={() => setSelectedRole(UserRole.INQUILINO)} className={`flex flex-col items-center justify-center p-4 rounded-lg border-2 transition-all ${selectedRole === UserRole.INQUILINO ? 'bg-indigo-500/30 border-indigo-400' : 'bg-white/10 border-transparent hover:border-white/30'}`}>
+                      <button type="button" onClick={() => { setSelectedRole(UserRole.INQUILINO); setRoleSelectedForSocial(true); }} className={`flex flex-col items-center justify-center p-4 rounded-lg border-2 transition-all ${selectedRole === UserRole.INQUILINO ? 'bg-indigo-500/30 border-indigo-400' : 'bg-white/10 border-transparent hover:border-white/30'}`}>
                         <UsersIcon className="w-8 h-8 mb-2" />
                         <span className="font-semibold">Inquilino</span>
                       </button>
-                      <button type="button" onClick={() => setSelectedRole(UserRole.PROPIETARIO)} className={`flex flex-col items-center justify-center p-4 rounded-lg border-2 transition-all ${selectedRole === UserRole.PROPIETARIO ? 'bg-indigo-500/30 border-indigo-400' : 'bg-white/10 border-transparent hover:border-white/30'}`}>
+                      <button type="button" onClick={() => { setSelectedRole(UserRole.PROPIETARIO); setRoleSelectedForSocial(true); }} className={`flex flex-col items-center justify-center p-4 rounded-lg border-2 transition-all ${selectedRole === UserRole.PROPIETARIO ? 'bg-indigo-500/30 border-indigo-400' : 'bg-white/10 border-transparent hover:border-white/30'}`}>
                         <BuildingIcon className="w-8 h-8 mb-2" />
                         <span className="font-semibold">Propietario</span>
                       </button>
@@ -126,22 +176,26 @@ const LoginPage: React.FC<LoginPageProps> = (props) => {
                 )}
                 <div>
                   <label htmlFor="name" className="block text-sm font-medium text-white/80 mb-1">Nombre Completo</label>
-                  <input type="text" id="name" value={name} onChange={(e) => setName(e.target.value)} className="w-full bg-white/10 border border-white/20 rounded-lg p-3 outline-none focus:ring-2 focus:ring-indigo-500" required />
+                  <input type="text" id="name" value={name} onChange={(e) => setName(e.target.value)} onBlur={(e) => validateField('name', e.target.value)} className={`w-full bg-white/10 border rounded-lg p-3 outline-none focus:ring-2 focus:ring-indigo-500 ${errors.name ? 'border-red-500' : 'border-white/20'}`} />
+                  {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name}</p>}
                 </div>
                  <div>
                   <label htmlFor="age" className="block text-sm font-medium text-white/80 mb-1">Edad</label>
-                  <input type="number" id="age" value={age} onChange={(e) => setAge(e.target.value)} className="w-full bg-white/10 border border-white/20 rounded-lg p-3 outline-none focus:ring-2 focus:ring-indigo-500" required />
+                  <input type="number" id="age" value={age} onChange={(e) => setAge(e.target.value)} onBlur={(e) => validateField('age', e.target.value)} className={`w-full bg-white/10 border rounded-lg p-3 outline-none focus:ring-2 focus:ring-indigo-500 ${errors.age ? 'border-red-500' : 'border-white/20'}`} />
+                  {errors.age && <p className="text-red-400 text-xs mt-1">{errors.age}</p>}
                 </div>
               </>
             )}
 
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-white/80 mb-1">Email</label>
-              <input type="email" id="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full bg-white/10 border border-white/20 rounded-lg p-3 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="tu@email.com" required />
+              <input type="email" id="email" value={email} onChange={(e) => setEmail(e.target.value)} onBlur={(e) => validateField('email', e.target.value)} className={`w-full bg-white/10 border rounded-lg p-3 outline-none focus:ring-2 focus:ring-indigo-500 ${errors.email ? 'border-red-500' : 'border-white/20'}`} placeholder="tu@email.com" />
+              {errors.email && <p className="text-red-400 text-xs mt-1">{errors.email}</p>}
             </div>
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-white/80 mb-1">Contraseña</label>
-              <input type="password" id="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full bg-white/10 border border-white/20 rounded-lg p-3 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="••••••••" required />
+              <input type="password" id="password" value={password} onChange={(e) => setPassword(e.target.value)} onBlur={(e) => validateField('password', e.target.value)} className={`w-full bg-white/10 border rounded-lg p-3 outline-none focus:ring-2 focus:ring-indigo-500 ${errors.password ? 'border-red-500' : 'border-white/20'}`} placeholder="••••••••" />
+              {errors.password && <p className="text-red-400 text-xs mt-1">{errors.password}</p>}
             </div>
 
             {error && <p className="text-red-400 text-sm text-center">{error}</p>}
@@ -152,9 +206,9 @@ const LoginPage: React.FC<LoginPageProps> = (props) => {
             
             <div className="text-center text-sm">
                 {mode === 'login' ? (
-                    <p className="text-white/70">¿No tienes cuenta? <button type="button" onClick={() => { setMode('register'); setError('') }} className="font-semibold text-indigo-400 hover:underline">Regístrate</button></p>
+                    <p className="text-white/70">¿No tienes cuenta? <button type="button" onClick={() => { setMode('register'); setError(''); setErrors({}); }} className="font-semibold text-indigo-400 hover:underline">Regístrate</button></p>
                 ) : (
-                    <p className="text-white/70">¿Ya tienes cuenta? <button type="button" onClick={() => { setMode('login'); setError('') }} className="font-semibold text-indigo-400 hover:underline">Inicia sesión</button></p>
+                    <p className="text-white/70">¿Ya tienes cuenta? <button type="button" onClick={() => { setMode('login'); setError(''); setErrors({}); }} className="font-semibold text-indigo-400 hover:underline">Inicia sesión</button></p>
                 )}
             </div>
 
@@ -163,11 +217,16 @@ const LoginPage: React.FC<LoginPageProps> = (props) => {
               <div className="relative flex justify-center text-sm"><span className="px-2 bg-slate-900 text-white/70">O continúa con</span></div>
             </div>
 
+            {mode === 'register' && !isGuidedRegisterMode && !roleSelectedForSocial && (
+                <p className="text-center text-xs text-yellow-400 -mt-2 mb-2">
+                    Por favor, selecciona un rol para registrarte con redes sociales.
+                </p>
+            )}
             <div className="grid grid-cols-2 gap-3">
-              <button type="button" className="flex items-center justify-center gap-3 w-full bg-white/10 hover:bg-white/20 text-white font-semibold py-3 px-4 rounded-lg">
+              <button type="button" disabled={mode === 'register' && !isGuidedRegisterMode && !roleSelectedForSocial} className="flex items-center justify-center gap-3 w-full bg-white/10 hover:bg-white/20 text-white font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                 <GoogleIcon className="w-5 h-5" /><span>Google</span>
               </button>
-               <button type="button" className="flex items-center justify-center gap-3 w-full bg-white/10 hover:bg-white/20 text-white font-semibold py-3 px-4 rounded-lg">
+               <button type="button" disabled={mode === 'register' && !isGuidedRegisterMode && !roleSelectedForSocial} className="flex items-center justify-center gap-3 w-full bg-white/10 hover:bg-white/20 text-white font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                 <FacebookIcon className="w-5 h-5" /><span>Facebook</span>
               </button>
             </div>

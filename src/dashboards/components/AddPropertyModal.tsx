@@ -36,9 +36,12 @@ const AddPropertyModal: React.FC<AddPropertyModalProps> = ({ isOpen, onClose, on
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [existingImageUrls, setExistingImageUrls] = useState<string[]>([]);
   const [localities, setLocalities] = useState<string[]>([]);
+  const [errors, setErrors] = useState<{ [key: string]: string | null }>({});
+
 
   useEffect(() => {
     if (isOpen) {
+        setErrors({}); // Reset errors when modal opens
         const resetData = (city: string, locality?: string) => {
             const cityLocalities = CITIES_DATA[city] || [];
             setLocalities(cityLocalities);
@@ -87,9 +90,42 @@ const AddPropertyModal: React.FC<AddPropertyModalProps> = ({ isOpen, onClose, on
     }
   }, [propertyToEdit, isOpen, initialData]);
 
+  const validateField = (name: string, value: string) => {
+    let error: string | null = null;
+    switch (name) {
+      case 'title':
+        if (!value) error = 'El título es obligatorio.';
+        else if (value.length < 5) error = 'El título debe tener al menos 5 caracteres.';
+        break;
+      case 'address':
+        if (!value) error = 'La dirección es obligatoria.';
+        break;
+      case 'postal_code':
+        if (!value) error = 'El código postal es obligatorio.';
+        else if (!/^\d{5}$/.test(value)) error = 'El código postal debe tener 5 dígitos.';
+        break;
+      case 'price':
+        if (!value) error = 'El precio es obligatorio.';
+        else if (isNaN(Number(value)) || Number(value) <= 0) error = 'El precio debe ser un número positivo.';
+        break;
+      case 'available_from':
+        if (!value) error = 'La fecha de disponibilidad es obligatoria.';
+        else if (new Date(value) < new Date(new Date().setHours(0,0,0,0))) error = 'La fecha no puede ser anterior a hoy.';
+        break;
+      case 'video_url':
+        if (value && !/^(ftp|http|https):\/\/[^ "]+$/.test(value)) error = 'La URL del vídeo no es válida.';
+        break;
+      default:
+        break;
+    }
+    setErrors(prev => ({ ...prev, [name]: error }));
+    return error === null;
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    validateField(name, value);
   };
   
   const handleCityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -127,8 +163,22 @@ const AddPropertyModal: React.FC<AddPropertyModalProps> = ({ isOpen, onClose, on
     setExistingImageUrls(prev => prev.filter(imageUrl => imageUrl !== url));
   };
 
+  const validateForm = () => {
+    const fieldsToValidate = ['title', 'address', 'postal_code', 'price', 'available_from', 'video_url'];
+    let isValid = true;
+    fieldsToValidate.forEach(field => {
+        if (!validateField(field, (formData as any)[field])) {
+            isValid = false;
+        }
+    });
+    return isValid;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateForm()) {
+        return;
+    }
     
     const fileToDataUrl = (file: File): Promise<string> => {
         return new Promise((resolve, reject) => {
@@ -169,7 +219,8 @@ const AddPropertyModal: React.FC<AddPropertyModalProps> = ({ isOpen, onClose, on
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="md:col-span-2">
               <label htmlFor="title" className="block text-sm font-medium text-white/80 mb-1">Título</label>
-              <input type="text" name="title" id="title" value={formData.title} onChange={handleChange} className="w-full bg-white/10 border border-white/20 rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 outline-none" required />
+              <input type="text" name="title" id="title" value={formData.title} onChange={handleChange} className={`w-full bg-white/10 border rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 outline-none ${errors.title ? 'border-red-500' : 'border-white/20'}`} />
+              {errors.title && <p className="text-red-400 text-xs mt-1">{errors.title}</p>}
             </div>
             <div>
               <label htmlFor="property_type" className="block text-sm font-medium text-white/80 mb-1">Tipo de Propiedad</label>
@@ -182,7 +233,8 @@ const AddPropertyModal: React.FC<AddPropertyModalProps> = ({ isOpen, onClose, on
           </div>
           <div>
             <label htmlFor="address" className="block text-sm font-medium text-white/80 mb-1">Dirección (Calle y número)</label>
-            <input type="text" name="address" id="address" value={formData.address} onChange={handleChange} className="w-full bg-white/10 border border-white/20 rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 outline-none" required />
+            <input type="text" name="address" id="address" value={formData.address} onChange={handleChange} className={`w-full bg-white/10 border rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 outline-none ${errors.address ? 'border-red-500' : 'border-white/20'}`} />
+            {errors.address && <p className="text-red-400 text-xs mt-1">{errors.address}</p>}
           </div>
            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
@@ -199,17 +251,20 @@ const AddPropertyModal: React.FC<AddPropertyModalProps> = ({ isOpen, onClose, on
               </div>
               <div>
                 <label htmlFor="postal_code" className="block text-sm font-medium text-white/80 mb-1">Código Postal</label>
-                <input type="text" name="postal_code" id="postal_code" value={formData.postal_code} onChange={handleChange} className="w-full bg-white/10 border border-white/20 rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 outline-none" required />
+                <input type="text" name="postal_code" id="postal_code" value={formData.postal_code} onChange={handleChange} className={`w-full bg-white/10 border rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 outline-none ${errors.postal_code ? 'border-red-500' : 'border-white/20'}`} />
+                {errors.postal_code && <p className="text-red-400 text-xs mt-1">{errors.postal_code}</p>}
               </div>
           </div>
            <div className="grid grid-cols-2 gap-4">
               <div>
-                <label htmlFor="price" className="block text-sm font-medium text-white/80 mb-1">Precio/mes</label>
-                <input type="number" name="price" id="price" value={formData.price} onChange={handleChange} className="w-full bg-white/10 border border-white/20 rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 outline-none" required />
+                <label htmlFor="price" className="block text-sm font-medium text-white/80 mb-1">Precio/mes (€)</label>
+                <input type="number" name="price" id="price" value={formData.price} onChange={handleChange} className={`w-full bg-white/10 border rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 outline-none ${errors.price ? 'border-red-500' : 'border-white/20'}`} />
+                {errors.price && <p className="text-red-400 text-xs mt-1">{errors.price}</p>}
               </div>
               <div>
                 <label htmlFor="available_from" className="block text-sm font-medium text-white/80 mb-1">Disponible desde</label>
-                <input type="date" name="available_from" id="available_from" value={formData.available_from} onChange={handleChange} className="w-full bg-white/10 border border-white/20 rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 outline-none" required style={{ colorScheme: 'dark' }} />
+                <input type="date" name="available_from" id="available_from" value={formData.available_from} onChange={handleChange} className={`w-full bg-white/10 border rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 outline-none ${errors.available_from ? 'border-red-500' : 'border-white/20'}`} required style={{ colorScheme: 'dark' }} />
+                {errors.available_from && <p className="text-red-400 text-xs mt-1">{errors.available_from}</p>}
               </div>
           </div>
            <div>
@@ -273,7 +328,8 @@ const AddPropertyModal: React.FC<AddPropertyModalProps> = ({ isOpen, onClose, on
           </div>
           <div>
             <label htmlFor="video_url" className="block text-sm font-medium text-white/80 mb-1">URL del Vídeo (Opcional)</label>
-            <input type="text" name="video_url" id="video_url" value={formData.video_url} onChange={handleChange} className="w-full bg-white/10 border border-white/20 rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 outline-none" />
+            <input type="text" name="video_url" id="video_url" value={formData.video_url} onChange={handleChange} className={`w-full bg-white/10 border rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 outline-none ${errors.video_url ? 'border-red-500' : 'border-white/20'}`} />
+            {errors.video_url && <p className="text-red-400 text-xs mt-1">{errors.video_url}</p>}
           </div>
           <div className="flex justify-end gap-4 pt-4 sticky bottom-0 bg-black/20 backdrop-blur-sm -m-6 mt-4 p-6 border-t border-white/10">
             <button type="button" onClick={onClose} className="bg-white/10 hover:bg-white/20 px-6 py-2 rounded-lg font-semibold transition-colors">Cancelar</button>

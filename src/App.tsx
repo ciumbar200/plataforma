@@ -200,6 +200,14 @@ function App() {
     setPage('login');
   };
 
+  // FIX: Added handler to navigate to the registration page.
+  const handleGoToRegister = () => {
+    setRegistrationData(null);
+    setPublicationData(null);
+    setLoginInitialMode('register');
+    setPage('login');
+  };
+
   const handleUpdateUser = async (updatedUser: User) => {
     if (!currentUser) return;
     
@@ -337,6 +345,8 @@ function App() {
     onHomeClick: () => setPage('home'),
     onOwnersClick: () => setPage('owners'),
     onLoginClick: handleGoToLogin,
+    // FIX: Added onRegisterClick to the shared navigation props.
+    onRegisterClick: handleGoToRegister,
     onBlogClick: () => setPage('blog'),
     onAboutClick: () => setPage('about'),
     onPrivacyClick: () => setPage('privacy'),
