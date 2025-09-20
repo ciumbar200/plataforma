@@ -1,11 +1,11 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 // FIX: Corrected import paths to point within the src directory.
 import { CITIES_DATA, showNotification } from '../constants';
-import { AVAILABLE_AMENITIES } from '../components/icons';
+import { AVAILABLE_AMENITIES } from '../../components/icons';
 import UserProfileCard from './components/UserProfileCard';
 import PropertyCard from './components/PropertyCard';
-import { CheckIcon, XIcon, CompassIcon, BuildingIcon, HeartIcon, UserCircleIcon, ChevronLeftIcon, PaperAirplaneIcon, EyeIcon, UsersIcon, CalendarIcon, PieChartIcon, AlertTriangleIcon, PawPrintIcon } from '../components/icons';
-import GlassCard from '../components/GlassCard';
+import { CheckIcon, XIcon, CompassIcon, BuildingIcon, HeartIcon, UserCircleIcon, ChevronLeftIcon, PaperAirplaneIcon, EyeIcon, UsersIcon, CalendarIcon, PieChartIcon, AlertTriangleIcon, PawPrintIcon } from '../../components/icons';
+import GlassCard from '../../components/GlassCard';
 import { User, Property, AmenityId, SavedSearch, UserRole, RentalGoal, PropertyType } from '../types';
 import GoogleMap from './components/GoogleMap';
 import SaveSearchModal from './components/SaveSearchModal';
@@ -121,7 +121,7 @@ const CompatibilityBreakdownModal: React.FC<CompatibilityBreakdownModalProps> = 
     const lifestyleScore = calculateLifestyleScore(userA, userB);
     const interestScore = calculateInterestScore(userA, userB);
     const commuteScore = calculateCommuteScore(userA, userB);
-    const sharedInterests = userA.interests.filter(i => userB.interests.includes(i));
+    const sharedInterests = (userA.interests || []).filter(i => (userB.interests || []).includes(i));
     const sharedLifestyles = (userA.lifestyle || []).filter(l => (userB.lifestyle || []).includes(l));
 
     return (
@@ -521,8 +521,8 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user: currentUser, al
                 <div className="w-full">
                     <h4 className="text-center font-semibold text-white/80 mb-3">Intereses de {filteredUsers[currentIndex].name.split(' ')[0]}</h4>
                     <div className="flex flex-wrap gap-2 justify-center">
-                        {filteredUsers[currentIndex].interests.map(interest => {
-                            const isShared = currentUser.interests.includes(interest);
+                        {(filteredUsers[currentIndex].interests || []).map(interest => {
+                            const isShared = (currentUser.interests || []).includes(interest);
                             return (<span key={interest} className={`px-3 py-1 text-sm rounded-full transition-colors border ${isShared ? 'bg-green-500/30 border-green-400 text-white font-semibold' : 'bg-white/10 border-white/20 text-white/80'}`}>{interest}</span>);
                         })}
                     </div>
@@ -659,8 +659,17 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user: currentUser, al
 
   const renderPropertyDetail = () => {
       if (!selectedProperty) return null;
-      const nextImage = () => { setCurrentPropertyImageIndex(prev => (prev + 1) % selectedProperty.image_urls.length); };
-      const prevImage = () => { setCurrentPropertyImageIndex(prev => (prev - 1 + selectedProperty.image_urls.length) % selectedProperty.image_urls.length); };
+      const images = selectedProperty.image_urls || [];
+      const nextImage = () => {
+        if (images.length > 0) {
+            setCurrentPropertyImageIndex(prev => (prev + 1) % images.length);
+        }
+      };
+      const prevImage = () => {
+        if (images.length > 0) {
+            setCurrentPropertyImageIndex(prev => (prev - 1 + images.length) % images.length);
+        }
+      };
       const availableAmenities = AVAILABLE_AMENITIES.filter(amenity => selectedProperty.features && selectedProperty.features[amenity.id]);
       const formattedDate = new Date(selectedProperty.available_from + 'T00:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
       const fullAddress = [selectedProperty.address, selectedProperty.locality, selectedProperty.city, selectedProperty.postal_code].filter(Boolean).join(', ');
@@ -672,12 +681,12 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user: currentUser, al
                   <GlassCard className="!p-0 overflow-hidden">
                       <div className="grid grid-cols-1 lg:grid-cols-2">
                            <div className="relative w-full h-full min-h-[300px] lg:min-h-full">
-                                <img src={selectedProperty.image_urls[currentPropertyImageIndex]} alt={selectedProperty.title} className="w-full h-full object-cover" />
-                                {selectedProperty.image_urls.length > 1 && (
+                                <img src={images.length > 0 ? images[currentPropertyImageIndex] : 'https://placehold.co/800x600/1e1b4b/ffffff?text=Sin+Imagen'} alt={selectedProperty.title} className="w-full h-full object-cover" />
+                                {images.length > 1 && (
                                     <>
                                         <button onClick={prevImage} className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 text-white p-2 rounded-full hover:bg-black/60"><ChevronLeftIcon className="w-6 h-6" /></button>
                                         <button onClick={nextImage} className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 text-white p-2 rounded-full hover:bg-black/60"><ChevronLeftIcon className="w-6 h-6 transform rotate-180" /></button>
-                                        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-2">{selectedProperty.image_urls.map((_, index) => (<div key={index} className={`w-2 h-2 rounded-full transition-colors ${index === currentPropertyImageIndex ? 'bg-white' : 'bg-white/50'}`}></div>))}</div>
+                                        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-2">{images.map((_, index) => (<div key={index} className={`w-2 h-2 rounded-full transition-colors ${index === currentPropertyImageIndex ? 'bg-white' : 'bg-white/50'}`}></div>))}</div>
                                     </>
                                 )}
                             </div>

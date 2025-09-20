@@ -37,7 +37,7 @@ const PropertyDetailsModal: React.FC<PropertyDetailsModalProps> = ({ isOpen, onC
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div>
               <div className="space-y-4">
-                {property.image_urls.map((url, index) => (
+                {(property.image_urls || []).map((url, index) => (
                   <img key={index} src={url} alt={`Vista de la propiedad ${index + 1}`} className="w-full h-auto object-cover rounded-lg" />
                 ))}
               </div>

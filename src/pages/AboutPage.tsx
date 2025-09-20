@@ -8,6 +8,7 @@ import { getSupabaseUrl } from '../constants';
 interface PageProps {
   onHomeClick: () => void;
   onLoginClick: () => void;
+  onRegisterClick: () => void;
   onOwnersClick: () => void;
   onBlogClick: () => void;
   onAboutClick: () => void;
@@ -24,13 +25,13 @@ const TeamMemberCard: React.FC<{ imgSrc: string; name: string; title: string; }>
     </div>
 );
 
-const AboutPage: React.FC<PageProps> = ({ onHomeClick, onLoginClick, onOwnersClick, onBlogClick, onAboutClick, onPrivacyClick, onTermsClick, onContactClick }) => {
+const AboutPage: React.FC<PageProps> = ({ onHomeClick, onLoginClick, onRegisterClick, onOwnersClick, onBlogClick, onAboutClick, onPrivacyClick, onTermsClick, onContactClick }) => {
     
     const footerProps = { onBlogClick, onAboutClick, onPrivacyClick, onTermsClick, onContactClick };
     
     return (
         <div className="min-h-screen w-full bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-900 text-white flex flex-col">
-            <Header onLoginClick={onLoginClick} onHomeClick={onHomeClick} onOwnersClick={onOwnersClick} />
+            <Header onLoginClick={onLoginClick} onRegisterClick={onRegisterClick} onHomeClick={onHomeClick} onOwnersClick={onOwnersClick} pageContext="inquilino" />
             
             <main className="flex-grow">
                 {/* Hero Section */}
@@ -58,7 +59,7 @@ const AboutPage: React.FC<PageProps> = ({ onHomeClick, onLoginClick, onOwnersCli
                             </p>
                         </div>
                         <GlassCard>
-                            <img src={getSupabaseUrl('property-media', 'about-mission.webp')} alt="Equipo colaborando" className="rounded-lg"/>
+                            <img src="https://images.unsplash.com/photo-1543269865-cbf427effbad?q=80&w=800&auto=format&fit=crop" alt="Equipo colaborando" className="rounded-lg"/>
                         </GlassCard>
                     </div>
                 </section>
@@ -71,9 +72,9 @@ const AboutPage: React.FC<PageProps> = ({ onHomeClick, onLoginClick, onOwnersCli
                             <p className="text-lg text-white/70 mt-2">Apasionados por la tecnología, el diseño y las buenas vibras.</p>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-12">
-                            <TeamMemberCard imgSrc={getSupabaseUrl('avatars', '01.webp')} name="Elena Rodríguez" title="Fundadora & CEO" />
-                            <TeamMemberCard imgSrc={getSupabaseUrl('avatars', '02.webp')} name="Javier Moreno" title="Líder de Tecnología" />
-                            <TeamMemberCard imgSrc={getSupabaseUrl('avatars', '03.webp')} name="Carlos Pérez" title="Gestor de Comunidad" />
+                            <TeamMemberCard imgSrc="https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=200&h=200&fit=crop" name="Elena Rodríguez" title="Fundadora & CEO" />
+                            <TeamMemberCard imgSrc="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=200&h=200&fit=crop" name="Javier Moreno" title="Líder de Tecnología" />
+                            <TeamMemberCard imgSrc="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=200&h=200&fit=crop" name="Carlos Pérez" title="Gestor de Comunidad" />
                         </div>
                     </div>
                 </section>

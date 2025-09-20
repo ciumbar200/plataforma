@@ -17,6 +17,7 @@ interface OwnerLandingPageProps {
     onStartPublication: (data: { property_type: PropertyType; city: string; locality: string }) => void;
     onHomeClick: () => void;
     onLoginClick: () => void;
+    onRegisterClick: () => void;
     onOwnersClick: () => void;
     onBlogClick: () => void;
     onAboutClick: () => void;
@@ -54,7 +55,7 @@ const testimonials = [
     }
 ];
 
-const OwnerLandingPage: React.FC<OwnerLandingPageProps> = ({ onStartPublication, onHomeClick, onLoginClick, onOwnersClick, onBlogClick, onAboutClick, onPrivacyClick, onTermsClick, onContactClick }) => {
+const OwnerLandingPage: React.FC<OwnerLandingPageProps> = ({ onStartPublication, onHomeClick, onLoginClick, onRegisterClick, onBlogClick, onAboutClick, onPrivacyClick, onTermsClick, onContactClick }) => {
     const [currentTestimonial, setCurrentTestimonial] = useState(0);
     const [propertyType, setPropertyType] = useState<PropertyType | ''>('');
     const [selectedCity, setSelectedCity] = useState<string>('');
@@ -91,7 +92,7 @@ const OwnerLandingPage: React.FC<OwnerLandingPageProps> = ({ onStartPublication,
 
     return (
         <div className="min-h-screen w-full bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-900 text-white flex flex-col">
-            <Header onLoginClick={onLoginClick} onHomeClick={onHomeClick} onOwnersClick={onOwnersClick} />
+            <Header onLoginClick={onLoginClick} onRegisterClick={onRegisterClick} onHomeClick={onHomeClick} onOwnersClick={onHomeClick} pageContext="propietario" />
             <main className="flex-grow">
                 {/* Hero Section */}
                 <section className="relative py-16 sm:py-32 text-center overflow-hidden">
@@ -111,10 +112,10 @@ const OwnerLandingPage: React.FC<OwnerLandingPageProps> = ({ onStartPublication,
                         <GlassCard className="mt-10 max-w-4xl mx-auto !p-4 !bg-white/10">
                              <form onSubmit={handleSubmit} className="flex flex-col md:flex-row items-center gap-2 text-left">
                                 <div className="w-full">
-                                    <label htmlFor="property_type" className="text-xs text-white/70">Tipo de Propiedad</label>
-                                    <select id="property_type" value={propertyType} onChange={(e) => setPropertyType(e.target.value as PropertyType)} className={`w-full bg-transparent font-semibold focus:outline-none ${!propertyType ? 'text-white/60' : 'text-white'}`}>
+                                    <label htmlFor="propertyType" className="text-xs text-white/70">Tipo de Propiedad</label>
+                                    <select id="propertyType" value={propertyType} onChange={(e) => setPropertyType(e.target.value as PropertyType)} className={`w-full bg-transparent font-semibold focus:outline-none ${!propertyType ? 'text-white/60' : 'text-white'}`}>
                                         <option value="" disabled>Tipo de propiedad</option>
-                                        {Object.values(PropertyType).map(type => <option key={type} value={type} className="bg-gray-800 text-white">{type}</option>)}
+                                        {Object.values(PropertyType).map((type: PropertyType) => <option key={type} value={type} className="bg-gray-800 text-white">{type}</option>)}
                                     </select>
                                 </div>
                                 <div className="w-px h-10 bg-white/20 hidden md:block"></div>
