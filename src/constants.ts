@@ -136,7 +136,6 @@ export const addToFluentCRM = async (user: { name: string; last_name?: string; e
 // --- MOCK DATA ---
 // MOCK_USERS and MOCK_PROPERTIES have been removed.
 // The application will now fetch this data directly from Supabase.
-// The data has been migrated via the `supabase_setup.sql` script.
 
 export const MOCK_NOTIFICATIONS: Notification[] = [
     { id: 1, user_id: '1', type: NotificationType.NEW_MATCH, message: '¡Tienes un nuevo match con Javier! Compatibilidad del 85%.', timestamp: '2024-07-25T10:30:00Z', read: false, related_entity_id: 2 },

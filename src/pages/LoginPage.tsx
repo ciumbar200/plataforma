@@ -46,7 +46,7 @@ const LoginPage: React.FC<LoginPageProps> = (props) => {
         onRegister({ email, name, age: parseInt(age, 10) });
     } else {
         if (email === 'admin@moon.com') { // Hardcoded admin login
-            const adminUser = users.find(u => u.role === UserRole.ADMIN);
+            const adminUser = users.find(u => u.email === 'admin@moon.com');
             if (adminUser) {
                 onLogin(adminUser);
                 return;
@@ -54,7 +54,11 @@ const LoginPage: React.FC<LoginPageProps> = (props) => {
         }
         const user = users.find(u => u.email === email);
         if (user) {
-          onLogin(user);
+          if (user.is_banned) {
+            setError('Esta cuenta ha sido baneada.');
+          } else {
+            onLogin(user);
+          }
         } else {
           setError('Usuario no encontrado. Para registrarte, inicia el proceso desde la página principal.');
         }

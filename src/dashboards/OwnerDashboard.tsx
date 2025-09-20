@@ -117,7 +117,7 @@ const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ user, properties, onSav
 
     useEffect(() => {
         if (initialPropertyData) {
-            setPropertyToEdit(null); // Ensure we are not editing
+            setPropertyToEdit(null);
             setIsModalOpen(true);
         }
     }, [initialPropertyData]);

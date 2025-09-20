@@ -80,7 +80,7 @@ function App() {
             age: userData.age,
             city: publicationData.city,
             locality: publicationData.locality,
-            profile_picture: 'https://placehold.co/100x100/9333ea/ffffff?text=P',
+            profile_picture: `https://placehold.co/200x200/a78bfa/4c1d95?text=${userData.name?.charAt(0)}`,
             role: targetRole,
         };
     } else if (registrationData) { // Tenant registration flow
@@ -93,18 +93,19 @@ function App() {
             city: registrationData.city,
             locality: registrationData.locality,
             rental_goal: registrationData.rentalGoal,
-            profile_picture: 'https://placehold.co/100x100/3b82f6/ffffff?text=I',
+            profile_picture: `https://placehold.co/200x200/93c5fd/1e3a8a?text=${userData.name?.charAt(0)}`,
             interests: [],
             lifestyle: [],
             noise_level: 'Medio' as const,
             role: targetRole,
         };
     } else {
-        alert("Error: No registration flow started.");
+        alert("Error: No se ha iniciado ningún flujo de registro.");
         return;
     }
 
     // NOTE: This flow bypasses Supabase Auth for demo purposes.
+    // A real app would integrate with supabase.auth.signUp
     const { data, error } = await supabase
       .from('profiles')
       .insert(newUserPayload)
@@ -120,7 +121,7 @@ function App() {
 
         if (targetRole === UserRole.PROPIETARIO) {
             setPage('owner-dashboard');
-            // publicationData is already set, OwnerDashboard will pick it up
+            // publicationData remains set, OwnerDashboard will use it
         } else {
             setPage('tenant-dashboard');
             setRegistrationData(null); // Clear tenant registration data
