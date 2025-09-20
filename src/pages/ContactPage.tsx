@@ -7,7 +7,6 @@ import { MailIcon, PhoneIcon, BuildingIcon } from '../components/icons';
 interface PageProps {
   onHomeClick: () => void;
   onLoginClick: () => void;
-  onRegisterClick: () => void;
   onBlogClick: () => void;
   onAboutClick: () => void;
   onPrivacyClick: () => void;
@@ -46,7 +45,7 @@ const ContactPage: React.FC<PageProps> = (props) => {
 
     return (
         <div className="min-h-screen w-full bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-900 text-white flex flex-col">
-            <Header onLoginClick={props.onLoginClick} onRegisterClick={props.onRegisterClick} onHomeClick={props.onHomeClick} pageContext="inquilino" />
+            <Header onLoginClick={props.onLoginClick} onHomeClick={props.onHomeClick} pageContext="inquilino" />
             
             <main className="flex-grow">
                 <section className="py-20">

@@ -97,65 +97,80 @@ function App() {
   
   const handleRegister = async (userData: Partial<User>, password?: string, role?: UserRole) => {
     if (!password || !userData.email) {
-        alert("Email y contraseña son requeridos para el registro.");
-        return;
+      alert("Email y contraseña son requeridos para el registro.");
+      return;
     }
 
+    // 1. Prepare the data payload first
+    let profileDataPayload: any;
+    let targetRole: UserRole;
+
+    if (publicationData) {
+      targetRole = UserRole.PROPIETARIO;
+      profileDataPayload = {
+        name: userData.name || '',
+        age: userData.age || 18,
+        city: publicationData.city,
+        locality: publicationData.locality,
+        profile_picture: `https://placehold.co/200x200/a78bfa/4c1d95?text=${(userData.name || 'P').charAt(0)}`,
+        role: targetRole,
+        interests: [],
+        noise_level: 'Medio',
+      };
+    } else if (registrationData) {
+      targetRole = UserRole.INQUILINO;
+      profileDataPayload = {
+        name: userData.name || '',
+        age: userData.age || 18,
+        city: registrationData.city,
+        locality: registrationData.locality,
+        rental_goal: registrationData.rentalGoal,
+        profile_picture: `https://placehold.co/200x200/93c5fd/1e3a8a?text=${(userData.name || 'I').charAt(0)}`,
+        interests: [],
+        lifestyle: [],
+        noise_level: 'Medio',
+        role: targetRole,
+      };
+    } else if (role) { // Generic registration
+      targetRole = role;
+      profileDataPayload = {
+        name: userData.name || '',
+        age: userData.age || 18,
+        profile_picture: `https://placehold.co/200x200/9ca3af/1f2937?text=${(userData.name || '?').charAt(0)}`,
+        role: targetRole,
+        interests: [],
+        noise_level: 'Medio',
+      };
+    } else {
+      alert("Error: No se ha podido determinar el rol del usuario durante el registro.");
+      return;
+    }
+
+    // 2. Call signUp with the data in options
     const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: userData.email,
-        password: password,
+      email: userData.email,
+      password: password,
+      options: {
+        data: profileDataPayload,
+      },
     });
 
     if (authError) {
-        console.error('Error en el registro de Auth:', authError);
-        alert(`Error al registrar: ${authError.message}`);
-        return;
+      console.error('Error en el registro de Auth:', authError);
+      alert(`Error al registrar: ${authError.message}`);
+      return;
     }
 
+    // 3. After successful signup, show a confirmation message.
+    // The onAuthStateChange listener will handle user state when they eventually log in after verification.
     if (authData.user) {
-        let newUserPayload: Omit<User, 'compatibility'>;
-        let targetRole: UserRole;
-
-        if (publicationData) {
-            targetRole = UserRole.PROPIETARIO;
-            newUserPayload = {
-                id: authData.user.id, name: userData.name || '', email: userData.email, age: userData.age || 18,
-                city: publicationData.city, locality: publicationData.locality,
-                profile_picture: `https://placehold.co/200x200/a78bfa/4c1d95?text=${(userData.name || 'P').charAt(0)}`,
-                role: targetRole, interests: [], noise_level: 'Medio',
-            };
-        } else if (registrationData) {
-            targetRole = UserRole.INQUILINO;
-            newUserPayload = {
-                id: authData.user.id, name: userData.name || '', email: userData.email, age: userData.age || 18,
-                city: registrationData.city, locality: registrationData.locality, rental_goal: registrationData.rentalGoal,
-                profile_picture: `https://placehold.co/200x200/93c5fd/1e3a8a?text=${(userData.name || 'I').charAt(0)}`,
-                interests: [], lifestyle: [], noise_level: 'Medio', role: targetRole,
-            };
-        } else if (role) { // Generic registration
-             targetRole = role;
-             newUserPayload = {
-                id: authData.user.id, name: userData.name || '', email: userData.email, age: userData.age || 18,
-                profile_picture: `https://placehold.co/200x200/9ca3af/1f2937?text=${(userData.name || '?').charAt(0)}`,
-                role: targetRole, interests: [], noise_level: 'Medio',
-             };
-        } else {
-            alert("Error: No se ha podido determinar el rol del usuario durante el registro.");
-            return;
-        }
-
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .insert(newUserPayload)
-          .select()
-          .single();
-
-        if (profileError) {
-            console.error('Error en la creación del perfil:', profileError);
-            alert(`Error al crear el perfil: ${profileError.message}`);
-        } else if (profileData) {
-            setUsers(prev => [...prev, profileData as User]);
-        }
+      alert('¡Registro exitoso! Por favor, revisa tu correo electrónico para verificar tu cuenta.');
+      
+      // Reset state and navigate to login page, so user can log in after verification
+      setRegistrationData(null);
+      setPublicationData(null);
+      setPage('login');
+      setLoginInitialMode('login');
     }
   };
 
@@ -174,13 +189,6 @@ function App() {
   const handleStartPublication = (data: PublicationData) => {
     setPublicationData(data);
     setRegistrationData(null);
-    setLoginInitialMode('register');
-    setPage('login');
-  };
-
-  const handleGoToRegister = () => {
-    setRegistrationData(null);
-    setPublicationData(null);
     setLoginInitialMode('register');
     setPage('login');
   };
@@ -329,7 +337,6 @@ function App() {
     onHomeClick: () => setPage('home'),
     onOwnersClick: () => setPage('owners'),
     onLoginClick: handleGoToLogin,
-    onRegisterClick: handleGoToRegister,
     onBlogClick: () => setPage('blog'),
     onAboutClick: () => setPage('about'),
     onPrivacyClick: () => setPage('privacy'),

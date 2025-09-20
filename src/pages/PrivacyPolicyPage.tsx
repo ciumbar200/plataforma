@@ -6,7 +6,6 @@ import GlassCard from '../components/GlassCard';
 interface PageProps {
   onHomeClick: () => void;
   onLoginClick: () => void;
-  onRegisterClick: () => void;
   onBlogClick: () => void;
   onAboutClick: () => void;
   onPrivacyClick: () => void;
@@ -14,13 +13,13 @@ interface PageProps {
   onContactClick: () => void;
 }
 
-const PrivacyPolicyPage: React.FC<PageProps> = ({ onHomeClick, onLoginClick, onRegisterClick, onBlogClick, onAboutClick, onPrivacyClick, onTermsClick, onContactClick }) => {
+const PrivacyPolicyPage: React.FC<PageProps> = ({ onHomeClick, onLoginClick, onBlogClick, onAboutClick, onPrivacyClick, onTermsClick, onContactClick }) => {
 
     const footerProps = { onBlogClick, onAboutClick, onPrivacyClick, onTermsClick, onContactClick };
 
     return (
         <div className="min-h-screen w-full bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-900 text-white flex flex-col">
-            <Header onLoginClick={onLoginClick} onRegisterClick={onRegisterClick} onHomeClick={onHomeClick} pageContext="inquilino" />
+            <Header onLoginClick={onLoginClick} onHomeClick={onHomeClick} pageContext="inquilino" />
             <main className="flex-grow py-12 px-4">
                 <div className="max-w-4xl mx-auto">
                     <GlassCard>
