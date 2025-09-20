@@ -25,6 +25,7 @@ function App() {
   const [page, setPage] = useState<Page>('home');
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loginInitialMode, setLoginInitialMode] = useState<'login' | 'register'>('login');
 
   const [users, setUsers] = useState<User[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
@@ -94,7 +95,7 @@ function App() {
     else setPage('tenant-dashboard');
   };
   
-  const handleRegister = async (userData: Partial<User>, password?: string) => {
+  const handleRegister = async (userData: Partial<User>, password?: string, role?: UserRole) => {
     if (!password || !userData.email) {
         alert("Email y contraseña son requeridos para el registro.");
         return;
@@ -118,35 +119,28 @@ function App() {
         if (publicationData) {
             targetRole = UserRole.PROPIETARIO;
             newUserPayload = {
-                id: authData.user.id,
-                name: userData.name || '',
-                email: userData.email,
-                age: userData.age || 18,
-                city: publicationData.city,
-                locality: publicationData.locality,
+                id: authData.user.id, name: userData.name || '', email: userData.email, age: userData.age || 18,
+                city: publicationData.city, locality: publicationData.locality,
                 profile_picture: `https://placehold.co/200x200/a78bfa/4c1d95?text=${(userData.name || 'P').charAt(0)}`,
-                role: targetRole,
-                interests: [],
-                noise_level: 'Medio',
+                role: targetRole, interests: [], noise_level: 'Medio',
             };
         } else if (registrationData) {
             targetRole = UserRole.INQUILINO;
             newUserPayload = {
-                id: authData.user.id,
-                name: userData.name || '',
-                email: userData.email,
-                age: userData.age || 18,
-                city: registrationData.city,
-                locality: registrationData.locality,
-                rental_goal: registrationData.rentalGoal,
+                id: authData.user.id, name: userData.name || '', email: userData.email, age: userData.age || 18,
+                city: registrationData.city, locality: registrationData.locality, rental_goal: registrationData.rentalGoal,
                 profile_picture: `https://placehold.co/200x200/93c5fd/1e3a8a?text=${(userData.name || 'I').charAt(0)}`,
-                interests: [],
-                lifestyle: [],
-                noise_level: 'Medio',
-                role: targetRole,
+                interests: [], lifestyle: [], noise_level: 'Medio', role: targetRole,
             };
+        } else if (role) { // Generic registration
+             targetRole = role;
+             newUserPayload = {
+                id: authData.user.id, name: userData.name || '', email: userData.email, age: userData.age || 18,
+                profile_picture: `https://placehold.co/200x200/9ca3af/1f2937?text=${(userData.name || '?').charAt(0)}`,
+                role: targetRole, interests: [], noise_level: 'Medio',
+             };
         } else {
-            alert("Error: No se ha iniciado ningún flujo de registro.");
+            alert("Error: No se ha podido determinar el rol del usuario durante el registro.");
             return;
         }
 
@@ -173,12 +167,28 @@ function App() {
   const handleStartRegistration = (data: RegistrationData) => {
     setRegistrationData(data);
     setPublicationData(null);
+    setLoginInitialMode('register');
     setPage('login');
   };
 
   const handleStartPublication = (data: PublicationData) => {
     setPublicationData(data);
     setRegistrationData(null);
+    setLoginInitialMode('register');
+    setPage('login');
+  };
+
+  const handleGoToRegister = () => {
+    setRegistrationData(null);
+    setPublicationData(null);
+    setLoginInitialMode('register');
+    setPage('login');
+  };
+  
+  const handleGoToLogin = () => {
+    setRegistrationData(null);
+    setPublicationData(null);
+    setLoginInitialMode('login');
     setPage('login');
   };
 
@@ -318,7 +328,8 @@ function App() {
   const pageNavigationProps = {
     onHomeClick: () => setPage('home'),
     onOwnersClick: () => setPage('owners'),
-    onLoginClick: () => setPage('login'),
+    onLoginClick: handleGoToLogin,
+    onRegisterClick: handleGoToRegister,
     onBlogClick: () => setPage('blog'),
     onAboutClick: () => setPage('about'),
     onPrivacyClick: () => setPage('privacy'),
@@ -339,14 +350,14 @@ function App() {
     switch (page) {
       case 'home': return <HomePage onStartRegistration={handleStartRegistration} {...pageNavigationProps} />;
       case 'owners': return <OwnerLandingPage onStartPublication={handleStartPublication} {...pageNavigationProps} />;
-      case 'login': return <LoginPage onLogin={handleLogin} onRegister={handleRegister} registrationData={registrationData} publicationData={publicationData} {...pageNavigationProps} />;
+      case 'login': return <LoginPage onLogin={handleLogin} onRegister={handleRegister} registrationData={registrationData} publicationData={publicationData} initialMode={loginInitialMode} {...pageNavigationProps} />;
       case 'blog': return <BlogPage posts={blogPosts} {...pageNavigationProps} />;
       case 'about': return <AboutPage {...pageNavigationProps} />;
       case 'privacy': return <PrivacyPolicyPage {...pageNavigationProps} />;
       case 'terms': return <TermsPage {...pageNavigationProps} />;
       case 'contact': return <ContactPage {...pageNavigationProps} />;
       case 'tenant-dashboard':
-        if (!currentUser) return <LoginPage onLogin={handleLogin} onRegister={handleRegister} {...pageNavigationProps} />;
+        if (!currentUser) return <LoginPage onLogin={handleLogin} onRegister={handleRegister} initialMode="login" {...pageNavigationProps} />;
         return <TenantDashboard 
             user={currentUser} 
             allUsers={users}
@@ -360,7 +371,7 @@ function App() {
             onGoToAccountSettings={() => { setAccountInitialTab('profile'); setPage('account'); }}
         />;
       case 'owner-dashboard':
-        if (!currentUser) return <LoginPage onLogin={handleLogin} onRegister={handleRegister} {...pageNavigationProps} />;
+        if (!currentUser) return <LoginPage onLogin={handleLogin} onRegister={handleRegister} initialMode="login" {...pageNavigationProps} />;
         return <OwnerDashboard 
             user={currentUser}
             properties={properties.filter(p => p.owner_id === currentUser.id)}
@@ -371,7 +382,7 @@ function App() {
             matches={matches}
         />;
       case 'admin-dashboard':
-        if (!currentUser || currentUser.role !== UserRole.ADMIN) return <LoginPage onLogin={handleLogin} onRegister={handleRegister} {...pageNavigationProps} />;
+        if (!currentUser || currentUser.role !== UserRole.ADMIN) return <LoginPage onLogin={handleLogin} onRegister={handleRegister} initialMode="login" {...pageNavigationProps} />;
         return <AdminDashboard 
             users={users}
             properties={properties}
@@ -384,7 +395,7 @@ function App() {
             onLogout={handleLogout}
         />;
       case 'account':
-        if (!currentUser) return <LoginPage onLogin={handleLogin} onRegister={handleRegister} {...pageNavigationProps} />;
+        if (!currentUser) return <LoginPage onLogin={handleLogin} onRegister={handleRegister} initialMode="login" {...pageNavigationProps} />;
         const backPage = currentUser.role === UserRole.INQUILINO ? 'tenant-dashboard' : 'owner-dashboard';
         return <AccountLayout 
             user={currentUser}

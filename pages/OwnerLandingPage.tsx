@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -20,6 +21,7 @@ interface OwnerLandingPageProps {
     onStartPublication: (data: { property_type: PropertyType; city: string; locality: string }) => void;
     onHomeClick: () => void;
     onLoginClick: () => void;
+    onRegisterClick: () => void;
     onBlogClick: () => void;
     onAboutClick: () => void;
     onPrivacyClick: () => void;
@@ -56,7 +58,7 @@ const testimonials = [
     }
 ];
 
-const OwnerLandingPage: React.FC<OwnerLandingPageProps> = ({ onStartPublication, onHomeClick, onLoginClick, onBlogClick, onAboutClick, onPrivacyClick, onTermsClick, onContactClick }) => {
+const OwnerLandingPage: React.FC<OwnerLandingPageProps> = ({ onStartPublication, onHomeClick, onLoginClick, onRegisterClick, onBlogClick, onAboutClick, onPrivacyClick, onTermsClick, onContactClick }) => {
     const [currentTestimonial, setCurrentTestimonial] = useState(0);
     const [propertyType, setPropertyType] = useState<PropertyType | ''>('');
     const [selectedCity, setSelectedCity] = useState<string>('');
@@ -93,7 +95,7 @@ const OwnerLandingPage: React.FC<OwnerLandingPageProps> = ({ onStartPublication,
 
     return (
         <div className="min-h-screen w-full bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-900 text-white flex flex-col">
-            <Header onLoginClick={onLoginClick} onHomeClick={onHomeClick} onOwnersClick={onHomeClick} pageContext="propietario" />
+            <Header onLoginClick={onLoginClick} onRegisterClick={onRegisterClick} onHomeClick={onHomeClick} onOwnersClick={onHomeClick} pageContext="propietario" />
             <main className="flex-grow">
                 {/* Hero Section */}
                 <section className="relative py-16 sm:py-32 text-center overflow-hidden">

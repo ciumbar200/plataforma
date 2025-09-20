@@ -8,6 +8,7 @@ import { getSupabaseUrl } from '../constants';
 interface PageProps {
   onHomeClick: () => void;
   onLoginClick: () => void;
+  onRegisterClick: () => void;
   onBlogClick: () => void;
   onAboutClick: () => void;
   onPrivacyClick: () => void;
@@ -23,13 +24,13 @@ const TeamMemberCard: React.FC<{ imgSrc: string; name: string; title: string; }>
     </div>
 );
 
-const AboutPage: React.FC<PageProps> = ({ onHomeClick, onLoginClick, onBlogClick, onAboutClick, onPrivacyClick, onTermsClick, onContactClick }) => {
+const AboutPage: React.FC<PageProps> = ({ onHomeClick, onLoginClick, onRegisterClick, onBlogClick, onAboutClick, onPrivacyClick, onTermsClick, onContactClick }) => {
     
     const footerProps = { onBlogClick, onAboutClick, onPrivacyClick, onTermsClick, onContactClick };
     
     return (
         <div className="min-h-screen w-full bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-900 text-white flex flex-col">
-            <Header onLoginClick={onLoginClick} onHomeClick={onHomeClick} pageContext="inquilino" />
+            <Header onLoginClick={onLoginClick} onRegisterClick={onRegisterClick} onHomeClick={onHomeClick} pageContext="inquilino" />
             
             <main className="flex-grow">
                 {/* Hero Section */}
@@ -85,7 +86,7 @@ const AboutPage: React.FC<PageProps> = ({ onHomeClick, onLoginClick, onBlogClick
                         <p className="text-lg text-white/70 mt-4 mb-8">
                             Ya seas inquilino buscando tu tribu o propietario buscando tranquilidad, tu match perfecto te está esperando.
                         </p>
-                        <button onClick={onLoginClick} className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-4 px-8 rounded-xl transition-all shadow-lg text-lg">
+                        <button onClick={onRegisterClick} className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-4 px-8 rounded-xl transition-all shadow-lg text-lg">
                             Empezar ahora
                         </button>
                     </div>

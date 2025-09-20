@@ -9,6 +9,7 @@ interface BlogPageProps {
   posts: BlogPost[];
   onHomeClick: () => void;
   onLoginClick: () => void;
+  onRegisterClick: () => void;
   onAboutClick: () => void;
   onPrivacyClick: () => void;
   onTermsClick: () => void;
@@ -32,7 +33,7 @@ const BlogCard: React.FC<{ post: BlogPost; onClick: () => void }> = ({ post, onC
   </GlassCard>
 );
 
-const BlogPage: React.FC<BlogPageProps> = ({ posts, onHomeClick, onLoginClick, onAboutClick, onPrivacyClick, onTermsClick, onContactClick }) => {
+const BlogPage: React.FC<BlogPageProps> = ({ posts, onHomeClick, onLoginClick, onRegisterClick, onAboutClick, onPrivacyClick, onTermsClick, onContactClick }) => {
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
 
   const footerProps = { onBlogClick: () => {}, onAboutClick, onPrivacyClick, onTermsClick, onContactClick };
@@ -40,7 +41,7 @@ const BlogPage: React.FC<BlogPageProps> = ({ posts, onHomeClick, onLoginClick, o
   if (selectedPost) {
     return (
       <div className="min-h-screen w-full bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-900 text-white flex flex-col">
-        <Header onLoginClick={onLoginClick} onHomeClick={onHomeClick} pageContext="inquilino" />
+        <Header onLoginClick={onLoginClick} onRegisterClick={onRegisterClick} onHomeClick={onHomeClick} pageContext="inquilino" />
         <main className="flex-grow py-12 px-4">
           <div className="max-w-4xl mx-auto">
             <button onClick={() => setSelectedPost(null)} className="flex items-center gap-2 text-white/80 hover:text-white transition-colors mb-8 bg-black/20 backdrop-blur-sm px-4 py-2 rounded-lg border border-white/10">
@@ -68,7 +69,7 @@ const BlogPage: React.FC<BlogPageProps> = ({ posts, onHomeClick, onLoginClick, o
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-900 text-white flex flex-col">
-      <Header onLoginClick={onLoginClick} onHomeClick={onHomeClick} pageContext="inquilino" />
+      <Header onLoginClick={onLoginClick} onRegisterClick={onRegisterClick} onHomeClick={onHomeClick} pageContext="inquilino" />
       <main className="flex-grow">
         <section className="py-20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -88,4 +89,5 @@ const BlogPage: React.FC<BlogPageProps> = ({ posts, onHomeClick, onLoginClick, o
     </div>
   );
 };
+
 export default BlogPage;
