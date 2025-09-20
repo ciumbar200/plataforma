@@ -64,7 +64,8 @@ const Profile: React.FC<ProfileProps> = ({ user, onSave }) => {
 
     if (profileImageFile) {
         const fileExt = profileImageFile.name.split('.').pop();
-        const filePath = `public/${user.id}-${new Date().getTime()}.${fileExt}`;
+        // Simplified file path for robustness and to ensure uniqueness
+        const filePath = `${user.id}-${new Date().getTime()}.${fileExt}`;
 
         const { error: uploadError } = await supabase.storage
             .from('avatars')

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { User } from '../../types';
 import { CheckIcon } from '../../components/icons';
@@ -21,7 +20,6 @@ const CandidateGroupCard: React.FC<CandidateGroupCardProps> = ({ group, onInvite
             {group.map(user => (
               <img
                 key={user.id}
-                // FIX: Corrected property name from profilePicture to profile_picture.
                 src={user.profile_picture}
                 alt={user.name}
                 className="w-10 h-10 rounded-full object-cover border-2 border-slate-800"

@@ -149,7 +149,7 @@ function App() {
   const handleUpdateUser = async (updatedUser: User) => {
     if (!currentUser) return;
     
-    // @ts-ignore
+    // @ts-ignore - 'compatibility' is a calculated field and should not be saved to the database.
     const { id, compatibility, ...updateData } = updatedUser;
     
     const { data, error } = await supabase
