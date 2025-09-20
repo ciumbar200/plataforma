@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import GlassCard from '../../components/GlassCard';
 import { XIcon } from '../../components/icons';
-import { BlogPost } from '../../types';
+// FIX: Corrected import path for types to point to the correct file inside the /src directory.
+import { BlogPost } from '../../src/types';
 
 interface BlogEditorModalProps {
   isOpen: boolean;

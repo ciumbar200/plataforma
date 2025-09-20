@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { User } from '../../types';
+// FIX: Corrected import path for User type.
+import { User } from '../src/types';
 import { ChevronLeftIcon, UserCircleIcon, ShieldLockIcon, BellIcon, HeartIcon } from '../../components/icons';
 import Footer from '../../components/Footer';
 
 // Account Sub-pages
 import Overview from './Overview';
+// FIX: Corrected Profile import as the component now has a default export.
 import Profile from './Profile';
 import Security from './Security';
 import Notifications from './Notifications';

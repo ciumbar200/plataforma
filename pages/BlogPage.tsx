@@ -2,7 +2,8 @@
 import React, { useState } from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import { BlogPost } from '../types';
+// FIX: Corrected import path for BlogPost type.
+import { BlogPost } from '../src/types';
 import GlassCard from '../components/GlassCard';
 import { ChevronLeftIcon } from '../components/icons';
 

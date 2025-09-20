@@ -1,7 +1,8 @@
 import React from 'react';
 import GlassCard from '../../components/GlassCard';
 import { XIcon, EyeIcon, UsersIcon, CalendarIcon } from '../../components/icons';
-import { Property } from '../../types';
+// FIX: Corrected import path for Property type.
+import { Property } from '../../src/types';
 import { AVAILABLE_AMENITIES } from '../../components/icons';
 import GoogleMap from './GoogleMap';
 
