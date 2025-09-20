@@ -151,6 +151,7 @@ export const MOCK_BLOG_POSTS: BlogPost[] = [
 ];
 
 export const MOCK_MATCHES: {[key: string]: string[]} = {
+    // Note: These UUIDs should correspond to the demo users inserted via SQL script.
     '8a65e909-7a54-4e81-872f-488f5f1a3ba2': ['1b8e8a6a-3e4b-4b1a-9f5a-3e1b3a3b3a3b', '4d4e8a6a-3e4b-4b1a-9f5a-3e1b3a3b3a4d'],
     '1b8e8a6a-3e4b-4b1a-9f5a-3e1b3a3b3a3b': ['8a65e909-7a54-4e81-872f-488f5f1a3ba2'],
     '4d4e8a6a-3e4b-4b1a-9f5a-3e1b3a3b3a4d': ['8a65e909-7a54-4e81-872f-488f5f1a3ba2'],
