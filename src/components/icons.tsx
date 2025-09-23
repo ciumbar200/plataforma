@@ -392,7 +392,8 @@ export const PhoneIcon: React.FC<IconProps> = (props) => (
 
 
 // FIX: Moved AVAILABLE_AMENITIES here to allow using JSX icons and resolve import issues.
-export const AVAILABLE_AMENITIES: { id: AmenityId; label: string; icon: JSX.Element }[] = [
+// FIX: Replaced JSX.Element with React.ReactElement to resolve "Cannot find namespace 'JSX'" error.
+export const AVAILABLE_AMENITIES: { id: AmenityId; label: string; icon: React.ReactElement }[] = [
     { id: 'pool', label: 'Piscina', icon: <SwimmingPoolIcon /> },
     { id: 'wifi', label: 'Wi-Fi', icon: <WifiIcon /> },
     { id: 'airConditioning', label: 'A/A', icon: <SnowflakeIcon /> },

@@ -36,16 +36,18 @@ const UserProfileCard: React.FC<UserProfileCardProps> = ({ user, onCompatibility
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
                     
                     {user.video_url && (
-                        <div 
-                            className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity cursor-pointer"
+                        <button
+                            type="button" 
+                            className="absolute inset-0 w-full h-full bg-black/30 flex items-center justify-center opacity-0 hover:opacity-100 focus:opacity-100 transition-opacity cursor-pointer group"
                             onClick={handlePlayClick}
+                            aria-label="Reproducir vídeo de presentación"
                         >
                              <div 
-                                className="bg-white/30 backdrop-blur-sm rounded-full p-4 hover:bg-white/40"
+                                className="bg-white/30 backdrop-blur-sm rounded-full p-4 group-hover:bg-white/40 group-focus:bg-white/40 transition-colors"
                              >
                                <PlayIcon className="w-10 h-10 text-white" />
                             </div>
-                        </div>
+                        </button>
                     )}
 
                     <div className="absolute bottom-4 left-4 text-white">

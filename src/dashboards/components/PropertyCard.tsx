@@ -47,14 +47,16 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onEdit, onCardCli
                     <img src={mainImageUrl} alt={property.title} className="w-full h-48 object-cover" />
                     {property.video_url && (
                         <div 
-                            className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity"
+                            className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 hover:opacity-100 focus-within:opacity-100 transition-opacity group"
                         >
-                             <div 
-                                className="bg-white/30 backdrop-blur-sm rounded-full p-4 hover:bg-white/40"
+                             <button
+                                type="button"
+                                className="bg-white/30 backdrop-blur-sm rounded-full p-4 hover:bg-white/40 focus:bg-white/40 transition-colors focus:outline-none focus:ring-2 focus:ring-white"
                                 onClick={handlePlayClick}
+                                aria-label="Reproducir vídeo de la propiedad"
                              >
                                <PlayIcon className="w-10 h-10 text-white" />
-                            </div>
+                            </button>
                         </div>
                     )}
                 </div>

@@ -501,8 +501,11 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user: currentUser, al
           <div className="w-full max-w-sm h-[550px] relative">
             {filteredUsers.length > 0 ? (
               filteredUsers.map((user, index) => (
-                <div key={user.id} className={`absolute w-full h-full transition-all duration-500 ease-in-out ${index === currentIndex ? 'opacity-100 transform scale-100' : 'opacity-0 transform scale-95 pointer-events-none'}`} style={{ zIndex: filteredUsers.length - index }}>
-                  {index === currentIndex && <UserProfileCard user={user} onCompatibilityClick={() => setIsBreakdownVisible(true)} />}
+                <div key={user.id} className={`absolute w-full h-full transition-all duration-500 ease-in-out ${index === currentIndex ? 'opacity-100 transform scale-100' : 'opacity-0 transform scale-95 invisible'}`} style={{ zIndex: filteredUsers.length - index }}>
+                  <UserProfileCard 
+                    user={user} 
+                    onCompatibilityClick={index === currentIndex ? () => setIsBreakdownVisible(true) : undefined} 
+                  />
                 </div>
               ))
             ) : (
