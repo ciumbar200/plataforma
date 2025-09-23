@@ -124,34 +124,34 @@ function App() {
       alert("Email y contraseña son requeridos para el registro.");
       return;
     }
-    let profileDataPayload: any;
+
+    let profile_data: any;
     let targetRole: UserRole;
 
     if (publicationData) {
-      targetRole = UserRole.PROPIETARIO;
-      profileDataPayload = {
-        name: userData.name || '', age: userData.age || 18, city: publicationData.city, locality: publicationData.locality, role: targetRole,
-        avatar_url: `https://placehold.co/200x200/a78bfa/4c1d95?text=${(userData.name || 'P').charAt(0)}`, interests: [], noise_level: 'Medio',
-      };
+        targetRole = UserRole.PROPIETARIO;
+        profile_data = { name: userData.name || '', age: userData.age || 18, city: publicationData.city, locality: publicationData.locality, role: targetRole, interests: [], noise_level: 'Medio' };
     } else if (registrationData) {
-      targetRole = UserRole.INQUILINO;
-      profileDataPayload = {
-        name: userData.name || '', age: userData.age || 18, city: registrationData.city, locality: registrationData.locality, rental_goal: registrationData.rentalGoal, role: targetRole,
-        avatar_url: `https://placehold.co/200x200/93c5fd/1e3a8a?text=${(userData.name || 'I').charAt(0)}`, interests: [], lifestyle: [], noise_level: 'Medio',
-      };
+        targetRole = UserRole.INQUILINO;
+        profile_data = { name: userData.name || '', age: userData.age || 18, city: registrationData.city, locality: registrationData.locality, rental_goal: registrationData.rentalGoal, role: targetRole, interests: [], lifestyle: [], noise_level: 'Medio' };
     } else if (role) {
-      targetRole = role;
-      profileDataPayload = {
-        name: userData.name || '', age: userData.age || 18, role: targetRole,
-        avatar_url: `https://placehold.co/200x200/9ca3af/1f2937?text=${(userData.name || '?').charAt(0)}`, interests: [], noise_level: 'Medio',
-      };
+        targetRole = role;
+        profile_data = { name: userData.name || '', age: userData.age || 18, role: targetRole, interests: [], noise_level: 'Medio' };
     } else {
-      alert("Error: No se ha podido determinar el rol del usuario durante el registro.");
-      return;
+        alert("Error: No se ha podido determinar el rol del usuario durante el registro.");
+        return;
     }
 
+    const avatar_url = `https://placehold.co/200x200/9ca3af/1f2937?text=${(userData.name || '?').charAt(0)}`;
+    const user_metadata = { avatar_url };
+
     const { data: authData, error: authError } = await supabase.auth.signUp({
-      email: userData.email, password: password, options: { data: profileDataPayload },
+      email: userData.email,
+      password: password,
+      options: {
+        data: profile_data, // Data for the 'profiles' table trigger
+        user_metadata: user_metadata // Data for 'auth.users' metadata
+      },
     });
 
     if (authError) {
@@ -212,19 +212,16 @@ const handleUpdateUser = async (updatedUser: User) => {
         const { avatar_url } = dataFromForm;
 
         // 1. Update auth user metadata if the avatar URL has changed.
-        // This is crucial for Supabase's built-in user management.
         if (avatar_url && avatar_url !== currentUser.avatar_url) {
             const { error: authError } = await supabase.auth.updateUser({
                 data: { avatar_url: avatar_url }
             });
             if (authError) {
-                // We throw here because if the auth update fails, we might not want to proceed.
                 throw new Error(`Error al actualizar metadatos de autenticación: ${authError.message}`);
             }
         }
         
-        // 2. Prepare payload for the 'profiles' table.
-        // As per the request, we now include avatar_url to ensure persistence.
+        // 2. Prepare payload for the 'profiles' table, excluding avatar_url.
         const profileDataToUpdate = {
             name: dataFromForm.name,
             age: dataFromForm.age,
@@ -236,7 +233,6 @@ const handleUpdateUser = async (updatedUser: User) => {
             lifestyle: dataFromForm.lifestyle,
             noise_level: dataFromForm.noise_level,
             commute_distance: dataFromForm.commute_distance,
-            avatar_url: dataFromForm.avatar_url, // Ensure avatar_url is saved to the profiles table
         };
 
         const { data: updatedProfile, error: profileError } = await supabase
@@ -247,7 +243,6 @@ const handleUpdateUser = async (updatedUser: User) => {
             .single();
 
         if (profileError) {
-            // This is where the 'Could not find the 'avatar_url' column' error would be caught.
             throw new Error(`Error de base de datos al actualizar el perfil: ${profileError.message}`);
         }
 
@@ -256,12 +251,10 @@ const handleUpdateUser = async (updatedUser: User) => {
         }
         
         // 3. Construct the final user state for the UI, ensuring all parts are synced.
-        // The `updatedProfile` from the DB is the source of truth for profile fields.
-        // The `avatar_url` comes from the form data which was just successfully saved.
         const finalUser: User = { 
             ...currentUser, 
             ...updatedProfile,
-            avatar_url: dataFromForm.avatar_url, // Use the new avatar URL
+            avatar_url: dataFromForm.avatar_url, // Use the new avatar URL for local state
         };
 
         // Update the application state.
@@ -269,8 +262,7 @@ const handleUpdateUser = async (updatedUser: User) => {
         setUsers(currentUsers => currentUsers.map(u => (u.id === finalUser.id ? finalUser : u)));
 
     } catch (error: any) {
-        console.error("Error detallado al actualizar el perfil:", error);
-        // Re-throw the error so the component can catch it and display it to the user.
+        console.error("Fallo al guardar el perfil:", error);
         throw error;
     }
 };
