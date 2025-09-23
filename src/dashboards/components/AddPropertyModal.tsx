@@ -164,13 +164,27 @@ const AddPropertyModal: React.FC<AddPropertyModalProps> = ({ isOpen, onClose, on
   };
 
   const validateForm = () => {
-    const fieldsToValidate = ['title', 'address', 'postal_code', 'price', 'available_from', 'video_url'];
+    const fieldsToValidate: (keyof typeof formData)[] = ['title', 'address', 'postal_code', 'price', 'available_from'];
     let isValid = true;
+    const newErrors: { [key: string]: string | null } = {};
+
     fieldsToValidate.forEach(field => {
-        if (!validateField(field, (formData as any)[field])) {
+        let error: string | null = null;
+        const value = formData[field] as string;
+        switch (field) {
+            case 'title': if (!value) error = 'El título es obligatorio.'; break;
+            case 'address': if (!value) error = 'La dirección es obligatoria.'; break;
+            case 'postal_code': if (!value || !/^\d{5}$/.test(value)) error = 'El código postal de 5 dígitos es obligatorio.'; break;
+            case 'price': if (!value || Number(value) <= 0) error = 'El precio debe ser un número positivo.'; break;
+            case 'available_from': if (!value) error = 'La fecha de disponibilidad es obligatoria.'; break;
+        }
+        if (error) {
+            newErrors[field] = error;
             isValid = false;
         }
     });
+
+    setErrors(newErrors);
     return isValid;
   };
 
@@ -225,7 +239,8 @@ const AddPropertyModal: React.FC<AddPropertyModalProps> = ({ isOpen, onClose, on
             <div>
               <label htmlFor="property_type" className="block text-sm font-medium text-white/80 mb-1">Tipo de Propiedad</label>
               <select name="property_type" id="property_type" value={formData.property_type} onChange={handleChange} className="w-full bg-white/10 border border-white/20 rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 outline-none">
-                  {Object.values(PropertyType).map(type => (
+                  {/* FIX: Add explicit type annotation to fix 'unknown' key error. */}
+                  {Object.values(PropertyType).map((type: PropertyType) => (
                       <option key={type} value={type} className="bg-gray-800">{type}</option>
                   ))}
               </select>

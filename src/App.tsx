@@ -295,6 +295,12 @@ const handleUpdateUser = async (updatedUser: User) => {
         compatible_candidates: 0,
         status: 'pending' as const,
       };
+      
+      // Generate 3 random images if none are provided
+      if (!newPropertyData.image_urls || newPropertyData.image_urls.length === 0) {
+        newPropertyData.image_urls = Array.from({ length: 3 }, (_, i) => `https://picsum.photos/800/600?random=${Date.now() + i}`);
+      }
+      
       const { data, error } = await supabase
         .from('properties')
         .insert(newPropertyData)
@@ -401,13 +407,13 @@ const handleUpdateUser = async (updatedUser: User) => {
     
     switch (page) {
       case 'home': return <HomePage onStartRegistration={handleStartRegistration} {...pageNavigationProps} />;
-      case 'owners': return <OwnerLandingPage onStartPublication={handleStartPublication} {...pageNavigationProps} />;
+      case 'owners': return <OwnerLandingPage onStartPublication={handleStartPublication} onOwnersClick={() => setPage('owners')} {...loginPageProps} />;
       case 'login': return <LoginPage onLogin={handleLogin} onRegister={handleRegister} registrationData={registrationData} publicationData={publicationData} initialMode={loginInitialMode} {...loginPageProps} />;
-      case 'blog': return <BlogPage posts={blogPosts} {...pageNavigationProps} />;
-      case 'about': return <AboutPage {...pageNavigationProps} />;
-      case 'privacy': return <PrivacyPolicyPage {...pageNavigationProps} />;
-      case 'terms': return <TermsPage {...pageNavigationProps} />;
-      case 'contact': return <ContactPage {...pageNavigationProps} />;
+      case 'blog': return <BlogPage posts={blogPosts} {...loginPageProps} />;
+      case 'about': return <AboutPage {...loginPageProps} />;
+      case 'privacy': return <PrivacyPolicyPage {...loginPageProps} />;
+      case 'terms': return <TermsPage {...loginPageProps} />;
+      case 'contact': return <ContactPage {...loginPageProps} />;
       case 'tenant-dashboard':
         if (!currentUser) return <LoginPage onLogin={handleLogin} onRegister={handleRegister} initialMode="login" {...loginPageProps} />;
         return <TenantDashboard 
@@ -439,6 +445,7 @@ const handleUpdateUser = async (updatedUser: User) => {
             users={users}
             properties={properties}
             blogPosts={blogPosts}
+            matches={matches}
             onUpdatePropertyStatus={handleUpdatePropertyStatus}
             onDeleteProperty={handleDeleteProperty}
             onSetUserBanStatus={handleSetUserBanStatus}

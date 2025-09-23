@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { User, Property, UserRole, BlogPost } from '../types';
 import StatCard from './components/StatCard';
-import { UsersIcon, CheckCircleIcon, BuildingIcon, HeartIcon, ChartBarIcon, ClockIcon, FileTextIcon, SettingsIcon, EyeIcon, TrashIcon, BanIcon, PencilIcon, CheckIcon as CheckMarkIcon, XIcon, PlusIcon, AlertTriangleIcon, MoonIcon, LogoutIcon } from '../components/icons';
+import { UsersIcon, CheckCircleIcon, BuildingIcon, HeartIcon, ChartBarIcon, ClockIcon, FileTextIcon, SettingsIcon, EyeIcon, TrashIcon, BanIcon, PencilIcon, CheckIcon as CheckMarkIcon, XIcon, PlusIcon, AlertTriangleIcon, MoonIcon, LogoutIcon, MenuIcon } from '../components/icons';
 import GlassCard from '../components/GlassCard';
 import UserDetailsModal from './components/UserDetailsModal';
 import PropertyDetailsModal from './components/PropertyDetailsModal';
@@ -14,6 +14,7 @@ interface AdminDashboardProps {
     users: User[];
     properties: Property[];
     blogPosts: BlogPost[];
+    matches: { [key: string]: string[] };
     onUpdatePropertyStatus: (propertyId: number, status: 'approved' | 'rejected') => void;
     onDeleteProperty: (propertyId: number) => void;
     onSetUserBanStatus: (userId: string, isBanned: boolean) => void;
@@ -26,6 +27,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     users, 
     properties, 
     blogPosts, 
+    matches,
     onUpdatePropertyStatus, 
     onDeleteProperty,
     onSetUserBanStatus,
@@ -34,6 +36,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     onLogout
 }) => {
     const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
     const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
     const [modal, setModal] = useState<string | null>(null);
@@ -54,6 +57,23 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     const displayUsers = users.filter(u => u.role !== UserRole.ADMIN);
     const pendingProperties = properties.filter(p => p.status === 'pending');
     const approvedProperties = properties.filter(p => p.status === 'approved');
+    
+    const activeMatchesCount = useMemo(() => {
+        let count = 0;
+        const userIds = Object.keys(matches);
+        for (const userId of userIds) {
+            const userMatchesList = matches[userId] || [];
+            for (const matchedUserId of userMatchesList) {
+                if (userId < matchedUserId) {
+                    const otherUserMatchesList = matches[matchedUserId] || [];
+                    if (otherUserMatchesList.includes(userId)) {
+                        count++;
+                    }
+                }
+            }
+        }
+        return count;
+    }, [matches]);
 
     const navItems = [
         { id: 'dashboard', label: 'Dashboard', icon: <ChartBarIcon className="w-5 h-5" /> },
@@ -69,9 +89,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <h3 className="text-2xl font-bold mb-6 text-white">Resumen General</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <StatCard icon={<UsersIcon className="w-7 h-7 text-white" />} title="Total de Usuarios" value={displayUsers.length.toLocaleString()} color="indigo" />
-                <StatCard icon={<HeartIcon className="w-7 h-7 text-white" />} title="Coincidencias Activas" value="128" color="purple" />
+                <StatCard icon={<HeartIcon className="w-7 h-7 text-white" />} title="Coincidencias Activas" value={activeMatchesCount.toLocaleString()} color="purple" />
                 <StatCard icon={<BuildingIcon className="w-7 h-7 text-white" />} title="Propiedades Listadas" value={approvedProperties.length.toLocaleString()} color="blue" />
-                <StatCard icon={<CheckCircleIcon className="w-7 h-7 text-white" />} title="Matches Exitosos" value="45" color="green" />
+                <StatCard icon={<CheckCircleIcon className="w-7 h-7 text-white" />} title="Matches Exitosos" value="0" color="green" />
             </div>
         </>
     );
@@ -80,7 +100,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         <>
             <h3 className="text-2xl font-bold mb-6 text-white">Gestión de Usuarios</h3>
             <GlassCard>
-                <div className="overflow-x-auto max-h-[60vh]">
+                {/* Desktop Table */}
+                <div className="overflow-x-auto max-h-[60vh] hidden md:block">
                     <table className="w-full text-left text-white">
                         <thead className="sticky top-0 bg-black/40 backdrop-blur-sm">
                             <tr>
@@ -119,6 +140,32 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         </tbody>
                     </table>
                 </div>
+                {/* Mobile Cards */}
+                <div className="md:hidden space-y-4">
+                    {displayUsers.map(user => (
+                        <div key={user.id} className="bg-black/20 p-4 rounded-lg">
+                            <div className="flex items-center gap-3 mb-3">
+                                <img src={user.avatar_url} alt={user.name} className="w-12 h-12 rounded-full object-cover" />
+                                <div>
+                                    <p className="font-bold text-lg">{user.name}</p>
+                                    <p className="text-sm text-white/70">{user.email || 'N/A'}</p>
+                                </div>
+                            </div>
+                            <div className="flex justify-between items-center text-sm mb-3">
+                                <p>Rol: <span className="font-semibold capitalize">{user.role.toLowerCase()}</span></p>
+                                <span className={`text-xs font-bold px-2 py-1 rounded-full ${user.is_banned ? 'bg-red-500/50 text-red-300' : 'bg-green-500/50 text-green-300'}`}>
+                                    {user.is_banned ? 'Baneado' : 'Activo'}
+                                </span>
+                            </div>
+                            <div className="flex justify-end gap-2 border-t border-white/10 pt-3">
+                                <button onClick={() => setSelectedUser(user)} className="bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-md text-sm font-semibold transition-colors">Ver</button>
+                                <button onClick={() => openModal('ban_user', user)} className={`px-3 py-1.5 rounded-md text-sm font-semibold transition-colors ${user.is_banned ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'}`}>
+                                    {user.is_banned ? 'Quitar Ban' : 'Banear'}
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </GlassCard>
         </>
     );
@@ -127,7 +174,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         <>
             <h3 className="text-2xl font-bold mb-6 text-white">Gestión de Propiedades Aprobadas</h3>
             <GlassCard>
-                 <div className="overflow-x-auto max-h-[60vh]">
+                 <div className="overflow-x-auto max-h-[60vh] hidden md:block">
                     <table className="w-full text-left text-white">
                         <thead className="sticky top-0 bg-black/40 backdrop-blur-sm">
                             <tr>
@@ -152,6 +199,23 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         </tbody>
                     </table>
                 </div>
+                {/* Mobile Cards */}
+                 <div className="md:hidden space-y-4">
+                    {approvedProperties.map(prop => (
+                        <div key={prop.id} className="bg-black/20 p-4 rounded-lg">
+                            <p className="font-bold text-lg">{prop.title}</p>
+                            <p className="text-sm text-white/70 mb-2">{prop.address}</p>
+                            <div className="flex justify-between items-center text-sm mb-3">
+                                <p>Precio: <span className="font-semibold">€{prop.price.toLocaleString()}</span></p>
+                                <span className={`text-xs font-semibold px-2 py-1 rounded-full ${prop.visibility === 'Pública' ? 'bg-green-500' : 'bg-yellow-500'}`}>{prop.visibility}</span>
+                            </div>
+                            <div className="flex justify-end gap-2 border-t border-white/10 pt-3">
+                                <button onClick={() => setSelectedProperty(prop)} className="bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-md text-sm font-semibold transition-colors">Ver</button>
+                                <button onClick={() => openModal('delete_property', prop)} className="bg-red-500/20 text-red-300 px-3 py-1.5 rounded-md text-sm font-semibold transition-colors">Eliminar</button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </GlassCard>
         </>
     );
@@ -160,7 +224,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
          <>
             <h3 className="text-2xl font-bold mb-6 text-white">Propiedades Pendientes de Aprobación</h3>
             <GlassCard>
-                 <div className="overflow-x-auto max-h-[60vh]">
+                 <div className="overflow-x-auto max-h-[60vh] hidden md:block">
                     <table className="w-full text-left text-white">
                         <thead className="sticky top-0 bg-black/40 backdrop-blur-sm">
                              <tr>
@@ -186,6 +250,21 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         </tbody>
                     </table>
                 </div>
+                 {/* Mobile Cards */}
+                 <div className="md:hidden space-y-4">
+                    {pendingProperties.length > 0 ? pendingProperties.map(prop => (
+                        <div key={prop.id} className="bg-black/20 p-4 rounded-lg">
+                            <p className="font-bold text-lg">{prop.title}</p>
+                            <p className="text-sm text-white/70">{prop.address}</p>
+                            <p className="text-sm text-white/70 mb-3">Ciudad: {prop.city}</p>
+                            <div className="flex justify-end flex-wrap gap-2 border-t border-white/10 pt-3">
+                                <button onClick={() => setSelectedProperty(prop)} className="bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-md text-sm font-semibold transition-colors">Ver Borrador</button>
+                                <button onClick={() => onUpdatePropertyStatus(prop.id, 'approved')} className="bg-green-500/80 hover:bg-green-500 px-3 py-1.5 rounded-md text-sm font-semibold transition-colors">Aprobar</button>
+                                <button onClick={() => onUpdatePropertyStatus(prop.id, 'rejected')} className="bg-red-500/80 hover:bg-red-500 px-3 py-1.5 rounded-md text-sm font-semibold transition-colors">Rechazar</button>
+                            </div>
+                        </div>
+                    )) : <p className="p-8 text-center text-white/70">No hay propiedades pendientes.</p>}
+                </div>
             </GlassCard>
         </>
     );
@@ -199,7 +278,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </button>
             </div>
             <GlassCard>
-                <div className="overflow-x-auto max-h-[60vh]">
+                <div className="overflow-x-auto max-h-[60vh] hidden md:block">
                     <table className="w-full text-left text-white">
                         <thead className="sticky top-0 bg-black/40 backdrop-blur-sm">
                             <tr>
@@ -223,6 +302,19 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             ))}
                         </tbody>
                     </table>
+                </div>
+                 {/* Mobile Cards */}
+                 <div className="md:hidden space-y-4">
+                    {blogPosts.map(post => (
+                        <div key={post.id} className="bg-black/20 p-4 rounded-lg">
+                            <p className="font-bold text-lg">{post.title}</p>
+                            <p className="text-sm text-white/70 mb-2">Por {post.author} el {new Date(post.publish_date).toLocaleDateString()}</p>
+                            <div className="flex justify-end gap-2 border-t border-white/10 pt-3">
+                                <button onClick={() => openModal('edit_blog', post)} className="bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-md text-sm font-semibold transition-colors">Editar</button>
+                                <button onClick={() => openModal('delete_blog', post)} className="bg-red-500/20 text-red-300 px-3 py-1.5 rounded-md text-sm font-semibold transition-colors">Eliminar</button>
+                            </div>
+                        </div>
+                    ))}
                 </div>
             </GlassCard>
         </>
@@ -272,8 +364,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     };
     
     return (
-        <div className="h-full w-full flex text-white">
-            <nav className="w-64 bg-black/20 backdrop-blur-xl border-r border-white/10 p-4 flex-shrink-0 flex flex-col">
+        <div className="h-full w-full flex text-white bg-gray-900">
+            {isSidebarOpen && <div className="md:hidden fixed inset-0 bg-black/60 z-30" onClick={() => setIsSidebarOpen(false)}></div>}
+            
+            <nav className={`fixed inset-y-0 left-0 w-64 bg-black/30 backdrop-blur-xl border-r border-white/10 p-4 flex-shrink-0 flex flex-col z-40 transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
                 <div>
                     <div className="flex items-center gap-2 mb-8">
                         <MoonIcon className="w-8 h-8 text-white" />
@@ -282,7 +376,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <ul className="space-y-2">
                         {navItems.map(item => (
                             <li key={item.id}>
-                                <button onClick={() => setActiveTab(item.id as AdminTab)} className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-left font-semibold text-sm transition-colors ${activeTab === item.id ? 'bg-indigo-600 text-white' : 'text-white/80 hover:bg-white/10 hover:text-white'}`}>
+                                <button onClick={() => { setActiveTab(item.id as AdminTab); setIsSidebarOpen(false); }} className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-left font-semibold text-sm transition-colors ${activeTab === item.id ? 'bg-indigo-600 text-white' : 'text-white/80 hover:bg-white/10 hover:text-white'}`}>
                                     <div className="flex items-center gap-3">
                                         {item.icon}
                                         <span>{item.label}</span>
@@ -293,7 +387,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         ))}
                     </ul>
                 </div>
-                <div className="mt-auto">
+                <div className="mt-auto hidden md:block">
                     <button 
                         onClick={onLogout} 
                         className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left font-semibold text-sm text-red-400/80 hover:bg-red-500/20 hover:text-red-400 transition-colors"
@@ -303,9 +397,21 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     </button>
                 </div>
             </nav>
-            <main className="flex-1 p-8 overflow-y-auto">
-                {renderContent()}
-            </main>
+            
+            <div className="flex-1 flex flex-col h-full">
+                <header className="md:hidden bg-black/20 backdrop-blur-lg border-b border-white/10 p-4 flex justify-between items-center sticky top-0 z-20">
+                    <button onClick={() => setIsSidebarOpen(true)} aria-label="Abrir menú">
+                        <MenuIcon className="w-6 h-6" />
+                    </button>
+                    <span className="text-lg font-bold">Admin Panel</span>
+                    <button onClick={onLogout} aria-label="Cerrar sesión">
+                        <LogoutIcon className="w-6 h-6 text-red-400"/>
+                    </button>
+                </header>
+                <main className="flex-1 p-4 sm:p-8 overflow-y-auto">
+                    {renderContent()}
+                </main>
+            </div>
             
             {/* Modals */}
             <UserDetailsModal isOpen={!!selectedUser} onClose={() => setSelectedUser(null)} user={selectedUser} />
