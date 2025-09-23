@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -55,24 +54,24 @@ const HomePage: React.FC<HomePageProps> = ({ onLoginClick, onStartRegistration, 
     };
 
     return (
-        <div className="min-h-screen w-full bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-900 text-white flex flex-col">
+        <div className="min-h-screen w-full bg-gradient-to-br from-blue-900 via-indigo-900 to-purple-900 text-white flex flex-col">
             <Header onLoginClick={onLoginClick} onHomeClick={() => {}} onOwnersClick={onOwnersClick} pageContext="inquilino" />
             
             <main className="flex-grow">
                 {/* Hero Section */}
-                <section className="relative py-24 sm:py-32 text-center overflow-hidden">
+                <section className="relative pt-16 pb-24 sm:pt-20 sm:pb-32 text-center overflow-hidden">
                     <div 
-                        className="absolute inset-0 w-full h-full bg-cover bg-center opacity-30 blur-md scale-110"
-                        style={{ backgroundImage: "url('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=2070&auto=format&fit=crop')" }}
+                        className="absolute inset-0 w-full h-full bg-cover bg-top sm:bg-center opacity-40 scale-110"
+                        style={{ backgroundImage: "url('https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=2071&auto=format&fit=crop')" }}
                         aria-hidden="true"
                     ></div>
                     <div className="absolute inset-0 bg-gradient-to-b from-gray-900/40 to-indigo-900/80" aria-hidden="true"></div>
                     <div className="relative z-10 max-w-4xl mx-auto px-4">
-                        <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 via-purple-300 to-pink-300">
-                            Encuentra tu Match Perfecto. De Piso y de Vida.
+                        <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-white">
+                            Vive Digno. Vive Seguro. <br/>Vive Acompañado.
                         </h1>
                         <p className="mt-6 text-lg sm:text-xl max-w-2xl mx-auto text-white/80">
-                            MoOn es la plataforma que te conecta con compañeros de piso compatibles y propiedades increíbles. Di adiós a las convivencias incómodas.
+                            Encuentra compañeros de piso compatibles y propiedades increíbles. Di adiós a las convivencias incómodas.
                         </p>
                         
                         <form onSubmit={handleSubmit} className="mt-10 max-w-5xl mx-auto">
@@ -87,9 +86,9 @@ const HomePage: React.FC<HomePageProps> = ({ onLoginClick, onStartRegistration, 
                                             className={`w-full appearance-none bg-purple-600/40 backdrop-blur-sm border border-white/20 rounded-xl px-5 py-3 pr-10 font-semibold focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all ${!rentalGoal ? 'text-white/70' : 'text-white'}`}
                                         >
                                             <option value="" disabled>Busco...</option>
-                                            <option value={RentalGoal.FIND_ROOMMATES_AND_APARTMENT} className="bg-gray-800 text-white">Busco otro mooner y alquilar juntos</option>
-                                            <option value={RentalGoal.FIND_ROOM_WITH_ROOMMATES} className="bg-gray-800 text-white">Busco habitación justa</option>
-                                            <option value={RentalGoal.BOTH} className="bg-gray-800 text-white">Las dos coisas</option>
+                                            <option value={RentalGoal.FIND_ROOMMATES_AND_APARTMENT} className="bg-gray-800 text-white">Compañeros y piso</option>
+                                            <option value={RentalGoal.FIND_ROOM_WITH_ROOMMATES} className="bg-gray-800 text-white">Habitación en piso</option>
+                                            <option value={RentalGoal.BOTH} className="bg-gray-800 text-white">Ambas opciones</option>
                                         </select>
                                         <ChevronDownIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/80 pointer-events-none" />
                                     </div>
