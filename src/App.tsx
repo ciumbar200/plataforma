@@ -211,18 +211,20 @@ const handleUpdateUser = async (updatedUser: User) => {
         const { id, ...dataFromForm } = updatedUser;
         const { avatar_url } = dataFromForm;
 
-        // 1. Update auth user metadata if avatar has changed.
+        // 1. Update auth user metadata if the avatar URL has changed.
+        // This is crucial for Supabase's built-in user management.
         if (avatar_url && avatar_url !== currentUser.avatar_url) {
             const { error: authError } = await supabase.auth.updateUser({
                 data: { avatar_url: avatar_url }
             });
             if (authError) {
+                // We throw here because if the auth update fails, we might not want to proceed.
                 throw new Error(`Error al actualizar metadatos de autenticación: ${authError.message}`);
             }
         }
         
-        // 2. Prepare payload for the 'profiles' table, EXCLUDING avatar_url.
-        // The error indicates the 'avatar_url' column does not exist in the profiles table.
+        // 2. Prepare payload for the 'profiles' table.
+        // As per the request, we now include avatar_url to ensure persistence.
         const profileDataToUpdate = {
             name: dataFromForm.name,
             age: dataFromForm.age,
@@ -234,6 +236,7 @@ const handleUpdateUser = async (updatedUser: User) => {
             lifestyle: dataFromForm.lifestyle,
             noise_level: dataFromForm.noise_level,
             commute_distance: dataFromForm.commute_distance,
+            avatar_url: dataFromForm.avatar_url, // Ensure avatar_url is saved to the profiles table
         };
 
         const { data: updatedProfile, error: profileError } = await supabase
@@ -244,6 +247,7 @@ const handleUpdateUser = async (updatedUser: User) => {
             .single();
 
         if (profileError) {
+            // This is where the 'Could not find the 'avatar_url' column' error would be caught.
             throw new Error(`Error de base de datos al actualizar el perfil: ${profileError.message}`);
         }
 
@@ -251,18 +255,22 @@ const handleUpdateUser = async (updatedUser: User) => {
             throw new Error("La base de datos no devolvió el perfil actualizado.");
         }
         
-        // 3. Construct final user state with the new avatar_url from the form/upload.
+        // 3. Construct the final user state for the UI, ensuring all parts are synced.
+        // The `updatedProfile` from the DB is the source of truth for profile fields.
+        // The `avatar_url` comes from the form data which was just successfully saved.
         const finalUser: User = { 
             ...currentUser, 
             ...updatedProfile,
-            avatar_url: dataFromForm.avatar_url, // Use the potentially new avatar URL
+            avatar_url: dataFromForm.avatar_url, // Use the new avatar URL
         };
 
+        // Update the application state.
         setCurrentUser(finalUser);
         setUsers(currentUsers => currentUsers.map(u => (u.id === finalUser.id ? finalUser : u)));
 
     } catch (error: any) {
         console.error("Error detallado al actualizar el perfil:", error);
+        // Re-throw the error so the component can catch it and display it to the user.
         throw error;
     }
 };
