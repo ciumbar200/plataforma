@@ -4,7 +4,7 @@ import { CITIES_DATA, showNotification } from '../constants';
 import { AVAILABLE_AMENITIES } from '../components/icons';
 import UserProfileCard from './components/UserProfileCard';
 import PropertyCard from './components/PropertyCard';
-import { CheckIcon, XIcon, CompassIcon, BuildingIcon, HeartIcon, UserCircleIcon, ChevronLeftIcon, PaperAirplaneIcon, EyeIcon, UsersIcon, CalendarIcon, PieChartIcon, AlertTriangleIcon, PawPrintIcon } from '../components/icons';
+import { CheckIcon, XIcon, CompassIcon, BuildingIcon, HeartIcon, UserCircleIcon, ChevronLeftIcon, PaperAirplaneIcon, EyeIcon, UsersIcon, CalendarIcon, PieChartIcon, AlertTriangleIcon, PawPrintIcon, ChevronDownIcon } from '../components/icons';
 import GlassCard from '../components/GlassCard';
 import { User, Property, AmenityId, SavedSearch, UserRole, RentalGoal, PropertyType } from '../types';
 import GoogleMap from './components/GoogleMap';
@@ -258,10 +258,9 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user: currentUser, al
 
   const profileCompletion = useMemo(() => calculateProfileCompletion(currentUser), [currentUser]);
   
-  const allPropertyCities = useMemo(() => {
-    const cities = new Set(properties.map(p => p.city).filter(Boolean) as string[]);
-    return Array.from(cities).sort();
-  }, [properties]);
+  const allCitiesForFilter = useMemo(() => {
+    return Object.keys(CITIES_DATA).sort();
+  }, []);
 
   const allInterests = useMemo(() => {
       return [...new Set(allUsers.filter(u => u.role === UserRole.INQUILINO).flatMap(user => user.interests))].sort();
@@ -276,10 +275,8 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user: currentUser, al
    useEffect(() => {
         if (selectedPropertyCity && CITIES_DATA[selectedPropertyCity]) {
             setAvailableLocalities(CITIES_DATA[selectedPropertyCity]);
-            setSelectedPropertyLocality('');
         } else {
             setAvailableLocalities([]);
-            setSelectedPropertyLocality('');
         }
     }, [selectedPropertyCity]);
 
@@ -289,7 +286,7 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user: currentUser, al
     if (selectedPropertyCity) {
         filtered = filtered.filter(p => p.city === selectedPropertyCity);
     }
-    if (selectedPropertyLocality && selectedPropertyLocality !== 'Todas las localidades') {
+    if (selectedPropertyLocality) {
         filtered = filtered.filter(p => p.locality === selectedPropertyLocality);
     }
     if (propertySearchQuery.trim()) {
@@ -558,66 +555,95 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user: currentUser, al
     return (
         <div className="w-full h-full flex flex-col">
             <SaveSearchModal isOpen={isSaveModalOpen} onClose={() => setSaveModalOpen(false)} onSave={handleSaveSearch} />
-            <h2 className="text-3xl font-bold text-center mb-2">Propiedades Disponibles</h2>
+            <h2 className="text-3xl font-bold text-center mb-6 text-white">Propiedades Disponibles</h2>
             {isPremiumUser && <p className="text-center text-indigo-300 mb-4 font-semibold">Acceso Premium: Viendo todas las propiedades.</p>}
 
             <GlassCard className="w-full max-w-6xl mx-auto mb-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 mb-4">
-                    <input type="text" placeholder="Buscar por título o dirección..." value={propertySearchQuery} onChange={(e) => setPropertySearchQuery(e.target.value)} className="lg:col-span-6 w-full bg-white/10 border border-white/20 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-indigo-500" />
-                    <select value={selectedPropertyCity} onChange={(e) => setSelectedPropertyCity(e.target.value)} className="w-full bg-white/10 border border-white/20 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-indigo-500 lg:col-span-2">
-                        <option value="" className="bg-gray-800">Todas las ciudades</option>
-                        {allPropertyCities.map(city => <option key={city} value={city} className="bg-gray-800">{city}</option>)}
-                    </select>
-                     <select value={selectedPropertyLocality} onChange={(e) => setSelectedPropertyLocality(e.target.value)} disabled={!selectedPropertyCity} className="w-full bg-white/10 border border-white/20 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-indigo-500 lg:col-span-2 disabled:opacity-50">
-                        <option value="" className="bg-gray-800">Todas las localidades</option>
-                        {availableLocalities.map(loc => <option key={loc} value={loc} className="bg-gray-800">{loc}</option>)}
-                    </select>
-                    <div className="flex gap-2 lg:col-span-2">
-                        <input type="number" placeholder="Precio Mín." value={priceRange.min} onChange={e => setPriceRange(p => ({...p, min: e.target.value}))} className="w-full bg-white/10 border border-white/20 rounded-lg p-2.5 outline-none" />
-                        <input type="number" placeholder="Precio Máx." value={priceRange.max} onChange={e => setPriceRange(p => ({...p, max: e.target.value}))} className="w-full bg-white/10 border border-white/20 rounded-lg p-2.5 outline-none" />
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="col-span-1 md:col-span-2 lg:col-span-4">
+                        <label htmlFor="propertySearchQuery" className="block text-sm font-medium text-white/80 mb-1">Buscar por palabra clave</label>
+                        <input type="text" id="propertySearchQuery" placeholder="Buscar por título, dirección, localidad..." value={propertySearchQuery} onChange={(e) => setPropertySearchQuery(e.target.value)} className="w-full bg-white/10 border border-white/20 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-indigo-500 text-white" />
+                    </div>
+                    
+                    <div>
+                        <label htmlFor="city" className="block text-sm font-medium text-white/80 mb-1">Ciudad</label>
+                        <div className="relative">
+                            <select id="city" value={selectedPropertyCity} onChange={(e) => { setSelectedPropertyCity(e.target.value); setSelectedPropertyLocality(''); }} className="w-full bg-white/10 border border-white/20 rounded-lg p-2.5 pr-8 outline-none focus:ring-2 focus:ring-indigo-500 appearance-none text-white">
+                                <option value="" className="bg-gray-800 text-white/70">Todas las ciudades</option>
+                                {allCitiesForFilter.map(city => <option key={city} value={city} className="bg-gray-800 text-white">{city}</option>)}
+                            </select>
+                            <ChevronDownIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/80 pointer-events-none" />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label htmlFor="locality" className="block text-sm font-medium text-white/80 mb-1">Localidad</label>
+                        <div className="relative">
+                            <select id="locality" value={selectedPropertyLocality} onChange={(e) => setSelectedPropertyLocality(e.target.value)} disabled={!selectedPropertyCity} className="w-full bg-white/10 border border-white/20 rounded-lg p-2.5 pr-8 outline-none focus:ring-2 focus:ring-indigo-500 appearance-none disabled:opacity-50 text-white">
+                                <option value="" className="bg-gray-800 text-white/70">Todas las localidades</option>
+                                {availableLocalities.map(loc => <option key={loc} value={loc} className="bg-gray-800 text-white">{loc}</option>)}
+                            </select>
+                            <ChevronDownIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/80 pointer-events-none" />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label htmlFor="propertyType" className="block text-sm font-medium text-white/80 mb-1">Tipo de Propiedad</label>
+                        <div className="relative">
+                            <select id="propertyType" value={selectedPropertyType} onChange={(e) => setSelectedPropertyType(e.target.value)} className="w-full bg-white/10 border border-white/20 rounded-lg p-2.5 pr-8 outline-none focus:ring-2 focus:ring-indigo-500 appearance-none text-white">
+                                <option value="" className="bg-gray-800 text-white/70">Todos los tipos</option>
+                                {Object.values(PropertyType).map(type => <option key={type} value={type} className="bg-gray-800 text-white">{type}</option>)}
+                            </select>
+                            <ChevronDownIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/80 pointer-events-none" />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label htmlFor="bathrooms" className="block text-sm font-medium text-white/80 mb-1">Baños</label>
+                        <div className="relative">
+                            <select id="bathrooms" value={selectedBathrooms} onChange={(e) => setSelectedBathrooms(e.target.value)} className="w-full bg-white/10 border border-white/20 rounded-lg p-2.5 pr-8 outline-none focus:ring-2 focus:ring-indigo-500 appearance-none text-white">
+                                <option value="" className="bg-gray-800 text-white/70">Cualquiera</option>
+                                <option value="1" className="bg-gray-800 text-white">1 baño</option>
+                                <option value="2" className="bg-gray-800 text-white">2 baños</option>
+                                <option value="3" className="bg-gray-800 text-white">3+ baños</option>
+                            </select>
+                            <ChevronDownIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/80 pointer-events-none" />
+                        </div>
+                    </div>
+
+                    <div className="col-span-1 md:col-span-2 lg:col-span-4">
+                        <label className="block text-sm font-medium text-white/80 mb-1">Rango de Precio (€)</label>
+                        <div className="flex gap-2">
+                            <input type="number" placeholder="Mín." value={priceRange.min} onChange={e => setPriceRange(p => ({...p, min: e.target.value}))} className="w-full bg-white/10 border border-white/20 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-indigo-500 text-white" />
+                            <input type="number" placeholder="Máx." value={priceRange.max} onChange={e => setPriceRange(p => ({...p, max: e.target.value}))} className="w-full bg-white/10 border border-white/20 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-indigo-500 text-white" />
+                        </div>
                     </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <select value={selectedPropertyType} onChange={(e) => setSelectedPropertyType(e.target.value)} className="w-full bg-white/10 border border-white/20 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-indigo-500">
-                        <option value="" className="bg-gray-800">Todos los tipos</option>
-                        {Object.values(PropertyType).map(type => <option key={type} value={type} className="bg-gray-800">{type}</option>)}
-                    </select>
-                    <select value={selectedBathrooms} onChange={(e) => setSelectedBathrooms(e.target.value)} className="w-full bg-white/10 border border-white/20 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-indigo-500">
-                        <option value="" className="bg-gray-800">Baños (cualquiera)</option>
-                        <option value="1" className="bg-gray-800">1 baño</option>
-                        <option value="2" className="bg-gray-800">2 baños</option>
-                        <option value="3" className="bg-gray-800">3+ baños</option>
-                    </select>
-                </div>
-                <div>
-                    <h4 className="text-sm font-semibold text-white/80 mb-2">Filtrar por servicios</h4>
-                    <div className="flex flex-wrap gap-2 items-center">
-                        <button 
-                            key="petsAllowed" 
-                            onClick={() => handleToggleAmenity('petsAllowed')} 
-                            className={`flex items-center gap-2 px-3 py-1.5 text-sm rounded-full transition-colors border ${selectedAmenities.includes('petsAllowed') ? 'bg-indigo-500 border-indigo-400 text-white font-semibold' : 'bg-white/10 border-white/20 text-white/80 hover:bg-white/20'}`}>
-                                <PawPrintIcon className="w-4 h-4" /> <span>Mascotas</span>
-                        </button>
-                        <div className="w-px h-5 bg-white/20 mx-1"></div>
-                        {AVAILABLE_AMENITIES.filter(amenity => amenity.id !== 'petsAllowed').map(amenity => (
-                            <button key={amenity.id} onClick={() => handleToggleAmenity(amenity.id)} className={`px-3 py-1 text-xs rounded-full transition-colors border ${selectedAmenities.includes(amenity.id) ? 'bg-indigo-500 border-indigo-400 text-white font-semibold' : 'bg-white/10 border-white/20 text-white/80 hover:bg-white/20'}`}>
-                                {amenity.label}
+                
+                <div className="pt-6 mt-6 border-t border-white/10">
+                    <h4 className="text-md font-semibold text-white/90 mb-3">Comodidades</h4>
+                    <div className="flex flex-wrap gap-3">
+                        {AVAILABLE_AMENITIES.map(amenity => (
+                            <button key={amenity.id} onClick={() => handleToggleAmenity(amenity.id)} className={`flex items-center gap-2 px-3 py-1.5 text-sm rounded-full transition-colors border ${selectedAmenities.includes(amenity.id) ? 'bg-indigo-500 border-indigo-400 text-white font-semibold' : 'bg-white/10 border-white/20 text-white/80 hover:bg-white/20'}`}>
+                                {React.cloneElement(amenity.icon, { className: 'w-4 h-4' })}
+                                <span>{amenity.label}</span>
                             </button>
                         ))}
                     </div>
                 </div>
-                <div className="border-t border-white/10 mt-4 pt-4 flex justify-end">
+
+                <div className="border-t border-white/10 mt-6 pt-4 flex justify-end">
                     <button onClick={() => setSaveModalOpen(true)} className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">Guardar Búsqueda</button>
                 </div>
             </GlassCard>
 
             {userSavedSearches.length > 0 && (
                 <div className="w-full max-w-6xl mx-auto mb-6">
-                    <h3 className="text-xl font-bold mb-3">Mis Búsquedas Guardadas</h3>
+                    <h3 className="text-xl font-bold mb-3 text-white">Mis Búsquedas Guardadas</h3>
                     <div className="flex flex-wrap gap-3">
                         {userSavedSearches.map(search => (
                             <div key={search.id} className="bg-black/20 backdrop-blur-sm p-3 rounded-lg flex items-center gap-3 border border-white/10">
-                                <span className="font-semibold">{search.name}</span>
+                                <span className="font-semibold text-white">{search.name}</span>
                                 <button onClick={() => handleLoadSearch(search)} className="text-sm text-indigo-400 hover:underline">Cargar</button>
                                 <button onClick={() => onDeleteSearch(search.id)} className="text-sm text-red-400 hover:underline">Borrar</button>
                             </div>
@@ -632,7 +658,7 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user: currentUser, al
                 </div>
             ) : (
                 <GlassCard className="w-full max-w-6xl mx-auto flex-grow flex items-center justify-center min-h-[300px]">
-                    <div className="text-center"><h3 className="text-xl font-bold">No se encontraron propiedades</h3><p className="text-white/70 mt-2">Prueba a cambiar los filtros de búsqueda.</p></div>
+                    <div className="text-center"><h3 className="text-xl font-bold text-white">No se encontraron propiedades</h3><p className="text-white/70 mt-2">Prueba a cambiar los filtros de búsqueda.</p></div>
                 </GlassCard>
             )}
         </div>
@@ -642,7 +668,7 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user: currentUser, al
   const renderMatches = () => {
     return (
         <div className="w-full h-full flex flex-col">
-            <h2 className="text-3xl font-bold text-center mb-6">Mis Coincidencias</h2>
+            <h2 className="text-3xl font-bold text-center mb-6 text-white">Mis Coincidencias</h2>
             <div className="w-full max-w-6xl mx-auto flex-grow">
                 {matches.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -695,7 +721,7 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user: currentUser, al
                             </div>
                           <div className="p-8 flex flex-col">
                               <span className={`text-xs font-semibold px-2 py-1 rounded-full self-start mb-2 ${selectedProperty.visibility === 'Pública' ? 'bg-green-500' : 'bg-yellow-500'}`}>{selectedProperty.visibility}</span>
-                              <h2 className="text-4xl font-bold mb-2">{selectedProperty.title}</h2>
+                              <h2 className="text-4xl font-bold mb-2 text-white">{selectedProperty.title}</h2>
                               <div className="flex items-baseline gap-3 mb-4">
                                 <span className="bg-indigo-500/50 text-indigo-200 font-semibold px-3 py-1 rounded-full text-sm">{selectedProperty.property_type}</span>
                                 <p className="text-md text-white/70">{fullAddress}</p>
@@ -706,9 +732,9 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user: currentUser, al
                                   <div className="flex items-center justify-center gap-2"><UsersIcon className="w-5 h-5" /><span>{selectedProperty.compatible_candidates} candidatos</span></div>
                                   <div className="flex items-center justify-center gap-2 text-green-300 font-semibold"><CalendarIcon className="w-5 h-5" /><span>Disponible: {formattedDate}</span></div>
                               </div>
-                              {availableAmenities.length > 0 && (<div className="mb-6"><h3 className="text-xl font-bold mb-3">Comodidades</h3><div className="flex flex-wrap gap-x-6 gap-y-3">{availableAmenities.map(amenity => (<div key={amenity.id} className="flex items-center gap-2 text-white/90">{React.cloneElement(amenity.icon, { className: 'w-5 h-5 text-indigo-300' })}<span className="text-sm">{amenity.label}</span></div>))}</div></div>)}
-                              {selectedProperty.conditions && (<div className="mb-8"><h3 className="text-xl font-bold mb-3">Condiciones</h3><p className="text-sm text-white/80 whitespace-pre-wrap">{selectedProperty.conditions}</p></div>)}
-                              {selectedProperty.lat != null && selectedProperty.lng != null && (<div className="mb-8"><h3 className="text-xl font-bold mb-3">Ubicación</h3><div className="rounded-2xl overflow-hidden border-2 border-white/10 shadow-lg"><GoogleMap lat={selectedProperty.lat} lng={selectedProperty.lng} /></div></div>)}
+                              {availableAmenities.length > 0 && (<div className="mb-6"><h3 className="text-xl font-bold mb-3 text-white">Comodidades</h3><div className="flex flex-wrap gap-x-6 gap-y-3">{availableAmenities.map(amenity => (<div key={amenity.id} className="flex items-center gap-2 text-white/90">{React.cloneElement(amenity.icon, { className: 'w-5 h-5 text-indigo-300' })}<span className="text-sm">{amenity.label}</span></div>))}</div></div>)}
+                              {selectedProperty.conditions && (<div className="mb-8"><h3 className="text-xl font-bold mb-3 text-white">Condiciones</h3><p className="text-sm text-white/80 whitespace-pre-wrap">{selectedProperty.conditions}</p></div>)}
+                              {selectedProperty.lat != null && selectedProperty.lng != null && (<div className="mb-8"><h3 className="text-xl font-bold mb-3 text-white">Ubicación</h3><div className="rounded-2xl overflow-hidden border-2 border-white/10 shadow-lg"><GoogleMap lat={selectedProperty.lat} lng={selectedProperty.lng} /></div></div>)}
                               <div className="mt-auto">{interestSent ? (<div className="text-center bg-green-500/20 border border-green-500 text-green-300 font-semibold p-4 rounded-lg flex flex-col items-center gap-2"><CheckIcon className="w-8 h-8 text-green-400" /><div><p>¡Tu interés ha sido enviado!</p><p className="text-sm font-normal">El propietario se pondrá en contacto contigo.</p></div></div>) : (<button onClick={handleSendInterest} className="w-full flex items-center justify-center gap-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-lg transition-colors text-lg"><PaperAirplaneIcon className="w-6 h-6" /><span>Enviar Interés al Propietario</span></button>)}</div>
                           </div>
                       </div>
