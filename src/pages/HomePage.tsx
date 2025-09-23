@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import { CompassIcon, UsersIcon, BuildingIcon, ChevronDownIcon, PencilIcon, SearchIcon, SignatureIcon } from '../components/icons';
+import { CompassIcon, UsersIcon, BuildingIcon, ChevronDownIcon, PencilIcon, SearchIcon, SignatureIcon, ChevronLeftIcon } from '../components/icons';
 import GlassCard from '../components/GlassCard';
 import { RentalGoal } from '../types';
 import { CITIES_DATA, getSupabaseUrl } from '../constants';
@@ -17,8 +17,41 @@ interface HomePageProps {
     onContactClick: () => void;
 }
 
+const testimonials = [
+    {
+        quote: "Encontré a mi compañera de piso y un apartamento increíble en menos de una semana. La compatibilidad era del 92% y ¡realmente se nota! MoOn hizo que todo el proceso fuera súper fácil y divertido.",
+        author: "Elena Rodríguez",
+        details: "Estudiante de Diseño, Madrid",
+        img: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=200&h=200&fit=crop'
+    },
+    {
+        quote: "Después de mi divorcio, la idea de vivir solo era abrumadora. En MoOn no solo encontré a alguien con quien compartir gastos, sino a un gran amigo. Alquilamos un piso juntos y ha sido la mejor decisión.",
+        author: "Carlos V.",
+        details: "Profesional divorciado, Barcelona",
+        img: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=200&h=200&fit=crop'
+    },
+    {
+        quote: "Se nos fue un compañero de piso y no sabíamos a quién meter. Publicamos la habitación en MoOn y en tres días encontramos a la persona perfecta, ¡y con una compatibilidad del 95%! Nos salvó.",
+        author: "Sofía M. y amigos",
+        details: "Grupo de piso, Valencia",
+        img: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=200&h=200&fit=crop'
+    },
+    {
+        quote: "Como estudiante, encontrar un piso asequible cerca de la universidad era una pesadilla. MoOn me conectó con otros estudiantes en mi misma situación y ahora compartimos un piso genial.",
+        author: "David L.",
+        details: "Estudiante de Ingeniería, Sevilla",
+        img: 'https://images.unsplash.com/photo-1557862921-37829c790f19?q=80&w=200&h=200&fit=crop'
+    },
+    {
+        quote: "Trabajo desde casa y necesitaba un compañero de piso tranquilo y con horarios similares. El filtro de 'Estilo de Vida' fue clave. ¡He encontrado la paz que necesitaba!",
+        author: "Ana P.",
+        details: "Freelance, Madrid",
+        img: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=200&h=200&fit=crop'
+    }
+];
+
 const Feature: React.FC<{ icon: React.ReactNode; title: string; children: React.ReactNode }> = ({ icon, title, children }) => (
-    <GlassCard className="text-center">
+    <GlassCard className="text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-indigo-500/20">
         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-indigo-500/30 mb-4">
             {icon}
         </div>
@@ -27,11 +60,36 @@ const Feature: React.FC<{ icon: React.ReactNode; title: string; children: React.
     </GlassCard>
 );
 
+const faqs = [
+    {
+        question: '¿Cómo funciona el algoritmo de compatibilidad?',
+        answer: 'Nuestro algoritmo analiza docenas de puntos de datos sobre tu estilo de vida, hábitos, horarios e intereses para asignarte una puntuación de compatibilidad con otros usuarios. ¡Es como un matchmaking para tu futuro hogar!',
+    },
+    {
+        question: '¿Es MoOn gratuito para los inquilinos?',
+        answer: 'Sí, crear tu perfil, buscar compañeros y propiedades, y hacer match es completamente gratuito para inquilinos. Ofreceremos funciones premium opcionales en el futuro.',
+    },
+    {
+        question: '¿Qué pasa si tengo un problema con mi compañero de piso?',
+        answer: 'Aunque nuestro objetivo es crear matches perfectos, entendemos que pueden surgir problemas. Ofrecemos recursos de mediación y guías de convivencia para ayudarte a resolver cualquier conflicto de manera amistosa.',
+    },
+];
+
 const HomePage: React.FC<HomePageProps> = ({ onLoginClick, onStartRegistration, onOwnersClick, onBlogClick, onAboutClick, onPrivacyClick, onTermsClick, onContactClick }) => {
     const [rentalGoal, setRentalGoal] = useState<RentalGoal | ''>('');
     const [selectedCity, setSelectedCity] = useState<string>('');
     const [selectedLocality, setSelectedLocality] = useState<string>('');
     const [localities, setLocalities] = useState<string[]>([]);
+    const [openFaq, setOpenFaq] = useState<number | null>(null);
+    const [currentTestimonial, setCurrentTestimonial] = useState(0);
+
+    const nextTestimonial = () => {
+        setCurrentTestimonial(prev => (prev + 1) % testimonials.length);
+    };
+
+    const prevTestimonial = () => {
+        setCurrentTestimonial(prev => (prev - 1 + testimonials.length) % testimonials.length);
+    };
 
     useEffect(() => {
         if (selectedCity && CITIES_DATA[selectedCity]) {
@@ -158,7 +216,7 @@ const HomePage: React.FC<HomePageProps> = ({ onLoginClick, onStartRegistration, 
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <h2 className="text-3xl font-bold text-center mb-12">Cómo Funciona para Inquilinos</h2>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                            <GlassCard className="relative text-center">
+                            <GlassCard className="relative text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-indigo-500/20">
                                 <span className="absolute top-4 right-4 text-5xl font-bold text-white/10">1</span>
                                 <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-indigo-500/30 mb-4">
                                     <PencilIcon className="w-7 h-7 text-indigo-300" />
@@ -166,7 +224,7 @@ const HomePage: React.FC<HomePageProps> = ({ onLoginClick, onStartRegistration, 
                                 <h3 className="text-xl font-bold text-white mb-2">Crea tu Perfil</h3>
                                 <p className="text-white/70">Define tu estilo de vida, hábitos e intereses. Nuestro algoritmo usa esta información para encontrar tu match perfecto.</p>
                             </GlassCard>
-                            <GlassCard className="relative text-center">
+                            <GlassCard className="relative text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-indigo-500/20">
                                 <span className="absolute top-4 right-4 text-5xl font-bold text-white/10">2</span>
                                 <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-indigo-500/30 mb-4">
                                     <SearchIcon className="w-7 h-7 text-indigo-300" />
@@ -174,7 +232,7 @@ const HomePage: React.FC<HomePageProps> = ({ onLoginClick, onStartRegistration, 
                                 <h3 className="text-xl font-bold text-white mb-2">Descubre y Conecta</h3>
                                 <p className="text-white/70">Explora perfiles de compañeros y propiedades compatibles. Envía "me gusta" y haz match con tus favoritos.</p>
                             </GlassCard>
-                             <GlassCard className="relative text-center">
+                             <GlassCard className="relative text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-indigo-500/20">
                                 <span className="absolute top-4 right-4 text-5xl font-bold text-white/10">3</span>
                                 <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-indigo-500/30 mb-4">
                                     <SignatureIcon className="w-7 h-7 text-indigo-300" />
@@ -186,18 +244,88 @@ const HomePage: React.FC<HomePageProps> = ({ onLoginClick, onStartRegistration, 
                     </div>
                 </section>
                 
-                {/* Testimonial Section */}
+                {/* Testimonial Carousel Section */}
                 <section className="py-20 bg-black/10">
-                    <div className="max-w-3xl mx-auto px-4 text-center">
-                        <img 
-                            src={getSupabaseUrl('avatars', 'testimonial01.webp')} 
-                            alt="Elena Rodríguez" 
-                            className="w-24 h-24 rounded-full mx-auto mb-4 border-4 border-purple-400"
-                        />
-                        <blockquote className="text-xl italic text-white/90">
-                            "Encontré a mi compañera de piso y un apartamento increíble en menos de una semana. La compatibilidad era del 92% y ¡realmente se nota! MoOn hizo que todo el proceso fuera súper fácil y divertido."
-                        </blockquote>
-                        <cite className="mt-4 block font-bold not-italic">- Elena Rodríguez, usuaria de MoOn</cite>
+                    <div className="max-w-4xl mx-auto px-4 text-center">
+                        <h2 className="text-3xl font-bold mb-2">Historias Reales, Conexiones Reales</h2>
+                        <p className="text-white/70 mb-10 max-w-2xl mx-auto">
+                            Descubre por qué cientos de personas confían en MoOn para encontrar su hogar y sus compañeros de piso ideales.
+                        </p>
+                        <GlassCard className="!p-8 relative overflow-hidden min-h-[320px] flex items-center justify-center">
+                            <div className="relative w-full h-full">
+                                {testimonials.map((testimonial, index) => (
+                                    <div
+                                        key={index}
+                                        className={`transition-opacity duration-500 ease-in-out absolute inset-0 flex flex-col justify-center items-center ${index === currentTestimonial ? 'opacity-100' : 'opacity-0'}`}
+                                    >
+                                        <img 
+                                            src={testimonial.img} 
+                                            alt={testimonial.author} 
+                                            className="w-24 h-24 rounded-full mx-auto mb-4 border-4 border-purple-400"
+                                        />
+                                        <blockquote className="text-xl italic text-white/90 max-w-2xl mx-auto">
+                                            "{testimonial.quote}"
+                                        </blockquote>
+                                        <cite className="mt-4 block font-bold not-italic">{testimonial.author}</cite>
+                                        <p className="text-sm text-white/70">{testimonial.details}</p>
+                                    </div>
+                                ))}
+                            </div>
+                            
+                            <button 
+                                onClick={prevTestimonial}
+                                className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/10 p-2 rounded-full hover:bg-white/20 transition-colors"
+                                aria-label="Anterior testimonio"
+                            >
+                                <ChevronLeftIcon className="w-6 h-6"/>
+                            </button>
+                            <button 
+                                onClick={nextTestimonial}
+                                className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/10 p-2 rounded-full hover:bg-white/20 transition-colors"
+                                aria-label="Siguiente testimonio"
+                            >
+                                <ChevronLeftIcon className="w-6 h-6 rotate-180"/>
+                            </button>
+                            
+                            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+                                {testimonials.map((_, index) => (
+                                    <button 
+                                        key={index} 
+                                        onClick={() => setCurrentTestimonial(index)}
+                                        className={`w-2 h-2 rounded-full transition-colors ${index === currentTestimonial ? 'bg-white' : 'bg-white/50 hover:bg-white/80'}`}
+                                        aria-label={`Ir al testimonio ${index + 1}`}
+                                    />
+                                ))}
+                            </div>
+                        </GlassCard>
+                    </div>
+                </section>
+
+                {/* FAQ Section */}
+                <section className="py-20">
+                    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <h2 className="text-3xl font-bold text-center mb-2">Preguntas Frecuentes</h2>
+                        <p className="text-center text-white/70 mb-10">¿Tienes dudas? Aquí resolvemos las más comunes.</p>
+                        <div className="space-y-4">
+                            {faqs.map((faq, index) => (
+                                <GlassCard key={index} className="!p-0 overflow-hidden">
+                                    <button
+                                        onClick={() => setOpenFaq(openFaq === index ? null : index)}
+                                        className="w-full flex justify-between items-center text-left p-6"
+                                    >
+                                        <h3 className="text-lg font-semibold text-white">{faq.question}</h3>
+                                        <ChevronDownIcon className={`w-6 h-6 text-white/70 transition-transform duration-300 ${openFaq === index ? 'rotate-180' : ''}`} />
+                                    </button>
+                                    <div
+                                        className={`overflow-hidden transition-all duration-300 ease-in-out ${openFaq === index ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}
+                                    >
+                                        <div className="p-6 pt-0 text-white/80">
+                                            <p>{faq.answer}</p>
+                                        </div>
+                                    </div>
+                                </GlassCard>
+                            ))}
+                        </div>
                     </div>
                 </section>
 
