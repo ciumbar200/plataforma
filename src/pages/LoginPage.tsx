@@ -6,6 +6,23 @@ import { GoogleIcon, FacebookIcon, MoonIcon, UsersIcon, BuildingIcon } from '../
 import GlassCard from '../components/GlassCard';
 import { supabase } from '../lib/supabaseClient';
 
+const MOCK_OWNER: User = {
+  id: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
+  name: 'Propietario Test',
+  email: 'propietario@moon.test',
+  age: 45,
+  avatar_url: 'https://placehold.co/200x200/6d28d9/ffffff?text=PT',
+  interests: ['Inversión', 'Viajes'],
+  noise_level: 'Bajo',
+  compatibility: 0, // Not relevant for owner
+  role: UserRole.PROPIETARIO,
+  bio: "Propietario de varias viviendas en la ciudad, buscando inquilinos responsables y compatibles.",
+  city: 'Madrid',
+  locality: 'Centro',
+  is_banned: false,
+  lifestyle: [],
+};
+
 type RegistrationData = { rentalGoal: RentalGoal; city: string; locality: string };
 type PublicationData = { property_type: PropertyType; city: string; locality: string };
 
@@ -106,6 +123,12 @@ const LoginPage: React.FC<LoginPageProps> = (props) => {
     if (mode === 'register') {
         await onRegister({ email, name, age: parseInt(age, 10) }, password, isGuidedRegisterMode ? undefined : selectedRole);
     } else {
+        if (email === MOCK_OWNER.email && password === 'Lokotron12') {
+            onLogin(MOCK_OWNER);
+            setLoading(false);
+            return;
+        }
+
         const { data, error: signInError } = await supabase.auth.signInWithPassword({
             email: email,
             password: password,

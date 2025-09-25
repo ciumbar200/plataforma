@@ -111,6 +111,11 @@ function App() {
   }, []);
 
   const handleLogin = (user: User) => {
+    // If the logged-in user isn't in the main list, add them.
+    // This handles the mock user case.
+    if (!users.find(u => u.id === user.id)) {
+        setUsers(prev => [...prev, user]);
+    }
     setCurrentUser(user);
     setRegistrationData(null);
     setPublicationData(null);
@@ -221,7 +226,7 @@ const handleUpdateUser = async (updatedUser: User) => {
             }
         }
         
-        // 2. Prepare payload for the 'profiles' table, excluding avatar_url.
+        // 2. Prepare payload for the 'profiles' table.
         const profileDataToUpdate = {
             name: dataFromForm.name,
             age: dataFromForm.age,
@@ -295,12 +300,6 @@ const handleUpdateUser = async (updatedUser: User) => {
         compatible_candidates: 0,
         status: 'pending' as const,
       };
-      
-      // Generate 3 random images if none are provided
-      if (!newPropertyData.image_urls || newPropertyData.image_urls.length === 0) {
-        newPropertyData.image_urls = Array.from({ length: 3 }, (_, i) => `https://picsum.photos/800/600?random=${Date.now() + i}`);
-      }
-      
       const { data, error } = await supabase
         .from('properties')
         .insert(newPropertyData)
@@ -406,14 +405,14 @@ const handleUpdateUser = async (updatedUser: User) => {
     const loginPageProps = { ...pageNavigationProps, onRegisterClick: () => { setLoginInitialMode('register'); setPage('login'); } };
     
     switch (page) {
-      case 'home': return <HomePage onStartRegistration={handleStartRegistration} {...pageNavigationProps} />;
+      case 'home': return <HomePage onStartRegistration={handleStartRegistration} {...pageNavigationProps} onLoginClick={loginPageProps.onLoginClick} />;
       case 'owners': return <OwnerLandingPage onStartPublication={handleStartPublication} onOwnersClick={() => setPage('owners')} {...loginPageProps} />;
       case 'login': return <LoginPage onLogin={handleLogin} onRegister={handleRegister} registrationData={registrationData} publicationData={publicationData} initialMode={loginInitialMode} {...loginPageProps} />;
-      case 'blog': return <BlogPage posts={blogPosts} {...loginPageProps} />;
-      case 'about': return <AboutPage {...loginPageProps} />;
-      case 'privacy': return <PrivacyPolicyPage {...loginPageProps} />;
-      case 'terms': return <TermsPage {...loginPageProps} />;
-      case 'contact': return <ContactPage {...loginPageProps} />;
+      case 'blog': return <BlogPage posts={blogPosts} onOwnersClick={() => setPage('owners')} {...loginPageProps} />;
+      case 'about': return <AboutPage onOwnersClick={() => setPage('owners')} {...loginPageProps} />;
+      case 'privacy': return <PrivacyPolicyPage onOwnersClick={() => setPage('owners')} {...loginPageProps} />;
+      case 'terms': return <TermsPage onOwnersClick={() => setPage('owners')} {...loginPageProps} />;
+      case 'contact': return <ContactPage onOwnersClick={() => setPage('owners')} {...loginPageProps} />;
       case 'tenant-dashboard':
         if (!currentUser) return <LoginPage onLogin={handleLogin} onRegister={handleRegister} initialMode="login" {...loginPageProps} />;
         return <TenantDashboard 
@@ -464,7 +463,7 @@ const handleUpdateUser = async (updatedUser: User) => {
             initialTab={accountInitialTab}
             {...pageNavigationProps}
         />
-      default: return <HomePage onStartRegistration={handleStartRegistration} {...pageNavigationProps} />;
+      default: return <HomePage onStartRegistration={handleStartRegistration} {...pageNavigationProps} onLoginClick={loginPageProps.onLoginClick} />;
     }
   };
 

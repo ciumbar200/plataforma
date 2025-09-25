@@ -113,7 +113,6 @@ const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ user, properties, onSav
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [propertyToEdit, setPropertyToEdit] = useState<Property | null>(null);
     const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
-    const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [invitedGroups, setInvitedGroups] = useState<string[]>([]);
 
     useEffect(() => {
@@ -135,7 +134,6 @@ const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ user, properties, onSav
     
     const handlePropertyClick = (property: Property) => {
         setSelectedProperty(property);
-        setCurrentImageIndex(0);
         setInvitedGroups([]); // Reset invitations when viewing a new property
         setView('propertyDetail');
     };
@@ -315,9 +313,6 @@ const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ user, properties, onSav
     
     const renderPropertyDetailView = () => {
         if (!selectedProperty) return null;
-        const images = selectedProperty.image_urls || [];
-        const nextImage = () => { if (images.length > 0) setCurrentImageIndex(prev => (prev + 1) % images.length); };
-        const prevImage = () => { if (images.length > 0) setCurrentImageIndex(prev => (prev - 1 + images.length) % images.length); };
 
         return (
             <div>
@@ -327,16 +322,7 @@ const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ user, properties, onSav
                         <div>
                             <h2 className="text-3xl font-bold mb-2">{selectedProperty.title}</h2>
                             <p className="text-white/70 mb-4">{selectedProperty.address}</p>
-                            <div className="relative mb-4">
-                                <img src={images.length > 0 ? images[currentImageIndex] : 'https://placehold.co/800x600/1e1b4b/ffffff?text=Sin+Imagen'} alt={selectedProperty.title} className="w-full h-64 object-cover rounded-lg" />
-                                {images.length > 1 && (
-                                    <>
-                                        <button onClick={prevImage} className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 text-white p-2 rounded-full hover:bg-black/60"><ChevronLeftIcon className="w-6 h-6" /></button>
-                                        <button onClick={nextImage} className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 text-white p-2 rounded-full hover:bg-black/60"><ChevronLeftIcon className="w-6 h-6 transform rotate-180" /></button>
-                                        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-2">{images.map((_, index) => (<button key={index} onClick={() => setCurrentImageIndex(index)} className={`w-2.5 h-2.5 rounded-full transition-colors ${index === currentImageIndex ? 'bg-white' : 'bg-white/50'}`}></button>))}</div>
-                                    </>
-                                )}
-                            </div>
+                            <img src={selectedProperty.image_urls[0]} alt={selectedProperty.title} className="w-full h-64 object-cover rounded-lg mb-4" />
                             <p className="text-lg">{selectedProperty.conditions}</p>
                         </div>
                         <div>
