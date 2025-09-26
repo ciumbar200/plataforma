@@ -6,29 +6,12 @@ import { GoogleIcon, FacebookIcon, MoonIcon, UsersIcon, BuildingIcon } from '../
 import GlassCard from '../components/GlassCard';
 import { supabase } from '../lib/supabaseClient';
 
-const MOCK_OWNER: User = {
-  id: 'a1b2c3d4-e5f6-7890-1234-567890abcdef',
-  name: 'Propietario Test',
-  email: 'propietario@moon.test',
-  age: 45,
-  avatar_url: 'https://placehold.co/200x200/6d28d9/ffffff?text=PT',
-  interests: ['Inversión', 'Viajes'],
-  noise_level: 'Bajo',
-  compatibility: 0, // Not relevant for owner
-  role: UserRole.PROPIETARIO,
-  bio: "Propietario de varias viviendas en la ciudad, buscando inquilinos responsables y compatibles.",
-  city: 'Madrid',
-  locality: 'Centro',
-  is_banned: false,
-  lifestyle: [],
-};
-
 type RegistrationData = { rentalGoal: RentalGoal; city: string; locality: string };
 type PublicationData = { property_type: PropertyType; city: string; locality: string };
 
 interface LoginPageProps {
   onLogin: (user: User) => void;
-  onRegister: (userData: Partial<User>, password?: string, role?: UserRole) => void;
+  onRegister: (userData: Partial<User>, password?: string, role?: UserRole) => Promise<void>;
   onHomeClick: () => void;
   onOwnersClick: () => void;
   registrationData?: RegistrationData | null;
@@ -133,36 +116,55 @@ const LoginPage: React.FC<LoginPageProps> = (props) => {
             }
         }
     } else {
-        if (email === MOCK_OWNER.email && password === 'Lokotron12') {
-            onLogin(MOCK_OWNER);
-            setLoading(false);
-            return;
-        }
-
-        const { data, error: signInError } = await supabase.auth.signInWithPassword({
+        const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({
             email: email,
             password: password,
         });
 
         if (signInError) {
             setError('Credenciales inválidas. Por favor, inténtalo de nuevo.');
-        } else if (data.user) {
+        } else if (authData.user) {
             const { data: profileData, error: profileError } = await supabase
                 .from('profiles')
                 .select('*')
-                .eq('id', data.user.id)
+                .eq('id', authData.user.id)
                 .single();
             
-            if (profileError) {
-                setError("No se pudo encontrar el perfil de usuario asociado a esta cuenta.");
+            if (profileData && !(profileData as User).is_banned) {
+                onLogin(profileData as User);
+            } else if (profileData && (profileData as User).is_banned) {
+                setError('Esta cuenta ha sido suspendida.');
                 await supabase.auth.signOut();
-            } else if (profileData) {
-                if ((profileData as User).is_banned) {
-                    setError('Esta cuenta ha sido suspendida.');
+            } else if (profileError && profileError.code === 'PGRST116') {
+                // Self-healing: Profile does not exist, but auth user does. Create a minimal profile.
+                console.warn("User profile not found, attempting to create one for existing auth user.");
+                const newProfile = {
+                    id: authData.user.id,
+                    name: authData.user.email?.split('@')[0] || 'Nuevo Usuario',
+                    age: 18,
+                    role: UserRole.INQUILINO,
+                    avatar_url: `https://placehold.co/200x200/9ca3af/1f2937?text=${(authData.user.email || '?').charAt(0)}`,
+                    interests: [],
+                    lifestyle: [],
+                    noise_level: 'Medio' as const,
+                    bio: '',
+                };
+                
+                const { data: newProfileData, error: newProfileError } = await supabase
+                    .from('profiles')
+                    .insert(newProfile)
+                    .select()
+                    .single();
+
+                if (newProfileError) {
+                    setError(`Hubo un error al reparar tu cuenta: ${newProfileError.message}`);
                     await supabase.auth.signOut();
-                } else {
-                    onLogin(profileData as User);
+                } else if (newProfileData) {
+                    onLogin(newProfileData as User);
                 }
+            } else {
+                setError(profileError?.message || "No se pudo encontrar el perfil de usuario asociado a esta cuenta.");
+                await supabase.auth.signOut();
             }
         }
     }

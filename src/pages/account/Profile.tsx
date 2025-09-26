@@ -164,62 +164,60 @@ const Profile: React.FC<ProfileProps> = ({ user, onSave }) => {
             </div>
         </div>
         
-        {user.role === 'INQUILINO' && (
-            <>
-                <div>
-                  <label htmlFor="video_url" className="block text-sm font-medium text-white/80 mb-1">
-                    URL de Vídeo de Presentación (Opcional)
-                  </label>
-                  <input 
-                    type="url" 
-                    name="video_url" 
-                    id="video_url" 
-                    value={formData.video_url || ''} 
-                    onChange={handleChange} 
-                    className="w-full bg-white/10 border border-white/20 rounded-lg p-3 outline-none focus:ring-2 focus:ring-indigo-500"
-                    placeholder="https://... (máx. 20 segundos)"
-                  />
-                  <p className="text-xs text-white/60 mt-1">
-                    Un vídeo corto aumenta tus posibilidades de encontrar un match.
-                  </p>
-                </div>
+        <>
+            <div>
+                <label htmlFor="video_url" className="block text-sm font-medium text-white/80 mb-1">
+                URL de Vídeo de Presentación (Opcional)
+                </label>
+                <input 
+                type="url" 
+                name="video_url" 
+                id="video_url" 
+                value={formData.video_url || ''} 
+                onChange={handleChange} 
+                className="w-full bg-white/10 border border-white/20 rounded-lg p-3 outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="https://... (máx. 20 segundos)"
+                />
+                <p className="text-xs text-white/60 mt-1">
+                Un vídeo corto aumenta tus posibilidades de encontrar un match.
+                </p>
+            </div>
 
+            <div>
+                <h3 className="text-lg font-semibold text-white/90 mb-3">Intereses</h3>
+                <div className="flex flex-wrap gap-2">
+                    {ALL_INTERESTS.map(interest => (
+                        <button key={interest} type="button" onClick={() => handleInterestToggle(interest)} className={`px-3 py-1 text-sm rounded-full transition-colors border ${(formData.interests || []).includes(interest) ? 'bg-indigo-500 border-indigo-400 text-white font-semibold' : 'bg-white/10 border-white/20 text-white/80 hover:bg-white/20'}`}>
+                            {interest}
+                        </button>
+                    ))}
+                </div>
+            </div>
+            <div>
+                <h3 className="text-lg font-semibold text-white/90 mb-3">Estilo de vida</h3>
+                <div className="flex flex-wrap gap-2">
+                    {ALL_LIFESTYLES.map(style => (
+                        <button key={style} type="button" onClick={() => handleLifestyleToggle(style)} className={`px-3 py-1 text-sm rounded-full transition-colors border ${(formData.lifestyle || []).includes(style) ? 'bg-purple-500 border-purple-400 text-white font-semibold' : 'bg-white/10 border-white/20 text-white/80 hover:bg-white/20'}`}>
+                            {style}
+                        </button>
+                    ))}
+                </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                    <h3 className="text-lg font-semibold text-white/90 mb-3">Intereses</h3>
-                    <div className="flex flex-wrap gap-2">
-                        {ALL_INTERESTS.map(interest => (
-                            <button key={interest} type="button" onClick={() => handleInterestToggle(interest)} className={`px-3 py-1 text-sm rounded-full transition-colors border ${(formData.interests || []).includes(interest) ? 'bg-indigo-500 border-indigo-400 text-white font-semibold' : 'bg-white/10 border-white/20 text-white/80 hover:bg-white/20'}`}>
-                                {interest}
-                            </button>
-                        ))}
-                    </div>
+                    <label htmlFor="noise_level" className="block text-sm font-medium text-white/80 mb-1">Nivel de ruido preferido</label>
+                    <select name="noise_level" id="noise_level" value={formData.noise_level} onChange={handleChange} className="w-full bg-white/10 border border-white/20 rounded-lg p-3 outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="Bajo" className="bg-gray-800">Bajo</option>
+                        <option value="Medio" className="bg-gray-800">Medio</option>
+                        <option value="Alto" className="bg-gray-800">Alto</option>
+                    </select>
                 </div>
-                 <div>
-                    <h3 className="text-lg font-semibold text-white/90 mb-3">Estilo de vida</h3>
-                    <div className="flex flex-wrap gap-2">
-                        {ALL_LIFESTYLES.map(style => (
-                            <button key={style} type="button" onClick={() => handleLifestyleToggle(style)} className={`px-3 py-1 text-sm rounded-full transition-colors border ${(formData.lifestyle || []).includes(style) ? 'bg-purple-500 border-purple-400 text-white font-semibold' : 'bg-white/10 border-white/20 text-white/80 hover:bg-white/20'}`}>
-                                {style}
-                            </button>
-                        ))}
-                    </div>
+                <div>
+                    <label htmlFor="commute_distance" className="block text-sm font-medium text-white/80 mb-1">Distancia máx. de búsqueda (min)</label>
+                    <input type="number" name="commute_distance" id="commute_distance" value={formData.commute_distance || ''} onChange={handleChange} className="w-full bg-white/10 border border-white/20 rounded-lg p-3 outline-none focus:ring-2 focus:ring-indigo-500" />
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label htmlFor="noise_level" className="block text-sm font-medium text-white/80 mb-1">Nivel de ruido preferido</label>
-                        <select name="noise_level" id="noise_level" value={formData.noise_level} onChange={handleChange} className="w-full bg-white/10 border border-white/20 rounded-lg p-3 outline-none focus:ring-2 focus:ring-indigo-500">
-                            <option value="Bajo" className="bg-gray-800">Bajo</option>
-                            <option value="Medio" className="bg-gray-800">Medio</option>
-                            <option value="Alto" className="bg-gray-800">Alto</option>
-                        </select>
-                    </div>
-                    <div>
-                      <label htmlFor="commute_distance" className="block text-sm font-medium text-white/80 mb-1">Distancia máx. de búsqueda (min)</label>
-                      <input type="number" name="commute_distance" id="commute_distance" value={formData.commute_distance || ''} onChange={handleChange} className="w-full bg-white/10 border border-white/20 rounded-lg p-3 outline-none focus:ring-2 focus:ring-indigo-500" />
-                    </div>
-                </div>
-            </>
-        )}
+            </div>
+        </>
 
         <div className="flex justify-end pt-4">
           <button type="submit" disabled={isUploading} className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg transition-colors disabled:bg-gray-500 disabled:cursor-not-allowed">

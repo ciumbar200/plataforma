@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import StatCard from './components/StatCard';
-import { BuildingIcon, ChartBarIcon, EyeIcon, UsersIcon, UserCircleIcon, PlusIcon, ChevronLeftIcon } from '../components/icons';
+import { BuildingIcon, ChartBarIcon, EyeIcon, UsersIcon, UserCircleIcon, PlusIcon, ChevronLeftIcon, MoonIcon } from '../components/icons';
 import PropertyCard from './components/PropertyCard';
 import AddPropertyModal from './components/AddPropertyModal';
 import { Property, User, PropertyType, OwnerStats, UserRole, RentalGoal } from '../types';
 import GlassCard from '../components/GlassCard';
 import CandidateGroupCard from './components/CandidateGroupCard';
+import ProfileDropdown from './components/ProfileDropdown';
+import Profile from '../pages/account/Profile';
 
 const MOCK_OWNER_STATS: OwnerStats = {
     monthlyEarnings: [
@@ -33,11 +35,15 @@ interface OwnerDashboardProps {
     onClearInitialPropertyData: () => void;
     allUsers: User[];
     matches: { [key: string]: string[] };
+    onLogout: () => void;
+    onGoToAccountSettings: () => void;
+    onUpdateUser: (updatedUser: User) => Promise<void>;
 }
 
 const navItems = [
     { id: 'dashboard', icon: <ChartBarIcon className="w-7 h-7" />, label: 'Panel' },
     { id: 'properties', icon: <BuildingIcon className="w-7 h-7" />, label: 'Propiedades' },
+    { id: 'candidates', icon: <UsersIcon className="w-7 h-7" />, label: 'Candidatos' },
     { id: 'profile', icon: <UserCircleIcon className="w-7 h-7" />, label: 'Mi Perfil' },
 ] as const;
 
@@ -69,34 +75,25 @@ const TopNavBar = ({ activeView, setView, onAddNew }: { activeView: View; setVie
 );
 
 const BottomNavBar = ({ activeView, setView, onAddNew }: { activeView: View; setView: (view: View) => void; onAddNew: () => void; }) => (
-    <div className="fixed bottom-0 left-0 right-0 h-20 bg-black/30 backdrop-blur-xl border-t border-white/20 z-30 grid grid-cols-4 items-center md:hidden">
-        <button
-            onClick={() => setView('dashboard')}
-            className={`flex flex-col items-center justify-center gap-1 transition-colors ${activeView === 'dashboard' ? 'text-purple-400' : 'text-white/70 hover:text-white'}`}
-        >
-            {navItems[0].icon}
-            <span className="text-xs font-medium">{navItems[0].label}</span>
-        </button>
-         <button
-            onClick={() => setView('properties')}
-            className={`flex flex-col items-center justify-center gap-1 transition-colors ${activeView === 'properties' ? 'text-purple-400' : 'text-white/70 hover:text-white'}`}
-        >
-            {navItems[1].icon}
-            <span className="text-xs font-medium">{navItems[1].label}</span>
-        </button>
+    <div className="fixed bottom-0 left-0 right-0 h-20 bg-black/30 backdrop-blur-xl border-t border-white/20 z-30 grid grid-cols-5 items-center md:hidden">
+        {navItems.map(item => (
+             <button
+                key={item.id}
+                onClick={() => setView(item.id)}
+                className={`flex flex-col items-center justify-center gap-1 transition-colors ${activeView === item.id ? 'text-purple-400' : 'text-white/70 hover:text-white'}`}
+            >
+                {item.icon}
+                <span className="text-xs font-medium">{item.label}</span>
+            </button>
+        ))}
          <button
             onClick={onAddNew}
-            className="flex flex-col items-center justify-center gap-1 transition-colors text-white bg-indigo-600 h-14 w-14 rounded-full mx-auto -translate-y-4 shadow-lg border-2 border-indigo-400"
+            className="flex flex-col items-center justify-center gap-1 transition-colors text-white"
             aria-label="Añadir nueva propiedad"
         >
-            <PlusIcon className="w-7 h-7" />
-        </button>
-          <button
-            onClick={() => setView('profile')}
-            className={`flex flex-col items-center justify-center gap-1 transition-colors ${activeView === 'profile' ? 'text-purple-400' : 'text-white/70 hover:text-white'}`}
-        >
-            {navItems[2].icon}
-            <span className="text-xs font-medium">{navItems[2].label}</span>
+            <div className="bg-indigo-600 h-12 w-12 rounded-full flex items-center justify-center shadow-lg border-2 border-indigo-400">
+                <PlusIcon className="w-7 h-7" />
+            </div>
         </button>
     </div>
 );
@@ -108,7 +105,7 @@ const BackButton = ({ onClick, text }: { onClick: () => void; text: string; }) =
     </button>
 );
 
-const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ user, properties, onSaveProperty, initialPropertyData, onClearInitialPropertyData, allUsers, matches }) => {
+const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ user, properties, onSaveProperty, initialPropertyData, onClearInitialPropertyData, allUsers, matches, onLogout, onGoToAccountSettings, onUpdateUser }) => {
     const [view, setView] = useState<View>('dashboard');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [propertyToEdit, setPropertyToEdit] = useState<Property | null>(null);
@@ -210,10 +207,11 @@ const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ user, properties, onSav
         return groups;
     }, [allUsers, matches]);
 
-    const handleInviteGroup = (group: User[]) => {
+    const handleInviteGroup = (group: User[], property: Property) => {
         const groupId = group.map(u => u.id).sort().join('-');
-        setInvitedGroups(prev => [...prev, groupId]);
-        alert(`Grupo de ${group.map(u => u.name).join(', ')} ha sido notificado sobre la propiedad.`);
+        const invitationKey = `${property.id}-${groupId}`;
+        setInvitedGroups(prev => [...prev, invitationKey]);
+        alert(`Grupo de ${group.map(u => u.name).join(', ')} ha sido notificado sobre la propiedad "${property.title}".`);
     };
 
     const renderDashboardView = () => (
@@ -289,26 +287,34 @@ const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ user, properties, onSav
         </>
     );
 
-    const renderProfileView = () => (
-         <>
-            <h2 className="text-3xl font-bold text-center mb-6">Mi Perfil</h2>
-            <div className="w-full max-w-4xl mx-auto">
-                <GlassCard className="!p-8">
-                    <div className="flex flex-col md:flex-row items-center gap-8 text-center md:text-left">
-                        <img src={user.avatar_url} alt={user.name} className="w-40 h-40 rounded-full object-cover border-4 border-purple-400 shadow-lg" />
-                        <div>
-                            <h3 className="text-4xl font-bold">{user.name}</h3>
-                            {user.city && <p className="text-lg text-cyan-400 mt-1">{user.city}, {user.locality}</p>}
-                            <p className="text-white/80 mt-2 text-lg italic">"{user.bio || 'Sin biografía. Haz clic en "Editar Perfil" en el menú de la esquina superior derecha para añadir una.'}"</p>
-                        </div>
-                    </div>
-                    <div className="my-8 border-t border-white/20"></div>
-                    <div className="text-center">
-                        <p className="text-white/70">Para editar los detalles de tu perfil, haz clic en tu foto de perfil en la esquina superior derecha y selecciona "Editar Perfil".</p>
-                    </div>
-                </GlassCard>
+    const renderCandidatesView = () => (
+        <>
+            <h2 className="text-3xl font-bold mb-6">Grupos de Candidatos Compatibles</h2>
+            <p className="text-white/70 mb-6 max-w-3xl">Aquí se muestran grupos de inquilinos que han hecho match entre sí y buscan una propiedad. Revisa tus propiedades privadas para invitarlos.</p>
+            <div className="space-y-4">
+                {tenantGroups.length > 0 ? (
+                    tenantGroups.map((group) => {
+                        const groupId = group.map(u => u.id).sort().join('-');
+                        return (
+                            <CandidateGroupCard
+                                key={groupId}
+                                group={group}
+                                onInvite={() => alert(`Para invitar a este grupo, ve a una de tus propiedades privadas y haz clic en "Liberar propiedad".`)}
+                                isInvited={false} // This is generic, no property context
+                            />
+                        );
+                    })
+                ) : (
+                    <GlassCard className="min-h-[200px] flex items-center justify-center">
+                        <p className="text-center text-white/70">No hay grupos de candidatos compatibles en este momento.</p>
+                    </GlassCard>
+                )}
             </div>
         </>
+    );
+
+    const renderProfileView = () => (
+        <Profile user={user} onSave={onUpdateUser} />
     );
     
     const renderPropertyDetailView = () => {
@@ -323,26 +329,27 @@ const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ user, properties, onSav
                             <h2 className="text-3xl font-bold mb-2">{selectedProperty.title}</h2>
                             <p className="text-white/70 mb-4">{selectedProperty.address}</p>
                             <img src={selectedProperty.image_urls[0]} alt={selectedProperty.title} className="w-full h-64 object-cover rounded-lg mb-4" />
-                            <p className="text-lg">{selectedProperty.conditions}</p>
+                            <h3 className="text-xl font-bold mb-2">Condiciones</h3>
+                            <p className="text-base text-white/80 whitespace-pre-wrap">{selectedProperty.conditions || 'No se especificaron condiciones.'}</p>
                         </div>
                         <div>
                             <h3 className="text-2xl font-bold mb-4">Grupos de Candidatos</h3>
-                            {selectedProperty.visibility === 'Pública' && (
+                            {selectedProperty.visibility === 'Pública' ? (
                                 <div className="text-center p-6 bg-black/20 rounded-lg">
                                     <p className="text-white/80">Esta propiedad es pública. Los candidatos pueden mostrar interés directamente.</p>
                                 </div>
-                            )}
-                            {selectedProperty.visibility === 'Privada' && (
+                            ) : (
                                 <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
                                     {tenantGroups.length > 0 ? (
                                         tenantGroups.map((group) => {
                                             const groupId = group.map(u => u.id).sort().join('-');
+                                            const invitationKey = `${selectedProperty.id}-${groupId}`;
                                             return (
                                                 <CandidateGroupCard
                                                     key={groupId}
                                                     group={group}
-                                                    onInvite={() => handleInviteGroup(group)}
-                                                    isInvited={invitedGroups.includes(groupId)}
+                                                    onInvite={() => handleInviteGroup(group, selectedProperty)}
+                                                    isInvited={invitedGroups.includes(invitationKey)}
                                                 />
                                             );
                                         })
@@ -364,6 +371,7 @@ const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ user, properties, onSav
         switch(view) {
             case 'dashboard': return renderDashboardView();
             case 'properties': return renderPropertiesView();
+            case 'candidates': return renderCandidatesView();
             case 'profile': return renderProfileView();
             case 'propertyDetail': return renderPropertyDetailView();
             default: return renderDashboardView();
@@ -372,12 +380,46 @@ const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ user, properties, onSav
 
     return (
         <div className="h-full w-full flex flex-col">
-            <TopNavBar activeView={view} setView={setView} onAddNew={handleAddNew} />
-            <main className="flex-1 overflow-y-auto">
-                 <div className="p-6 md:pb-6 pb-24">
-                    {renderContent()}
+            <header className="bg-black/20 backdrop-blur-lg border-b border-white/10 p-2 px-6 flex justify-between items-center flex-shrink-0 z-20">
+                <div className="flex items-center gap-2">
+                    <MoonIcon className="w-7 h-7" />
+                    <span className="text-xl font-bold">Panel de Propietario</span>
                 </div>
-            </main>
+                <div className="hidden md:flex items-center gap-4">
+                     <button 
+                        onClick={handleAddNew} 
+                        className="flex items-center gap-2 bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors text-sm"
+                        aria-label="Añadir nueva propiedad"
+                    >
+                        <PlusIcon className="w-5 h-5" />
+                        <span>Añadir Propiedad</span>
+                    </button>
+                    <ProfileDropdown user={user} onLogout={onLogout} onAccountSettings={onGoToAccountSettings} />
+                </div>
+            </header>
+            <div className="flex-1 flex overflow-hidden">
+                <nav className="hidden md:flex flex-col w-64 bg-black/20 p-4 border-r border-white/10">
+                    <ul className="space-y-2">
+                    {navItems.map(item => (
+                        <li key={item.id}>
+                            <button
+                                onClick={() => setView(item.id)}
+                                // FIX: Replaced undefined variable 'activeView' with the correct state variable 'view' for sidebar button styling.
+                                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left font-semibold text-sm transition-colors ${view === item.id ? 'bg-purple-500/50 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white'}`}
+                            >
+                                {React.cloneElement(item.icon, { className: "w-5 h-5" })}
+                                <span>{item.label}</span>
+                            </button>
+                        </li>
+                    ))}
+                    </ul>
+                </nav>
+                <main className="flex-1 overflow-y-auto">
+                    <div className="p-6 md:pb-6 pb-24">
+                        {renderContent()}
+                    </div>
+                </main>
+            </div>
             <AddPropertyModal 
                 isOpen={isModalOpen}
                 onClose={handleCloseModal}

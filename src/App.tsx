@@ -226,6 +226,11 @@ function App() {
     setLoginInitialMode('login');
     setPage('login');
   };
+  
+  const handleGoToAccountSettings = () => {
+    setAccountInitialTab('profile');
+    setPage('account');
+  };
 
   const handleUpdateUser = async (updatedUser: User): Promise<void> => {
     if (!currentUser) {
@@ -431,11 +436,11 @@ function App() {
       case 'home': return <HomePage onStartRegistration={handleStartRegistration} {...pageNavigationProps} onRegisterClick={loginPageProps.onRegisterClick} />;
       case 'owners': return <OwnerLandingPage onStartPublication={handleStartPublication} onLoginClick={handleGoToLogin} onHomeClick={() => setPage('home')} {...pageNavigationProps} />;
       case 'login': return <LoginPage onLogin={handleLogin} onRegister={handleRegister} registrationData={registrationData} publicationData={publicationData} initialMode={loginInitialMode} {...loginPageProps} />;
-      case 'blog': return <BlogPage posts={blogPosts} {...loginPageProps} onOwnersClick={() => setPage('owners')} />;
-      case 'about': return <AboutPage {...loginPageProps} onOwnersClick={() => setPage('owners')} />;
-      case 'privacy': return <PrivacyPolicyPage {...loginPageProps} onOwnersClick={() => setPage('owners')} />;
-      case 'terms': return <TermsPage {...loginPageProps} onOwnersClick={() => setPage('owners')} />;
-      case 'contact': return <ContactPage {...loginPageProps} onOwnersClick={() => setPage('owners')} />;
+      case 'blog': return <BlogPage posts={blogPosts} {...loginPageProps} />;
+      case 'about': return <AboutPage {...loginPageProps} />;
+      case 'privacy': return <PrivacyPolicyPage {...loginPageProps} />;
+      case 'terms': return <TermsPage {...loginPageProps} />;
+      case 'contact': return <ContactPage {...loginPageProps} />;
       case 'tenant-dashboard':
         if (!currentUser) return <LoginPage onLogin={handleLogin} onRegister={handleRegister} initialMode="login" {...loginPageProps} />;
         return <TenantDashboard 
@@ -448,7 +453,7 @@ function App() {
             onDeleteSearch={(id) => setSavedSearches(savedSearches.filter(s => s.id !== id))}
             userMatches={matches[currentUser.id] || []}
             onAddMatch={handleAddMatch}
-            onGoToAccountSettings={() => { setAccountInitialTab('profile'); setPage('account'); }}
+            onGoToAccountSettings={handleGoToAccountSettings}
         />;
       case 'owner-dashboard':
         if (!currentUser) return <LoginPage onLogin={handleLogin} onRegister={handleRegister} initialMode="login" {...loginPageProps}/>;
@@ -460,6 +465,9 @@ function App() {
             onClearInitialPropertyData={() => setPublicationData(null)}
             allUsers={users}
             matches={matches}
+            onLogout={handleLogout}
+            onGoToAccountSettings={handleGoToAccountSettings}
+            onUpdateUser={handleUpdateUser}
         />;
       case 'admin-dashboard':
         if (!currentUser || currentUser.role !== UserRole.ADMIN) return <LoginPage onLogin={handleLogin} onRegister={handleRegister} initialMode="login" {...loginPageProps} />;
