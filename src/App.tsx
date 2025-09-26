@@ -124,11 +124,10 @@ function App() {
   
   const handleRegister = async (userData: Partial<User>, password?: string, role?: UserRole) => {
     if (!password || !userData.email) {
-      alert("Email y contraseña son requeridos para el registro.");
-      return;
+      throw new Error("Email y contraseña son requeridos para el registro.");
     }
 
-    // Paso 1: Registrar al usuario en Supabase Auth (sin metadatos de perfil)
+    // Paso 1: Registrar al usuario en Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: userData.email,
       password: password,
@@ -136,21 +135,18 @@ function App() {
 
     if (authError) {
       console.error('Error en el registro de Auth:', authError);
-      alert(`Error al registrar: ${authError.message}`);
-      return;
+      throw authError; // Lanza el error para que sea capturado por el componente UI
     }
 
     if (!authData.user) {
-      alert('Registro completado, pero no se pudo obtener la información del usuario. Por favor, verifica tu email e intenta iniciar sesión.');
-      return;
+      throw new Error('Registro completado, pero no se pudo obtener la información del usuario. Por favor, verifica tu email e intenta iniciar sesión.');
     }
 
     // Paso 2: Si el registro en Auth es exitoso, crear el perfil manualmente en la tabla 'profiles'
     try {
       const avatar_url = `https://placehold.co/200x200/9ca3af/1f2937?text=${(userData.name || '?').charAt(0)}`;
-      let profile_to_insert: Omit<User, 'id' | 'compatibility' | 'email'> & { id: string };
-
-      let baseProfile = {
+      
+      const baseProfile = {
           id: authData.user.id,
           name: userData.name || 'Nuevo Usuario',
           age: userData.age || 18,
@@ -164,23 +160,25 @@ function App() {
       let targetRole: UserRole;
       if (publicationData) {
           targetRole = UserRole.PROPIETARIO;
-          profile_to_insert = { ...baseProfile, city: publicationData.city, locality: publicationData.locality, role: targetRole };
       } else if (registrationData) {
           targetRole = UserRole.INQUILINO;
-          profile_to_insert = { ...baseProfile, city: registrationData.city, locality: registrationData.locality, rental_goal: registrationData.rentalGoal, role: targetRole };
-      } else if (role) {
-          targetRole = role;
-          profile_to_insert = { ...baseProfile, role: targetRole };
       } else {
-          throw new Error("No se ha podido determinar el rol del usuario durante el registro.");
+          targetRole = role || UserRole.INQUILINO;
       }
+      
+      const profile_to_insert = { 
+          ...baseProfile, 
+          role: targetRole,
+          city: publicationData?.city || registrationData?.city,
+          locality: publicationData?.locality || registrationData?.locality,
+          rental_goal: registrationData?.rentalGoal,
+      };
 
       const { error: profileError } = await supabase
         .from('profiles')
         .insert(profile_to_insert);
 
       if (profileError) {
-        // Este error será mucho más específico y nos dirá qué columna o dato está fallando.
         throw new Error(`Error al crear el perfil: ${profileError.message}`);
       }
 
@@ -193,8 +191,6 @@ function App() {
     } catch (error: any) {
         console.error("Error en la post-creación del perfil:", error);
         alert(`Tu cuenta fue creada, pero hubo un problema al configurar tu perfil: ${error.message}. Por favor, contacta a soporte.`);
-        // Opcional: Intentar eliminar el usuario de auth si la creación del perfil falla.
-        // await supabase.auth.api.deleteUser(authData.user.id);
     }
   };
 
@@ -239,7 +235,6 @@ function App() {
     try {
         const { id, ...dataFromForm } = updatedUser;
 
-        // 1. Update auth user metadata for fields that have changed.
         const metadataToUpdate: { [key: string]: any } = {};
         if (dataFromForm.name && dataFromForm.name !== currentUser.name) {
             metadataToUpdate.name = dataFromForm.name;
@@ -257,7 +252,6 @@ function App() {
             }
         }
         
-        // 2. Prepare payload for the 'profiles' table.
         const profileDataToUpdate = {
             name: dataFromForm.name,
             age: dataFromForm.age,
@@ -437,11 +431,11 @@ function App() {
       case 'home': return <HomePage onStartRegistration={handleStartRegistration} {...pageNavigationProps} onRegisterClick={loginPageProps.onRegisterClick} />;
       case 'owners': return <OwnerLandingPage onStartPublication={handleStartPublication} onLoginClick={handleGoToLogin} onHomeClick={() => setPage('home')} {...pageNavigationProps} />;
       case 'login': return <LoginPage onLogin={handleLogin} onRegister={handleRegister} registrationData={registrationData} publicationData={publicationData} initialMode={loginInitialMode} {...loginPageProps} />;
-      case 'blog': return <BlogPage posts={blogPosts} {...loginPageProps} />;
-      case 'about': return <AboutPage {...loginPageProps} />;
-      case 'privacy': return <PrivacyPolicyPage {...loginPageProps} />;
-      case 'terms': return <TermsPage {...loginPageProps} />;
-      case 'contact': return <ContactPage {...loginPageProps} />;
+      case 'blog': return <BlogPage posts={blogPosts} {...loginPageProps} onOwnersClick={() => setPage('owners')} />;
+      case 'about': return <AboutPage {...loginPageProps} onOwnersClick={() => setPage('owners')} />;
+      case 'privacy': return <PrivacyPolicyPage {...loginPageProps} onOwnersClick={() => setPage('owners')} />;
+      case 'terms': return <TermsPage {...loginPageProps} onOwnersClick={() => setPage('owners')} />;
+      case 'contact': return <ContactPage {...loginPageProps} onOwnersClick={() => setPage('owners')} />;
       case 'tenant-dashboard':
         if (!currentUser) return <LoginPage onLogin={handleLogin} onRegister={handleRegister} initialMode="login" {...loginPageProps} />;
         return <TenantDashboard 

@@ -121,7 +121,17 @@ const LoginPage: React.FC<LoginPageProps> = (props) => {
     setLoading(true);
 
     if (mode === 'register') {
-        await onRegister({ email, name, age: parseInt(age, 10) }, password, isGuidedRegisterMode ? undefined : selectedRole);
+        try {
+            await onRegister({ email, name, age: parseInt(age, 10) }, password, isGuidedRegisterMode ? undefined : selectedRole);
+        } catch (err: any) {
+            console.error("Error de registro:", err);
+            if (err.message && err.message.toLowerCase().includes('user already registered')) {
+                setError('Este correo electrónico ya está registrado. Por favor, intenta iniciar sesión.');
+                setMode('login'); // Switch to login mode
+            } else {
+                setError(err.message || 'Ocurrió un error desconocido durante el registro.');
+            }
+        }
     } else {
         if (email === MOCK_OWNER.email && password === 'Lokotron12') {
             onLogin(MOCK_OWNER);
