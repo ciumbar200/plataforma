@@ -1,6 +1,3 @@
-
-
-
 import React, { useState } from 'react';
 // FIX: Corrected import path for types.ts to point to the file inside the /src directory.
 import { User, RentalGoal } from '../../src/types';
@@ -36,7 +33,6 @@ const UserProfileCard: React.FC<UserProfileCardProps> = ({ user, onCompatibility
         <>
             <GlassCard className="!p-0 h-full w-full overflow-hidden flex flex-col">
                 <div className="relative h-3/5">
-                    {/* FIX: Corrected property name from profile_picture to avatar_url to match the User type. */}
                     <img src={user.avatar_url} alt={user.name} className="w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
                     

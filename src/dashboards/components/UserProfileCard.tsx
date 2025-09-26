@@ -32,7 +32,7 @@ const UserProfileCard: React.FC<UserProfileCardProps> = ({ user, onCompatibility
         <>
             <GlassCard className="!p-0 h-full w-full overflow-hidden flex flex-col">
                 <div className="relative h-3/5">
-                    <img src={user.avatar_url} alt={user.name} className="w-full h-full object-cover" />
+                    <img src={user.profile_picture} alt={user.name} className="w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
                     
                     {user.video_url && (

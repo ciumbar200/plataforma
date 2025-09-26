@@ -111,8 +111,6 @@ function App() {
   }, []);
 
   const handleLogin = (user: User) => {
-    // If the logged-in user isn't in the main list, add them.
-    // This handles the mock user case.
     if (!users.find(u => u.id === user.id)) {
         setUsers(prev => [...prev, user]);
     }
@@ -130,33 +128,10 @@ function App() {
       return;
     }
 
-    let profile_data: any;
-    let targetRole: UserRole;
-
-    if (publicationData) {
-        targetRole = UserRole.PROPIETARIO;
-        profile_data = { name: userData.name || '', age: userData.age || 18, city: publicationData.city, locality: publicationData.locality, role: targetRole, interests: [], noise_level: 'Medio' };
-    } else if (registrationData) {
-        targetRole = UserRole.INQUILINO;
-        profile_data = { name: userData.name || '', age: userData.age || 18, city: registrationData.city, locality: registrationData.locality, rental_goal: registrationData.rentalGoal, role: targetRole, interests: [], lifestyle: [], noise_level: 'Medio' };
-    } else if (role) {
-        targetRole = role;
-        profile_data = { name: userData.name || '', age: userData.age || 18, role: targetRole, interests: [], noise_level: 'Medio' };
-    } else {
-        alert("Error: No se ha podido determinar el rol del usuario durante el registro.");
-        return;
-    }
-
-    const avatar_url = `https://placehold.co/200x200/9ca3af/1f2937?text=${(userData.name || '?').charAt(0)}`;
-    const user_metadata = { avatar_url };
-
+    // Paso 1: Registrar al usuario en Supabase Auth (sin metadatos de perfil)
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: userData.email,
       password: password,
-      options: {
-        data: profile_data, // Data for the 'profiles' table trigger
-        user_metadata: user_metadata // Data for 'auth.users' metadata
-      },
     });
 
     if (authError) {
@@ -165,12 +140,61 @@ function App() {
       return;
     }
 
-    if (authData.user) {
+    if (!authData.user) {
+      alert('Registro completado, pero no se pudo obtener la información del usuario. Por favor, verifica tu email e intenta iniciar sesión.');
+      return;
+    }
+
+    // Paso 2: Si el registro en Auth es exitoso, crear el perfil manualmente en la tabla 'profiles'
+    try {
+      const avatar_url = `https://placehold.co/200x200/9ca3af/1f2937?text=${(userData.name || '?').charAt(0)}`;
+      let profile_to_insert: Omit<User, 'id' | 'compatibility' | 'email'> & { id: string };
+
+      let baseProfile = {
+          id: authData.user.id,
+          name: userData.name || 'Nuevo Usuario',
+          age: userData.age || 18,
+          interests: [],
+          lifestyle: [],
+          noise_level: 'Medio' as const,
+          avatar_url,
+          bio: '',
+      };
+
+      let targetRole: UserRole;
+      if (publicationData) {
+          targetRole = UserRole.PROPIETARIO;
+          profile_to_insert = { ...baseProfile, city: publicationData.city, locality: publicationData.locality, role: targetRole };
+      } else if (registrationData) {
+          targetRole = UserRole.INQUILINO;
+          profile_to_insert = { ...baseProfile, city: registrationData.city, locality: registrationData.locality, rental_goal: registrationData.rentalGoal, role: targetRole };
+      } else if (role) {
+          targetRole = role;
+          profile_to_insert = { ...baseProfile, role: targetRole };
+      } else {
+          throw new Error("No se ha podido determinar el rol del usuario durante el registro.");
+      }
+
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert(profile_to_insert);
+
+      if (profileError) {
+        // Este error será mucho más específico y nos dirá qué columna o dato está fallando.
+        throw new Error(`Error al crear el perfil: ${profileError.message}`);
+      }
+
       alert('¡Registro exitoso! Por favor, revisa tu correo electrónico para verificar tu cuenta.');
       setRegistrationData(null);
       setPublicationData(null);
       setPage('login');
       setLoginInitialMode('login');
+
+    } catch (error: any) {
+        console.error("Error en la post-creación del perfil:", error);
+        alert(`Tu cuenta fue creada, pero hubo un problema al configurar tu perfil: ${error.message}. Por favor, contacta a soporte.`);
+        // Opcional: Intentar eliminar el usuario de auth si la creación del perfil falla.
+        // await supabase.auth.api.deleteUser(authData.user.id);
     }
   };
 
@@ -207,19 +231,26 @@ function App() {
     setPage('login');
   };
 
-const handleUpdateUser = async (updatedUser: User) => {
+  const handleUpdateUser = async (updatedUser: User): Promise<void> => {
     if (!currentUser) {
         throw new Error("No hay un usuario autenticado para actualizar.");
     }
 
     try {
         const { id, ...dataFromForm } = updatedUser;
-        const { avatar_url } = dataFromForm;
 
-        // 1. Update auth user metadata if the avatar URL has changed.
-        if (avatar_url && avatar_url !== currentUser.avatar_url) {
+        // 1. Update auth user metadata for fields that have changed.
+        const metadataToUpdate: { [key: string]: any } = {};
+        if (dataFromForm.name && dataFromForm.name !== currentUser.name) {
+            metadataToUpdate.name = dataFromForm.name;
+        }
+        if (dataFromForm.avatar_url && dataFromForm.avatar_url !== currentUser.avatar_url) {
+            metadataToUpdate.avatar_url = dataFromForm.avatar_url;
+        }
+        
+        if (Object.keys(metadataToUpdate).length > 0) {
             const { error: authError } = await supabase.auth.updateUser({
-                data: { avatar_url: avatar_url }
+                data: metadataToUpdate
             });
             if (authError) {
                 throw new Error(`Error al actualizar metadatos de autenticación: ${authError.message}`);
@@ -238,6 +269,7 @@ const handleUpdateUser = async (updatedUser: User) => {
             lifestyle: dataFromForm.lifestyle,
             noise_level: dataFromForm.noise_level,
             commute_distance: dataFromForm.commute_distance,
+            avatar_url: dataFromForm.avatar_url,
         };
 
         const { data: updatedProfile, error: profileError } = await supabase
@@ -255,14 +287,11 @@ const handleUpdateUser = async (updatedUser: User) => {
             throw new Error("La base de datos no devolvió el perfil actualizado.");
         }
         
-        // 3. Construct the final user state for the UI, ensuring all parts are synced.
         const finalUser: User = { 
             ...currentUser, 
             ...updatedProfile,
-            avatar_url: dataFromForm.avatar_url, // Use the new avatar URL for local state
         };
 
-        // Update the application state.
         setCurrentUser(finalUser);
         setUsers(currentUsers => currentUsers.map(u => (u.id === finalUser.id ? finalUser : u)));
 
@@ -405,14 +434,14 @@ const handleUpdateUser = async (updatedUser: User) => {
     const loginPageProps = { ...pageNavigationProps, onRegisterClick: () => { setLoginInitialMode('register'); setPage('login'); } };
     
     switch (page) {
-      case 'home': return <HomePage onStartRegistration={handleStartRegistration} {...pageNavigationProps} onLoginClick={loginPageProps.onLoginClick} />;
-      case 'owners': return <OwnerLandingPage onStartPublication={handleStartPublication} onOwnersClick={() => setPage('owners')} {...loginPageProps} />;
+      case 'home': return <HomePage onStartRegistration={handleStartRegistration} {...pageNavigationProps} onRegisterClick={loginPageProps.onRegisterClick} />;
+      case 'owners': return <OwnerLandingPage onStartPublication={handleStartPublication} onLoginClick={handleGoToLogin} onHomeClick={() => setPage('home')} {...pageNavigationProps} />;
       case 'login': return <LoginPage onLogin={handleLogin} onRegister={handleRegister} registrationData={registrationData} publicationData={publicationData} initialMode={loginInitialMode} {...loginPageProps} />;
-      case 'blog': return <BlogPage posts={blogPosts} onOwnersClick={() => setPage('owners')} {...loginPageProps} />;
-      case 'about': return <AboutPage onOwnersClick={() => setPage('owners')} {...loginPageProps} />;
-      case 'privacy': return <PrivacyPolicyPage onOwnersClick={() => setPage('owners')} {...loginPageProps} />;
-      case 'terms': return <TermsPage onOwnersClick={() => setPage('owners')} {...loginPageProps} />;
-      case 'contact': return <ContactPage onOwnersClick={() => setPage('owners')} {...loginPageProps} />;
+      case 'blog': return <BlogPage posts={blogPosts} {...loginPageProps} />;
+      case 'about': return <AboutPage {...loginPageProps} />;
+      case 'privacy': return <PrivacyPolicyPage {...loginPageProps} />;
+      case 'terms': return <TermsPage {...loginPageProps} />;
+      case 'contact': return <ContactPage {...loginPageProps} />;
       case 'tenant-dashboard':
         if (!currentUser) return <LoginPage onLogin={handleLogin} onRegister={handleRegister} initialMode="login" {...loginPageProps} />;
         return <TenantDashboard 
@@ -463,7 +492,7 @@ const handleUpdateUser = async (updatedUser: User) => {
             initialTab={accountInitialTab}
             {...pageNavigationProps}
         />
-      default: return <HomePage onStartRegistration={handleStartRegistration} {...pageNavigationProps} onLoginClick={loginPageProps.onLoginClick} />;
+      default: return <HomePage onStartRegistration={handleStartRegistration} {...pageNavigationProps} onRegisterClick={loginPageProps.onRegisterClick} />;
     }
   };
 

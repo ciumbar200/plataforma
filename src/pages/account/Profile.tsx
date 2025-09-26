@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { User, RentalGoal } from '../../types';
+import { User } from '../../types';
 import GlassCard from '../../components/GlassCard';
 import { CITIES_DATA } from '../../constants';
 import { CameraIcon } from '../../components/icons';
@@ -28,7 +28,6 @@ const Profile: React.FC<ProfileProps> = ({ user, onSave }) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setProfileImageFile(file);
-      // Create a temporary URL for instant preview
       setFormData(prev => ({ ...prev, avatar_url: URL.createObjectURL(file) }));
     }
   };
@@ -63,7 +62,6 @@ const Profile: React.FC<ProfileProps> = ({ user, onSave }) => {
     try {
       let finalUserData = { ...formData };
 
-      // Image upload logic
       if (profileImageFile) {
         const fileExt = profileImageFile.name.split('.').pop();
         const filePath = `${user.id}/${new Date().getTime()}.${fileExt}`;
@@ -101,12 +99,10 @@ const Profile: React.FC<ProfileProps> = ({ user, onSave }) => {
       alert('Perfil actualizado con éxito');
       
     } catch (error: any) {
-      // Centralized error display for the user.
       console.error("Fallo al guardar el perfil:", error);
       alert(`Fallo al guardar el perfil:\n${error.message || 'Se produjo un error inesperado.'}`);
       
       if (profileImageFile) {
-          // Revert preview image if the entire save process fails
           setFormData(prev => ({ ...prev, avatar_url: user.avatar_url }));
       }
     } finally {
