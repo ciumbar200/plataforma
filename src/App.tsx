@@ -62,16 +62,9 @@ function App() {
             const avatar_url = session.user.user_metadata?.avatar_url || profile.avatar_url;
             const syncedProfile = { ...profile, avatar_url };
 
-            setCurrentUser(syncedProfile);
-            if (syncedProfile.role === UserRole.ADMIN) setPage('admin-dashboard');
-            else if (!syncedProfile.is_profile_complete) {
-              // This is handled by the main render logic, no need to set page here
-            } else if (syncedProfile.role === UserRole.PROPIETARIO) {
-              setPage('owner-dashboard');
-            } else {
-              setPage('tenant-dashboard');
-            }
+            handleLogin(syncedProfile);
           } else {
+            console.warn("User session exists but no profile found. Logging out.");
             await supabase.auth.signOut();
             setCurrentUser(null);
             setPage('home');
@@ -91,25 +84,57 @@ function App() {
 
     initializeApp();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-        const userInState = users.find(u => u.id === session?.user?.id);
-        
-        if (session?.user && userInState) {
-          if (currentUser?.id !== userInState.id) {
-            const avatar_url = session.user.user_metadata?.avatar_url || userInState.avatar_url;
-            const syncedProfile = { ...userInState, avatar_url };
-            setCurrentUser(syncedProfile);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+        if (_event === 'SIGNED_IN' && session?.user) {
+             const { data: profileData } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', session.user.id)
+                .single();
 
-            if (syncedProfile.role === UserRole.ADMIN) setPage('admin-dashboard');
-            else if (!syncedProfile.is_profile_complete) {
-              // Let main render logic handle this
+            if (profileData) {
+                if (currentUser?.id !== profileData.id) {
+                    handleLogin(profileData as User);
+                }
+            } else if (session.user.app_metadata.provider === 'google') {
+                // This is a new user from OAuth, their profile needs to be created
+                console.log('New OAuth user detected. Creating profile...');
+                const roleFromStorage = sessionStorage.getItem('oauth_role') as UserRole | null;
+                sessionStorage.removeItem('oauth_role');
+
+                const newProfile = {
+                  id: session.user.id,
+                  email: session.user.email,
+                  name: session.user.user_metadata.full_name || session.user.email?.split('@')[0] || 'Nuevo Usuario',
+                  age: 18, // Default age
+                  role: roleFromStorage || UserRole.INQUILINO, // Use stored role or default
+                  avatar_url: session.user.user_metadata.avatar_url,
+                  interests: [],
+                  lifestyle: [],
+                  noise_level: 'Medio' as const,
+                  bio: '',
+                  is_profile_complete: false, // Force profile completion
+                };
+                
+                const { data: createdProfile, error: insertError } = await supabase
+                    .from('profiles')
+                    .insert(newProfile)
+                    .select()
+                    .single();
+                
+                if (insertError) {
+                   console.error("Error creating profile for OAuth user:", insertError);
+                   alert("Error creando perfil: " + insertError.message);
+                   await supabase.auth.signOut();
+                } else if (createdProfile) {
+                   console.log('Profile created successfully for OAuth user.');
+                   setUsers(prev => [...prev, createdProfile as User]);
+                   handleLogin(createdProfile as User);
+                }
             }
-            else if (syncedProfile.role === UserRole.PROPIETARIO) setPage('owner-dashboard');
-            else setPage('tenant-dashboard');
-          }
-        } else if (!session?.user && currentUser !== null) {
-             setCurrentUser(null);
-             setPage('home');
+        } else if (_event === 'SIGNED_OUT') {
+            setCurrentUser(null);
+            setPage('home');
         }
     });
 
@@ -119,18 +144,20 @@ function App() {
   }, []);
 
   const handleLogin = (user: User) => {
-    if (!users.find(u => u.id === user.id)) {
-        setUsers(prev => [...prev, user]);
-    }
+    setUsers(prev => prev.find(u => u.id === user.id) ? prev.map(u => u.id === user.id ? user : u) : [...prev, user]);
     setCurrentUser(user);
     setRegistrationData(null);
     setPublicationData(null);
-    if (user.role === UserRole.ADMIN) setPage('admin-dashboard');
-    else if (!user.is_profile_complete) {
-        // Handled by main render logic
+    
+    if (user.role === UserRole.ADMIN) {
+        setPage('admin-dashboard');
+    } else if (!user.is_profile_complete) {
+        // The main render logic will handle the redirection.
+    } else if (user.role === UserRole.PROPIETARIO) {
+        setPage('owner-dashboard');
+    } else {
+        setPage('tenant-dashboard');
     }
-    else if (user.role === UserRole.PROPIETARIO) setPage('owner-dashboard');
-    else setPage('tenant-dashboard');
   };
   
   const handleRegister = async (userData: Partial<User>, password?: string, role?: UserRole) => {
@@ -138,7 +165,7 @@ function App() {
       throw new Error("Email y contraseña son requeridos para el registro.");
     }
 
-    // Paso 1: Registrar al usuario en Supabase Auth
+    // Step 1: Register user in Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: userData.email,
       password: password,
@@ -146,20 +173,21 @@ function App() {
 
     if (authError) {
       console.error('Error en el registro de Auth:', authError);
-      throw authError; // Lanza el error para que sea capturado por el componente UI
+      throw authError; 
     }
 
     if (!authData.user) {
       throw new Error('Registro completado, pero no se pudo obtener la información del usuario. Por favor, verifica tu email e intenta iniciar sesión.');
     }
 
-    // Paso 2: Si el registro en Auth es exitoso, crear el perfil manualmente en la tabla 'profiles'
+    // Step 2: Manually create profile in 'profiles' table
     try {
       const avatar_url = `https://placehold.co/200x200/9ca3af/1f2937?text=${(userData.name || '?').charAt(0)}`;
       
       const baseProfile = {
           id: authData.user.id,
           name: userData.name || 'Nuevo Usuario',
+          email: userData.email,
           age: userData.age || 18,
           interests: [],
           lifestyle: [],
@@ -186,12 +214,18 @@ function App() {
           rental_goal: registrationData?.rentalGoal,
       };
 
-      const { error: profileError } = await supabase
+      const { data: newProfile, error: profileError } = await supabase
         .from('profiles')
-        .insert(profile_to_insert);
+        .insert(profile_to_insert)
+        .select()
+        .single();
 
       if (profileError) {
         throw new Error(`Error al crear el perfil: ${profileError.message}`);
+      }
+      
+      if(newProfile) {
+        setUsers(prev => [...prev, newProfile as User]);
       }
 
       alert('¡Registro exitoso! Por favor, revisa tu correo electrónico para verificar tu cuenta e iniciar sesión.');
@@ -203,6 +237,21 @@ function App() {
     } catch (error: any) {
         console.error("Error en la post-creación del perfil:", error);
         alert(`Tu cuenta fue creada, pero hubo un problema al configurar tu perfil: ${error.message}. Por favor, contacta a soporte.`);
+    }
+  };
+  
+  const handleOAuthSignIn = async (role: UserRole) => {
+    sessionStorage.setItem('oauth_role', role);
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin,
+      },
+    });
+    if (error) {
+      console.error('Error initiating Google OAuth:', error);
+      alert('No se pudo iniciar la sesión con Google: ' + error.message);
     }
   };
 
@@ -310,7 +359,7 @@ function App() {
         };
 
         setCurrentUser(finalUser);
-        setUsers(currentUsers => currentUsers.map(u => (u.id === finalUser.id ? finalUser : u)));
+        setUsers(prevUsers => prevUsers.map(u => (u.id === finalUser.id ? finalUser : u)));
 
     } catch (error: any) {
         console.error("Fallo al guardar el perfil:", error);
@@ -332,11 +381,13 @@ function App() {
         .from('properties')
         .update(updateData)
         .eq('id', id)
-        .select();
+        .select()
+        .single();
+
       if (error) {
           console.error('Error al actualizar la propiedad:', error);
       } else if (data) {
-          setProperties(prev => prev.map(p => p.id === data[0].id ? data[0] as Property : p));
+          setProperties(prev => prev.map(p => p.id === data.id ? data as Property : p));
       }
     } else { // Insert
       const newPropertyData = {
@@ -349,11 +400,13 @@ function App() {
       const { data, error } = await supabase
         .from('properties')
         .insert(newPropertyData)
-        .select();
+        .select()
+        .single();
+
       if (error) {
         console.error('Error al crear la propiedad:', error);
       } else if (data) {
-        setProperties(prev => [...prev, data[0] as Property]);
+        setProperties(prev => [...prev, data as Property]);
         
         if (!currentUser.is_profile_complete) {
             const { data: updatedProfile, error: profileError } = await supabase
@@ -366,11 +419,9 @@ function App() {
             if (profileError) {
                 console.error("Error al marcar perfil de propietario como completo:", profileError);
             } else if (updatedProfile) {
-                setCurrentUser(prevCurrentUser => {
-                    if (!prevCurrentUser) return null;
-                    return { ...prevCurrentUser, ...updatedProfile };
-                });
-                setUsers(prevUsers => prevUsers.map(u => u.id === updatedProfile.id ? { ...u, ...updatedProfile } : u));
+                const finalUser = { ...currentUser, ...updatedProfile };
+                setCurrentUser(finalUser);
+                setUsers(prev => prev.map(u => u.id === finalUser.id ? finalUser : u));
             }
         }
       }
@@ -379,10 +430,13 @@ function App() {
 
   const handleAddMatch = (matchedUserId: string) => {
     if (!currentUser) return;
-    const currentMatches = matches[currentUser.id] || [];
-    if (!currentMatches.includes(matchedUserId)) {
-        setMatches(prev => ({ ...prev, [currentUser.id]: [...currentMatches, matchedUserId] }));
-    }
+    setMatches(prev => {
+        const currentMatches = prev[currentUser.id] || [];
+        if (!currentMatches.includes(matchedUserId)) {
+            return { ...prev, [currentUser.id]: [...currentMatches, matchedUserId] };
+        }
+        return prev;
+    });
   };
 
   const handleUpdatePropertyStatus = async (propertyId: number, status: 'approved' | 'rejected') => {
@@ -390,12 +444,13 @@ function App() {
       .from('properties')
       .update({ status })
       .eq('id', propertyId)
-      .select();
+      .select()
+      .single();
 
     if (error) {
       console.error('Error al actualizar el estado de la propiedad:', error);
     } else if (data) {
-      setProperties(prev => prev.map(p => p.id === propertyId ? data[0] as Property : p));
+      setProperties(prev => prev.map(p => p.id === propertyId ? data as Property : p));
     }
   };
   
@@ -417,29 +472,32 @@ function App() {
       .from('profiles')
       .update({ is_banned: isBanned })
       .eq('id', userId)
-      .select();
+      .select()
+      .single();
     
     if (error) {
       console.error('Error al actualizar el estado de baneo del usuario:', error);
     } else if (data) {
-      setUsers(prev => prev.map(u => u.id === userId ? data[0] as User : u));
+      setUsers(prev => prev.map(u => u.id === userId ? data as User : u));
     }
   };
 
   const handleSaveBlogPost = (postData: Omit<BlogPost, 'id'> & { id?: number }) => {
-    if (postData.id) {
-        setBlogPosts(prev => prev.map(p => p.id === postData.id ? { ...p, ...postData } as BlogPost : p));
-    } else {
-        const newPost: BlogPost = {
-            ...postData,
-            id: Math.max(0, ...blogPosts.map(p => p.id)) + 1,
-            slug: postData.title.toLowerCase().replace(/\s+/g, '-'),
-            author: currentUser?.name || 'Admin',
-            author_image_url: currentUser?.avatar_url || '',
-            publish_date: new Date().toISOString(),
-        };
-        setBlogPosts(prev => [newPost, ...prev]);
-    }
+    setBlogPosts(prev => {
+        if (postData.id) {
+            return prev.map(p => p.id === postData.id ? { ...p, ...postData } as BlogPost : p);
+        } else {
+            const newPost: BlogPost = {
+                ...postData,
+                id: Math.max(0, ...prev.map(p => p.id)) + 1,
+                slug: postData.title.toLowerCase().replace(/\s+/g, '-'),
+                author: currentUser?.name || 'Admin',
+                author_image_url: currentUser?.avatar_url || '',
+                publish_date: new Date().toISOString(),
+            };
+            return [newPost, ...prev];
+        }
+    });
   };
 
   const handleDeleteBlogPost = (postId: number) => {
@@ -501,29 +559,29 @@ function App() {
     
     switch (page) {
       case 'home': return <HomePage onStartRegistration={handleStartRegistration} {...pageNavigationProps} onRegisterClick={loginPageProps.onRegisterClick} />;
-      case 'owners': return <OwnerLandingPage onStartPublication={handleStartPublication} onLoginClick={handleGoToLogin} onHomeClick={() => setPage('home')} {...pageNavigationProps} onOwnersClick={() => setPage('home')} />;
-      case 'login': return <LoginPage onLogin={handleLogin} onRegister={handleRegister} registrationData={registrationData} publicationData={publicationData} initialMode={loginInitialMode} {...loginPageProps} />;
+      case 'owners': return <OwnerLandingPage onStartPublication={handleStartPublication} onLoginClick={handleGoToLogin} onHomeClick={() => setPage('home')} {...pageNavigationProps} />;
+      case 'login': return <LoginPage onLogin={handleLogin} onRegister={handleRegister} onOAuthSignIn={handleOAuthSignIn} registrationData={registrationData} publicationData={publicationData} initialMode={loginInitialMode} {...loginPageProps} />;
       case 'blog': return <BlogPage posts={blogPosts} {...loginPageProps} />;
       case 'about': return <AboutPage {...loginPageProps} />;
       case 'privacy': return <PrivacyPolicyPage {...loginPageProps} />;
       case 'terms': return <TermsPage {...loginPageProps} />;
       case 'contact': return <ContactPage {...loginPageProps} />;
       case 'tenant-dashboard':
-        if (!currentUser) return <LoginPage onLogin={handleLogin} onRegister={handleRegister} initialMode="login" {...loginPageProps} />;
+        if (!currentUser) return <LoginPage onLogin={handleLogin} onRegister={handleRegister} onOAuthSignIn={handleOAuthSignIn} initialMode="login" {...loginPageProps} />;
         return <TenantDashboard 
             user={currentUser} 
             allUsers={users}
             properties={properties.filter(p => p.status === 'approved')}
             onSendInterest={() => alert('Interés enviado (simulación)')}
             savedSearches={savedSearches}
-            onSaveSearch={(search) => setSavedSearches([...savedSearches, {...search, id: Date.now(), user_id: currentUser.id}])}
-            onDeleteSearch={(id) => setSavedSearches(savedSearches.filter(s => s.id !== id))}
+            onSaveSearch={(search) => setSavedSearches(prev => [...prev, {...search, id: Date.now(), user_id: currentUser.id}])}
+            onDeleteSearch={(id) => setSavedSearches(prev => prev.filter(s => s.id !== id))}
             userMatches={matches[currentUser.id] || []}
             onAddMatch={handleAddMatch}
             onGoToAccountSettings={handleGoToAccountSettings}
         />;
       case 'owner-dashboard':
-        if (!currentUser) return <LoginPage onLogin={handleLogin} onRegister={handleRegister} initialMode="login" {...loginPageProps}/>;
+        if (!currentUser) return <LoginPage onLogin={handleLogin} onRegister={handleRegister} onOAuthSignIn={handleOAuthSignIn} initialMode="login" {...loginPageProps}/>;
         return <OwnerDashboard 
             user={currentUser}
             properties={properties.filter(p => p.owner_id === currentUser.id)}
@@ -537,7 +595,7 @@ function App() {
             onUpdateUser={handleUpdateUser}
         />;
       case 'admin-dashboard':
-        if (!currentUser || currentUser.role !== UserRole.ADMIN) return <LoginPage onLogin={handleLogin} onRegister={handleRegister} initialMode="login" {...loginPageProps} />;
+        if (!currentUser || currentUser.role !== UserRole.ADMIN) return <LoginPage onLogin={handleLogin} onRegister={handleRegister} onOAuthSignIn={handleOAuthSignIn} initialMode="login" {...loginPageProps} />;
         return <AdminDashboard 
             users={users}
             properties={properties}
@@ -551,7 +609,7 @@ function App() {
             onLogout={handleLogout}
         />;
       case 'account':
-        if (!currentUser) return <LoginPage onLogin={handleLogin} onRegister={handleRegister} initialMode="login" {...loginPageProps} />;
+        if (!currentUser) return <LoginPage onLogin={handleLogin} onRegister={handleRegister} onOAuthSignIn={handleOAuthSignIn} initialMode="login" {...loginPageProps} />;
         const backPage = currentUser.role === UserRole.INQUILINO ? 'tenant-dashboard' : 'owner-dashboard';
         return <AccountLayout 
             user={currentUser}
