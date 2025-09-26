@@ -16,6 +16,7 @@ const Header: React.FC<HeaderProps> = ({ onLoginClick, onRegisterClick, onHomeCl
 
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
+    const [isScrolled, setIsScrolled] = useState(false);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -29,6 +30,17 @@ const Header: React.FC<HeaderProps> = ({ onLoginClick, onRegisterClick, onHomeCl
         };
     }, []);
 
+    useEffect(() => {
+        const handleScroll = () => {
+            setIsScrolled(window.scrollY > 10);
+        };
+        window.addEventListener('scroll', handleScroll);
+        handleScroll(); // Set initial state
+        return () => {
+            window.removeEventListener('scroll', handleScroll);
+        };
+    }, []);
+    
     const handleRegister = () => {
         onRegisterClick?.();
         setIsDropdownOpen(false);
@@ -38,11 +50,19 @@ const Header: React.FC<HeaderProps> = ({ onLoginClick, onRegisterClick, onHomeCl
         onLoginClick();
         setIsDropdownOpen(false);
     }
+    
+    const headerClasses = `
+        sticky top-0 z-50 text-white w-full transition-all duration-300 h-16 mb-[-4rem]
+        ${isScrolled 
+            ? 'bg-black/20 backdrop-blur-lg border-b border-white/10' 
+            : 'bg-transparent border-b-0'
+        }
+    `;
 
     return (
-        <header className="sticky top-0 z-50 bg-black/20 backdrop-blur-lg border-b border-white/10 text-white w-full">
+        <header className={headerClasses.trim()}>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex justify-between items-center h-16">
+                <div className="flex justify-between items-center h-full">
                     <button className="flex items-center gap-2 cursor-pointer" onClick={onHomeClick}>
                         <MoonIcon className="w-7 h-7" />
                         <span className="text-xl font-bold">MoOn</span>

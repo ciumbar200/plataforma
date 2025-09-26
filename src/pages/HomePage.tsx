@@ -118,23 +118,25 @@ const HomePage: React.FC<HomePageProps> = ({ onLoginClick, onRegisterClick, onSt
             
             <main className="flex-grow">
                 {/* Hero Section */}
-                <section className="relative pt-16 pb-24 sm:pt-20 sm:pb-32 text-center overflow-hidden">
+                <section className="relative pt-20 pb-20 sm:pt-24 sm:pb-32 text-center overflow-hidden">
                     <div 
-                        className="absolute inset-0 w-full h-full bg-cover bg-top sm:bg-center opacity-40 scale-110"
+                        className="absolute inset-0 w-full h-full bg-cover bg-top sm:bg-center opacity-60 scale-110"
                         style={{ backgroundImage: "url('https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=2071&auto=format&fit=crop')" }}
                         aria-hidden="true"
                     ></div>
-                    <div className="absolute inset-0 bg-gradient-to-b from-gray-900/40 to-indigo-900/80" aria-hidden="true"></div>
+                    <div className="absolute inset-0 bg-gradient-to-b from-gray-900/30 to-indigo-900/70" aria-hidden="true"></div>
                     <div className="relative z-10 max-w-4xl mx-auto px-4">
                         <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-white">
-                            Vive Digno. Vive Seguro. <br/>Vive Acompañado.
+                            <span className="block animate-fade-in-up" style={{ animationDelay: '0.1s' }}>Vive Digno.</span>
+                            <span className="block animate-fade-in-up" style={{ animationDelay: '0.2s' }}>Vive Seguro.</span>
+                            <span className="block animate-fade-in-up" style={{ animationDelay: '0.3s' }}>Vive Acompañado.</span>
                         </h1>
-                        <p className="mt-6 text-lg sm:text-xl max-w-2xl mx-auto text-white/80">
+                        <p className="mt-6 text-lg sm:text-xl max-w-2xl mx-auto text-white/80 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
                             Encuentra compañeros de piso compatibles y propiedades increíbles. Di adiós a las convivencias incómodas.
                         </p>
                         
-                        <form onSubmit={handleSubmit} className="mt-10 max-w-5xl mx-auto">
-                           <GlassCard className="!bg-white/10">
+                        <form onSubmit={handleSubmit} className="mt-10 max-w-5xl mx-auto animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
+                           <GlassCard className="!bg-white/20">
                                 <div className="flex flex-col md:flex-row items-center justify-center gap-4">
                                     {/* Rental Goal Select */}
                                     <div className="relative w-full md:w-64">
@@ -184,13 +186,23 @@ const HomePage: React.FC<HomePageProps> = ({ onLoginClick, onRegisterClick, onSt
                                     {/* Submit Button */}
                                     <button
                                         type="submit"
-                                        className="w-full md:w-auto bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-3 px-8 rounded-xl transition-all shadow-lg"
+                                        className="w-full md:w-auto flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-3 px-8 rounded-xl transition-all shadow-lg hover:shadow-purple-500/50 transform hover:-translate-y-0.5"
                                     >
-                                        Buscar
+                                        <SearchIcon className="w-5 h-5" />
+                                        <span>Buscar</span>
                                     </button>
                                 </div>
                             </GlassCard>
                         </form>
+
+                        <div className="mt-8 flex flex-col items-center gap-4 animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
+                            <div className="flex -space-x-2">
+                                <img className="inline-block h-8 w-8 rounded-full ring-2 ring-slate-900 object-cover" src="https://images.unsplash.com/photo-1491528323818-fdd1faba62cc?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="Usuario 1"/>
+                                <img className="inline-block h-8 w-8 rounded-full ring-2 ring-slate-900 object-cover" src="https://images.unsplash.com/photo-1550525811-e586910b323f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="Usuario 2"/>
+                                <img className="inline-block h-8 w-8 rounded-full ring-2 ring-slate-900 object-cover" src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="Usuario 3"/>
+                            </div>
+                            <p className="text-sm text-white/80"><span className="font-bold text-white">Únete a +10,000 Mooners</span> encontrando su hogar ideal.</p>
+                        </div>
                     </div>
                 </section>
 
