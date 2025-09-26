@@ -318,7 +318,7 @@ function App() {
       if (error) {
           console.error('Error al actualizar la propiedad:', error);
       } else if (data) {
-          setProperties(properties.map(p => p.id === data[0].id ? data[0] as Property : p));
+          setProperties(prev => prev.map(p => p.id === data[0].id ? data[0] as Property : p));
       }
     } else { // Insert
       const newPropertyData = {
@@ -358,7 +358,7 @@ function App() {
     if (error) {
       console.error('Error al actualizar el estado de la propiedad:', error);
     } else if (data) {
-      setProperties(properties.map(p => p.id === propertyId ? data[0] as Property : p));
+      setProperties(prev => prev.map(p => p.id === propertyId ? data[0] as Property : p));
     }
   };
   
@@ -371,7 +371,7 @@ function App() {
     if (error) {
       console.error('Error al eliminar la propiedad:', error);
     } else {
-      setProperties(properties.filter(p => p.id !== propertyId));
+      setProperties(prev => prev.filter(p => p.id !== propertyId));
     }
   };
 
@@ -385,13 +385,13 @@ function App() {
     if (error) {
       console.error('Error al actualizar el estado de baneo del usuario:', error);
     } else if (data) {
-      setUsers(users.map(u => u.id === userId ? data[0] as User : u));
+      setUsers(prev => prev.map(u => u.id === userId ? data[0] as User : u));
     }
   };
 
   const handleSaveBlogPost = (postData: Omit<BlogPost, 'id'> & { id?: number }) => {
     if (postData.id) {
-        setBlogPosts(blogPosts.map(p => p.id === postData.id ? { ...p, ...postData } as BlogPost : p));
+        setBlogPosts(prev => prev.map(p => p.id === postData.id ? { ...p, ...postData } as BlogPost : p));
     } else {
         const newPost: BlogPost = {
             ...postData,
@@ -406,7 +406,7 @@ function App() {
   };
 
   const handleDeleteBlogPost = (postId: number) => {
-    setBlogPosts(blogPosts.filter(p => p.id !== postId));
+    setBlogPosts(prev => prev.filter(p => p.id !== postId));
   };
 
   const pageNavigationProps = {
@@ -434,7 +434,7 @@ function App() {
     
     switch (page) {
       case 'home': return <HomePage onStartRegistration={handleStartRegistration} {...pageNavigationProps} onRegisterClick={loginPageProps.onRegisterClick} />;
-      case 'owners': return <OwnerLandingPage onStartPublication={handleStartPublication} onLoginClick={handleGoToLogin} onHomeClick={() => setPage('home')} {...pageNavigationProps} />;
+      case 'owners': return <OwnerLandingPage onStartPublication={handleStartPublication} onLoginClick={handleGoToLogin} onHomeClick={() => setPage('home')} {...pageNavigationProps} onOwnersClick={() => setPage('home')} />;
       case 'login': return <LoginPage onLogin={handleLogin} onRegister={handleRegister} registrationData={registrationData} publicationData={publicationData} initialMode={loginInitialMode} {...loginPageProps} />;
       case 'blog': return <BlogPage posts={blogPosts} {...loginPageProps} />;
       case 'about': return <AboutPage {...loginPageProps} />;

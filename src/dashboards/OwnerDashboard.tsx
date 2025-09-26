@@ -10,20 +10,12 @@ import CandidateGroupCard from './components/CandidateGroupCard';
 import ProfileDropdown from './components/ProfileDropdown';
 import Profile from '../pages/account/Profile';
 
-const MOCK_OWNER_STATS: OwnerStats = {
-    monthlyEarnings: [
-        { name: 'Ene', earnings: 4000 },
-        { name: 'Feb', earnings: 3000 },
-        { name: 'Mar', earnings: 2000 },
-        { name: 'Abr', earnings: 2780 },
-        { name: 'May', earnings: 1890 },
-        { name: 'Jun', earnings: 2390 },
-        { name: 'Jul', earnings: 3490 },
-    ],
-    totalProperties: 5,
-    totalViews: 12500,
-    totalCandidates: 340,
-};
+const MOCK_MONTHLY_EARNINGS_DATA = [
+    { name: 'Ene', earnings: 0 }, { name: 'Feb', earnings: 0 }, { name: 'Mar', earnings: 0 },
+    { name: 'Abr', earnings: 0 }, { name: 'May', earnings: 0 }, { name: 'Jun', earnings: 0 },
+    { name: 'Jul', earnings: 0 }, { name: 'Ago', earnings: 0 }, { name: 'Sep', earnings: 0 },
+    { name: 'Oct', earnings: 0 }, { name: 'Nov', earnings: 0 }, { name: 'Dic', earnings: 0 },
+];
 
 type InitialPropertyData = { property_type: PropertyType; city: string; locality: string };
 
@@ -44,37 +36,11 @@ const navItems = [
     { id: 'dashboard', icon: <ChartBarIcon className="w-7 h-7" />, label: 'Panel' },
     { id: 'properties', icon: <BuildingIcon className="w-7 h-7" />, label: 'Propiedades' },
     { id: 'candidates', icon: <UsersIcon className="w-7 h-7" />, label: 'Candidatos' },
-    { id: 'profile', icon: <UserCircleIcon className="w-7 h-7" />, label: 'Mi Perfil' },
 ] as const;
 
 type View = typeof navItems[number]['id'] | 'propertyDetail';
 
-const TopNavBar = ({ activeView, setView, onAddNew }: { activeView: View; setView: (view: View) => void; onAddNew: () => void; }) => (
-    <nav className="hidden md:flex justify-between items-center w-full bg-black/20 backdrop-blur-lg border-b border-white/10 p-2 px-6">
-        <div className="flex items-center gap-2">
-            {navItems.map(item => (
-                <button
-                    key={item.id}
-                    onClick={() => setView(item.id)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors text-sm font-semibold ${activeView === item.id ? 'bg-purple-500/50 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white'}`}
-                >
-                    {React.cloneElement(item.icon, { className: "w-5 h-5" })}
-                    <span>{item.label}</span>
-                </button>
-            ))}
-        </div>
-        <button 
-            onClick={onAddNew} 
-            className="flex items-center gap-2 bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors text-sm"
-            aria-label="Añadir nueva propiedad"
-        >
-            <PlusIcon className="w-5 h-5" />
-            <span>Añadir Propiedad</span>
-        </button>
-    </nav>
-);
-
-const BottomNavBar = ({ activeView, setView, onAddNew }: { activeView: View; setView: (view: View) => void; onAddNew: () => void; }) => (
+const BottomNavBar = ({ activeView, setView, onAddNew, onGoToAccountSettings }: { activeView: View; setView: (view: View) => void; onAddNew: () => void; onGoToAccountSettings: () => void; }) => (
     <div className="fixed bottom-0 left-0 right-0 h-20 bg-black/30 backdrop-blur-xl border-t border-white/20 z-30 grid grid-cols-5 items-center md:hidden">
         {navItems.map(item => (
              <button
@@ -94,6 +60,13 @@ const BottomNavBar = ({ activeView, setView, onAddNew }: { activeView: View; set
             <div className="bg-indigo-600 h-12 w-12 rounded-full flex items-center justify-center shadow-lg border-2 border-indigo-400">
                 <PlusIcon className="w-7 h-7" />
             </div>
+        </button>
+         <button
+            onClick={onGoToAccountSettings}
+            className={`flex flex-col items-center justify-center gap-1 transition-colors text-white/70 hover:text-white`}
+        >
+            <UserCircleIcon className="w-7 h-7" />
+            <span className="text-xs font-medium">Mi Perfil</span>
         </button>
     </div>
 );
@@ -213,6 +186,14 @@ const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ user, properties, onSav
         setInvitedGroups(prev => [...prev, invitationKey]);
         alert(`Grupo de ${group.map(u => u.name).join(', ')} ha sido notificado sobre la propiedad "${property.title}".`);
     };
+    
+    const realStats = useMemo(() => ({
+      totalRevenue: properties.reduce((sum, prop) => sum + prop.price, 0),
+      totalProperties: properties.length,
+      totalViews: properties.reduce((sum, prop) => sum + prop.views, 0),
+      totalCandidates: properties.reduce((sum, prop) => sum + prop.compatible_candidates, 0),
+    }), [properties]);
+
 
     const renderDashboardView = () => (
         <>
@@ -220,34 +201,34 @@ const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ user, properties, onSav
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <StatCard 
                     icon={<ChartBarIcon className="w-7 h-7 text-white" />}
-                    title="Ingresos Totales"
-                    value={`€${MOCK_OWNER_STATS.monthlyEarnings.reduce((acc, item) => acc + item.earnings, 0).toLocaleString()}`}
+                    title="Ingresos Mensuales Potenciales"
+                    value={`€${realStats.totalRevenue.toLocaleString()}`}
                     color="green"
                 />
                 <StatCard 
                     icon={<BuildingIcon className="w-7 h-7 text-white" />}
                     title="Propiedades Listadas"
-                    value={properties.length.toString()}
+                    value={realStats.totalProperties.toString()}
                     color="indigo"
                 />
                 <StatCard 
                     icon={<EyeIcon className="w-7 h-7 text-white" />}
                     title="Visitas Totales"
-                    value={properties.reduce((acc, p) => acc + p.views, 0).toLocaleString()}
+                    value={realStats.totalViews.toLocaleString()}
                     color="blue"
                 />
                 <StatCard 
                     icon={<UsersIcon className="w-7 h-7 text-white" />}
                     title="Candidatos Totales"
-                    value={properties.reduce((acc, p) => acc + p.compatible_candidates, 0).toLocaleString()}
+                    value={realStats.totalCandidates.toLocaleString()}
                     color="purple"
                 />
             </div>
              <div className="bg-black/20 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg p-6">
-                <h3 className="text-xl font-bold mb-4">Ingresos Mensuales</h3>
+                <h3 className="text-xl font-bold mb-4">Rendimiento Mensual (Simulado)</h3>
                 <div className="w-full h-80">
                         <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={MOCK_OWNER_STATS.monthlyEarnings} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                        <BarChart data={MOCK_MONTHLY_EARNINGS_DATA} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.2)" />
                             <XAxis dataKey="name" stroke="rgba(255, 255, 255, 0.7)" />
                             <YAxis stroke="rgba(255, 255, 255, 0.7)" />
@@ -312,10 +293,6 @@ const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ user, properties, onSav
             </div>
         </>
     );
-
-    const renderProfileView = () => (
-        <Profile user={user} onSave={onUpdateUser} />
-    );
     
     const renderPropertyDetailView = () => {
         if (!selectedProperty) return null;
@@ -372,7 +349,6 @@ const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ user, properties, onSav
             case 'dashboard': return renderDashboardView();
             case 'properties': return renderPropertiesView();
             case 'candidates': return renderCandidatesView();
-            case 'profile': return renderProfileView();
             case 'propertyDetail': return renderPropertyDetailView();
             default: return renderDashboardView();
         }
@@ -385,10 +361,22 @@ const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ user, properties, onSav
                     <MoonIcon className="w-7 h-7" />
                     <span className="text-xl font-bold">Panel de Propietario</span>
                 </div>
-                <div className="hidden md:flex items-center gap-4">
+                <nav className="hidden md:flex items-center gap-2">
+                    {navItems.map(item => (
+                        <button
+                            key={item.id}
+                            onClick={() => setView(item.id)}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors text-sm font-semibold ${view === item.id ? 'bg-purple-500/50 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white'}`}
+                        >
+                            {React.cloneElement(item.icon, { className: "w-5 h-5" })}
+                            <span>{item.label}</span>
+                        </button>
+                    ))}
+                </nav>
+                <div className="flex items-center gap-4">
                      <button 
                         onClick={handleAddNew} 
-                        className="flex items-center gap-2 bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors text-sm"
+                        className="hidden md:flex items-center gap-2 bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors text-sm"
                         aria-label="Añadir nueva propiedad"
                     >
                         <PlusIcon className="w-5 h-5" />
@@ -397,29 +385,11 @@ const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ user, properties, onSav
                     <ProfileDropdown user={user} onLogout={onLogout} onAccountSettings={onGoToAccountSettings} />
                 </div>
             </header>
-            <div className="flex-1 flex overflow-hidden">
-                <nav className="hidden md:flex flex-col w-64 bg-black/20 p-4 border-r border-white/10">
-                    <ul className="space-y-2">
-                    {navItems.map(item => (
-                        <li key={item.id}>
-                            <button
-                                onClick={() => setView(item.id)}
-                                // FIX: Replaced undefined variable 'activeView' with the correct state variable 'view' for sidebar button styling.
-                                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left font-semibold text-sm transition-colors ${view === item.id ? 'bg-purple-500/50 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white'}`}
-                            >
-                                {React.cloneElement(item.icon, { className: "w-5 h-5" })}
-                                <span>{item.label}</span>
-                            </button>
-                        </li>
-                    ))}
-                    </ul>
-                </nav>
-                <main className="flex-1 overflow-y-auto">
-                    <div className="p-6 md:pb-6 pb-24">
-                        {renderContent()}
-                    </div>
-                </main>
-            </div>
+            <main className="flex-1 overflow-y-auto">
+                 <div className="p-6 md:pb-6 pb-24">
+                    {renderContent()}
+                </div>
+            </main>
             <AddPropertyModal 
                 isOpen={isModalOpen}
                 onClose={handleCloseModal}
@@ -427,7 +397,7 @@ const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ user, properties, onSav
                 propertyToEdit={propertyToEdit}
                 initialData={propertyToEdit ? null : initialPropertyData}
             />
-            <BottomNavBar activeView={view} setView={setView} onAddNew={handleAddNew} />
+            <BottomNavBar activeView={view} setView={setView} onAddNew={handleAddNew} onGoToAccountSettings={onGoToAccountSettings}/>
         </div>
     );
 };
