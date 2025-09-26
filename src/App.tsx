@@ -64,8 +64,13 @@ function App() {
 
             setCurrentUser(syncedProfile);
             if (syncedProfile.role === UserRole.ADMIN) setPage('admin-dashboard');
-            else if (syncedProfile.role === UserRole.PROPIETARIO) setPage('owner-dashboard');
-            else setPage('tenant-dashboard');
+            else if (!syncedProfile.is_profile_complete) {
+              // This is handled by the main render logic, no need to set page here
+            } else if (syncedProfile.role === UserRole.PROPIETARIO) {
+              setPage('owner-dashboard');
+            } else {
+              setPage('tenant-dashboard');
+            }
           } else {
             await supabase.auth.signOut();
             setCurrentUser(null);
@@ -96,6 +101,9 @@ function App() {
             setCurrentUser(syncedProfile);
 
             if (syncedProfile.role === UserRole.ADMIN) setPage('admin-dashboard');
+            else if (!syncedProfile.is_profile_complete) {
+              // Let main render logic handle this
+            }
             else if (syncedProfile.role === UserRole.PROPIETARIO) setPage('owner-dashboard');
             else setPage('tenant-dashboard');
           }
@@ -118,6 +126,9 @@ function App() {
     setRegistrationData(null);
     setPublicationData(null);
     if (user.role === UserRole.ADMIN) setPage('admin-dashboard');
+    else if (!user.is_profile_complete) {
+        // Handled by main render logic
+    }
     else if (user.role === UserRole.PROPIETARIO) setPage('owner-dashboard');
     else setPage('tenant-dashboard');
   };
@@ -155,6 +166,7 @@ function App() {
           noise_level: 'Medio' as const,
           avatar_url,
           bio: '',
+          is_profile_complete: false,
       };
 
       let targetRole: UserRole;
@@ -182,7 +194,7 @@ function App() {
         throw new Error(`Error al crear el perfil: ${profileError.message}`);
       }
 
-      alert('¡Registro exitoso! Por favor, revisa tu correo electrónico para verificar tu cuenta.');
+      alert('¡Registro exitoso! Por favor, revisa tu correo electrónico para verificar tu cuenta e iniciar sesión.');
       setRegistrationData(null);
       setPublicationData(null);
       setPage('login');
@@ -240,6 +252,11 @@ function App() {
     try {
         const { id, ...dataFromForm } = updatedUser;
 
+        let shouldMarkProfileComplete = false;
+        if (!currentUser.is_profile_complete && dataFromForm.bio && dataFromForm.bio.length >= 100) {
+            shouldMarkProfileComplete = true;
+        }
+
         const metadataToUpdate: { [key: string]: any } = {};
         if (dataFromForm.name && dataFromForm.name !== currentUser.name) {
             metadataToUpdate.name = dataFromForm.name;
@@ -269,6 +286,7 @@ function App() {
             noise_level: dataFromForm.noise_level,
             commute_distance: dataFromForm.commute_distance,
             avatar_url: dataFromForm.avatar_url,
+            is_profile_complete: shouldMarkProfileComplete ? true : currentUser.is_profile_complete,
         };
 
         const { data: updatedProfile, error: profileError } = await supabase
@@ -336,6 +354,25 @@ function App() {
         console.error('Error al crear la propiedad:', error);
       } else if (data) {
         setProperties(prev => [...prev, data[0] as Property]);
+        
+        if (!currentUser.is_profile_complete) {
+            const { data: updatedProfile, error: profileError } = await supabase
+                .from('profiles')
+                .update({ is_profile_complete: true })
+                .eq('id', currentUser.id)
+                .select()
+                .single();
+
+            if (profileError) {
+                console.error("Error al marcar perfil de propietario como completo:", profileError);
+            } else if (updatedProfile) {
+                setCurrentUser(prevCurrentUser => {
+                    if (!prevCurrentUser) return null;
+                    return { ...prevCurrentUser, ...updatedProfile };
+                });
+                setUsers(prevUsers => prevUsers.map(u => u.id === updatedProfile.id ? { ...u, ...updatedProfile } : u));
+            }
+        }
       }
     }
   };
@@ -427,6 +464,36 @@ function App() {
             <p className="mt-4 text-lg">Cargando MoOn...</p>
         </div>
     );
+  }
+
+  // Mandatory Profile/Property completion flow
+  if (currentUser && !currentUser.is_profile_complete) {
+    if (currentUser.role === UserRole.INQUILINO) {
+        return <AccountLayout 
+            user={currentUser}
+            onUpdateUser={handleUpdateUser}
+            onLogout={handleLogout}
+            onBack={() => {}} // No-op, should not be visible
+            isMandatory={true}
+            initialTab="profile"
+            {...pageNavigationProps}
+        />;
+    }
+    if (currentUser.role === UserRole.PROPIETARIO) {
+        return <OwnerDashboard 
+            user={currentUser}
+            properties={properties.filter(p => p.owner_id === currentUser.id)}
+            onSaveProperty={handleSaveProperty}
+            forceAddProperty={true}
+            initialPropertyData={publicationData}
+            onClearInitialPropertyData={() => setPublicationData(null)}
+            allUsers={users}
+            matches={matches}
+            onLogout={handleLogout}
+            onGoToAccountSettings={handleGoToAccountSettings}
+            onUpdateUser={handleUpdateUser}
+        />;
+    }
   }
 
   const renderPage = () => {

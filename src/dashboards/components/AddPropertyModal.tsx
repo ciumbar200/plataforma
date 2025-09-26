@@ -13,9 +13,10 @@ interface AddPropertyModalProps {
   onSave: (property: Omit<Property, 'id' | 'views' | 'compatible_candidates' | 'owner_id'> & { id?: number }) => void;
   propertyToEdit?: Property | null;
   initialData?: InitialPropertyData | null;
+  isMandatory?: boolean;
 }
 
-const AddPropertyModal: React.FC<AddPropertyModalProps> = ({ isOpen, onClose, onSave, propertyToEdit, initialData }) => {
+const AddPropertyModal: React.FC<AddPropertyModalProps> = ({ isOpen, onClose, onSave, propertyToEdit, initialData, isMandatory = false }) => {
   const [formData, setFormData] = useState({
     title: '',
     address: '', // Street address
@@ -167,7 +168,7 @@ const AddPropertyModal: React.FC<AddPropertyModalProps> = ({ isOpen, onClose, on
     const fieldsToValidate = ['title', 'address', 'postal_code', 'price', 'available_from', 'video_url'];
     let isValid = true;
     fieldsToValidate.forEach(field => {
-        if (!validateField(field, (formData as any)[field])) {
+        if (!validateField(field, (formData as any)[field] || '')) {
             isValid = false;
         }
     });
@@ -206,14 +207,17 @@ const AddPropertyModal: React.FC<AddPropertyModalProps> = ({ isOpen, onClose, on
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <GlassCard className="w-full max-w-2xl text-white relative !p-0">
         <div className="p-6 border-b border-white/10">
-            <button 
-            onClick={onClose} 
-            className="absolute top-4 right-4 text-white/70 hover:text-white"
-            aria-label="Cerrar modal"
-            >
-            <XIcon className="w-6 h-6" />
-            </button>
+            {!isMandatory && (
+              <button 
+              onClick={onClose} 
+              className="absolute top-4 right-4 text-white/70 hover:text-white"
+              aria-label="Cerrar modal"
+              >
+              <XIcon className="w-6 h-6" />
+              </button>
+            )}
             <h2 className="text-2xl font-bold">{propertyToEdit ? 'Editar Propiedad' : 'Añadir Nueva Propiedad'}</h2>
+            {isMandatory && <p className="text-sm text-indigo-300 mt-1">Completa este paso para acceder a tu panel.</p>}
         </div>
         <form onSubmit={handleSubmit} className="space-y-4 max-h-[85vh] overflow-y-auto p-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -332,7 +336,9 @@ const AddPropertyModal: React.FC<AddPropertyModalProps> = ({ isOpen, onClose, on
             {errors.video_url && <p className="text-red-400 text-xs mt-1">{errors.video_url}</p>}
           </div>
           <div className="flex justify-end gap-4 pt-4 sticky bottom-0 bg-black/20 backdrop-blur-sm -m-6 mt-4 p-6 border-t border-white/10">
-            <button type="button" onClick={onClose} className="bg-white/10 hover:bg-white/20 px-6 py-2 rounded-lg font-semibold transition-colors">Cancelar</button>
+            {!isMandatory && (
+                <button type="button" onClick={onClose} className="bg-white/10 hover:bg-white/20 px-6 py-2 rounded-lg font-semibold transition-colors">Cancelar</button>
+            )}
             <button type="submit" className="bg-indigo-600 hover:bg-indigo-700 px-6 py-2 rounded-lg font-semibold transition-colors">Guardar Propiedad</button>
           </div>
         </form>

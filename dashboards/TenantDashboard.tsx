@@ -1,4 +1,5 @@
 
+
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 // FIX: Corrected import path for constants.ts to point to the file inside the /src directory.
 import { CITIES_DATA, showNotification } from '../src/constants';
@@ -711,7 +712,8 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user: currentUser, al
                                 {selectedProperty.image_urls.length > 1 && (
                                     <>
                                         <button onClick={prevImage} className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 text-white p-2 rounded-full hover:bg-black/60"><ChevronLeftIcon className="w-6 h-6" /></button>
-                                        <button onClick={nextImage} className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 text-white p-2 rounded-full hover:bg-black/60"><ChevronLeftIcon className="w-6 h-6 transform rotate-180" /></button>
+                                        {/* FIX: Removed the 'transform' class as it's often redundant in modern Tailwind and may cause issues. */}
+                                        <button onClick={nextImage} className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 text-white p-2 rounded-full hover:bg-black/60"><ChevronLeftIcon className="w-6 h-6 rotate-180" /></button>
                                         {/* FIX: Corrected property name from imageUrls to image_urls. */}
                                         <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-2">{selectedProperty.image_urls.map((_, index) => (<div key={index} className={`w-2 h-2 rounded-full transition-colors ${index === currentPropertyImageIndex ? 'bg-white' : 'bg-white/50'}`}></div>))}</div>
                                     </>

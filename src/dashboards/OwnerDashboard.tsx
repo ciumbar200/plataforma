@@ -30,6 +30,7 @@ interface OwnerDashboardProps {
     onLogout: () => void;
     onGoToAccountSettings: () => void;
     onUpdateUser: (updatedUser: User) => Promise<void>;
+    forceAddProperty?: boolean;
 }
 
 const navItems = [
@@ -78,7 +79,7 @@ const BackButton = ({ onClick, text }: { onClick: () => void; text: string; }) =
     </button>
 );
 
-const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ user, properties, onSaveProperty, initialPropertyData, onClearInitialPropertyData, allUsers, matches, onLogout, onGoToAccountSettings, onUpdateUser }) => {
+const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ user, properties, onSaveProperty, initialPropertyData, onClearInitialPropertyData, allUsers, matches, onLogout, onGoToAccountSettings, onUpdateUser, forceAddProperty = false }) => {
     const [view, setView] = useState<View>('dashboard');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [propertyToEdit, setPropertyToEdit] = useState<Property | null>(null);
@@ -86,11 +87,11 @@ const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ user, properties, onSav
     const [invitedGroups, setInvitedGroups] = useState<string[]>([]);
 
     useEffect(() => {
-        if (initialPropertyData) {
+        if (initialPropertyData || forceAddProperty) {
             setPropertyToEdit(null);
             setIsModalOpen(true);
         }
-    }, [initialPropertyData]);
+    }, [initialPropertyData, forceAddProperty]);
 
     const handleAddNew = () => {
         setPropertyToEdit(null);
@@ -353,6 +354,24 @@ const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ user, properties, onSav
             default: return renderDashboardView();
         }
     };
+    
+    if (forceAddProperty) {
+        return (
+            <div className="h-full w-full flex flex-col items-center justify-center text-center p-4">
+                 <AddPropertyModal 
+                    isOpen={isModalOpen}
+                    onClose={() => {}} // No-op close
+                    isMandatory={true}
+                    onSave={handleSaveAndClose}
+                    propertyToEdit={propertyToEdit}
+                    initialData={propertyToEdit ? null : initialPropertyData}
+                />
+                 <MoonIcon className="w-16 h-16 text-indigo-400 mb-4" />
+                 <h2 className="text-2xl font-bold">¡Bienvenido a MoOn, Propietario!</h2>
+                 <p className="text-white/80 mt-2">Para empezar a encontrar inquilinos, por favor, añade tu primera propiedad.</p>
+            </div>
+        )
+    }
 
     return (
         <div className="h-full w-full flex flex-col">
@@ -391,11 +410,12 @@ const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ user, properties, onSav
                 </div>
             </main>
             <AddPropertyModal 
-                isOpen={isModalOpen}
+                isOpen={isModalOpen && !forceAddProperty}
                 onClose={handleCloseModal}
                 onSave={handleSaveAndClose}
                 propertyToEdit={propertyToEdit}
                 initialData={propertyToEdit ? null : initialPropertyData}
+                isMandatory={false}
             />
             <BottomNavBar activeView={view} setView={setView} onAddNew={handleAddNew} onGoToAccountSettings={onGoToAccountSettings}/>
         </div>

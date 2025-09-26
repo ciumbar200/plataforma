@@ -32,6 +32,7 @@ export interface User {
   lifestyle?: string[];
   commute_distance?: number; // in minutes
   is_banned?: boolean;
+  is_profile_complete?: boolean;
 }
 
 // FIX: Defined AmenityId here to break circular dependency with components/icons.tsx

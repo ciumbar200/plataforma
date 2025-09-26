@@ -714,14 +714,18 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user: currentUser, al
                                 {images.length > 1 && (
                                     <>
                                         <button onClick={prevImage} className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 text-white p-2 rounded-full hover:bg-black/60"><ChevronLeftIcon className="w-6 h-6" /></button>
-                                        <button onClick={nextImage} className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 text-white p-2 rounded-full hover:bg-black/60"><ChevronLeftIcon className="w-6 h-6 transform rotate-180" /></button>
-                                        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-2">{images.map((_, index) => (<div key={index} className={`w-2 h-2 rounded-full transition-colors ${index === currentPropertyImageIndex ? 'bg-white' : 'bg-white/50'}`}></div>))}</div>
+                                        <button onClick={nextImage} className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 text-white p-2 rounded-full hover:bg-black/60"><ChevronLeftIcon className="w-6 h-6 rotate-180" /></button>
+                                        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-2">
+                                            {images.map((_, index) => (
+                                                <div key={index} className={`w-2 h-2 rounded-full transition-colors ${index === currentPropertyImageIndex ? 'bg-white' : 'bg-white/50'}`}></div>
+                                            ))}
+                                        </div>
                                     </>
                                 )}
                             </div>
                           <div className="p-8 flex flex-col">
                               <span className={`text-xs font-semibold px-2 py-1 rounded-full self-start mb-2 ${selectedProperty.visibility === 'Pública' ? 'bg-green-500' : 'bg-yellow-500'}`}>{selectedProperty.visibility}</span>
-                              <h2 className="text-4xl font-bold mb-2 text-white">{selectedProperty.title}</h2>
+                              <h2 className="text-4xl font-bold mb-2">{selectedProperty.title}</h2>
                               <div className="flex items-baseline gap-3 mb-4">
                                 <span className="bg-indigo-500/50 text-indigo-200 font-semibold px-3 py-1 rounded-full text-sm">{selectedProperty.property_type}</span>
                                 <p className="text-md text-white/70">{fullAddress}</p>
@@ -732,9 +736,9 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user: currentUser, al
                                   <div className="flex items-center justify-center gap-2"><UsersIcon className="w-5 h-5" /><span>{selectedProperty.compatible_candidates} candidatos</span></div>
                                   <div className="flex items-center justify-center gap-2 text-green-300 font-semibold"><CalendarIcon className="w-5 h-5" /><span>Disponible: {formattedDate}</span></div>
                               </div>
-                              {availableAmenities.length > 0 && (<div className="mb-6"><h3 className="text-xl font-bold mb-3 text-white">Comodidades</h3><div className="flex flex-wrap gap-x-6 gap-y-3">{availableAmenities.map(amenity => (<div key={amenity.id} className="flex items-center gap-2 text-white/90">{React.cloneElement(amenity.icon, { className: 'w-5 h-5 text-indigo-300' })}<span className="text-sm">{amenity.label}</span></div>))}</div></div>)}
-                              {selectedProperty.conditions && (<div className="mb-8"><h3 className="text-xl font-bold mb-3 text-white">Condiciones</h3><p className="text-sm text-white/80 whitespace-pre-wrap">{selectedProperty.conditions}</p></div>)}
-                              {selectedProperty.lat != null && selectedProperty.lng != null && (<div className="mb-8"><h3 className="text-xl font-bold mb-3 text-white">Ubicación</h3><div className="rounded-2xl overflow-hidden border-2 border-white/10 shadow-lg"><GoogleMap lat={selectedProperty.lat} lng={selectedProperty.lng} /></div></div>)}
+                              {availableAmenities.length > 0 && (<div className="mb-6"><h3 className="text-xl font-bold mb-3">Comodidades</h3><div className="flex flex-wrap gap-x-6 gap-y-3">{availableAmenities.map(amenity => (<div key={amenity.id} className="flex items-center gap-2 text-white/90">{React.cloneElement(amenity.icon, { className: 'w-5 h-5 text-indigo-300' })}<span className="text-sm">{amenity.label}</span></div>))}</div></div>)}
+                              {selectedProperty.conditions && (<div className="mb-8"><h3 className="text-xl font-bold mb-3">Condiciones</h3><p className="text-sm text-white/80 whitespace-pre-wrap">{selectedProperty.conditions}</p></div>)}
+                              {selectedProperty.lat != null && selectedProperty.lng != null && (<div className="mb-8"><h3 className="text-xl font-bold mb-3">Ubicación</h3><div className="rounded-2xl overflow-hidden border-2 border-white/10 shadow-lg"><GoogleMap lat={selectedProperty.lat} lng={selectedProperty.lng} /></div></div>)}
                               <div className="mt-auto">{interestSent ? (<div className="text-center bg-green-500/20 border border-green-500 text-green-300 font-semibold p-4 rounded-lg flex flex-col items-center gap-2"><CheckIcon className="w-8 h-8 text-green-400" /><div><p>¡Tu interés ha sido enviado!</p><p className="text-sm font-normal">El propietario se pondrá en contacto contigo.</p></div></div>) : (<button onClick={handleSendInterest} className="w-full flex items-center justify-center gap-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-lg transition-colors text-lg"><PaperAirplaneIcon className="w-6 h-6" /><span>Enviar Interés al Propietario</span></button>)}</div>
                           </div>
                       </div>

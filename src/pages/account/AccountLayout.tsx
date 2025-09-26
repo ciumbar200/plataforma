@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { User } from '../../types';
-import { ChevronLeftIcon, UserCircleIcon, ShieldLockIcon, BellIcon, HeartIcon } from '../../components/icons';
+import { ChevronLeftIcon, UserCircleIcon, ShieldLockIcon, BellIcon, HeartIcon, MoonIcon } from '../../components/icons';
 import Footer from '../../components/Footer';
+import GlassCard from '../../components/GlassCard';
 
 // Account Sub-pages
 import Overview from './Overview';
@@ -29,9 +30,10 @@ interface AccountLayoutProps {
   onTermsClick: () => void;
   onContactClick: () => void;
   initialTab?: string;
+  isMandatory?: boolean;
 }
 
-const AccountLayout: React.FC<AccountLayoutProps> = ({ user, onUpdateUser, onLogout, onBack, onBlogClick, onAboutClick, onPrivacyClick, onTermsClick, onContactClick, initialTab }) => {
+const AccountLayout: React.FC<AccountLayoutProps> = ({ user, onUpdateUser, onLogout, onBack, onBlogClick, onAboutClick, onPrivacyClick, onTermsClick, onContactClick, initialTab, isMandatory = false }) => {
     const [activeTab, setActiveTab] = useState(initialTab || 'overview');
 
     const navItems = [
@@ -60,10 +62,17 @@ const AccountLayout: React.FC<AccountLayoutProps> = ({ user, onUpdateUser, onLog
             <header className="sticky top-0 z-50 bg-black/20 backdrop-blur-lg border-b border-white/10 text-white w-full">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between items-center h-16">
-                        <button onClick={onBack} className="flex items-center gap-2 text-white/80 hover:text-white transition-colors z-10 bg-black/20 backdrop-blur-sm px-4 py-2 rounded-lg border border-white/10">
-                            <ChevronLeftIcon className="w-5 h-5" />
-                            <span>Volver al Panel</span>
-                        </button>
+                        {!isMandatory ? (
+                            <button onClick={onBack} className="flex items-center gap-2 text-white/80 hover:text-white transition-colors z-10 bg-black/20 backdrop-blur-sm px-4 py-2 rounded-lg border border-white/10">
+                                <ChevronLeftIcon className="w-5 h-5" />
+                                <span>Volver al Panel</span>
+                            </button>
+                        ) : (
+                           <div className="flex items-center gap-2">
+                                <MoonIcon className="w-7 h-7" />
+                                <span className="text-xl font-bold">MoOn</span>
+                            </div>
+                        )}
                          <h1 className="text-xl font-bold">Ajustes de Cuenta</h1>
                         <div className="w-40 text-right"> 
                            <button onClick={onLogout} className="text-sm font-medium text-red-400 hover:underline">Cerrar sesión</button>
@@ -74,6 +83,12 @@ const AccountLayout: React.FC<AccountLayoutProps> = ({ user, onUpdateUser, onLog
             
             <main className="flex-grow">
                 <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+                    {isMandatory && (
+                        <GlassCard className="mb-8 text-center bg-indigo-500/20 border-indigo-400">
+                            <h2 className="text-xl font-bold">¡Bienvenido a MoOn!</h2>
+                            <p className="text-white/80 mt-2">Para empezar a conectar, por favor completa tu perfil. Una buena biografía es clave para encontrar el match perfecto.</p>
+                        </GlassCard>
+                    )}
                     <div className="flex flex-col md:flex-row gap-8">
                         <aside className="w-full md:w-1/4 lg:w-1/5">
                              {/* Mobile dropdown */}
@@ -81,6 +96,7 @@ const AccountLayout: React.FC<AccountLayoutProps> = ({ user, onUpdateUser, onLog
                                 <select 
                                     value={activeTab} 
                                     onChange={(e) => setActiveTab(e.target.value)}
+                                    disabled={isMandatory}
                                     className="w-full bg-white/10 border border-white/20 rounded-lg p-3 outline-none focus:ring-2 focus:ring-indigo-500"
                                 >
                                     {navItems.map(item => (
@@ -94,11 +110,12 @@ const AccountLayout: React.FC<AccountLayoutProps> = ({ user, onUpdateUser, onLog
                                    <button 
                                         key={item.id} 
                                         onClick={() => setActiveTab(item.id)}
+                                        disabled={isMandatory && item.id !== 'profile'}
                                         className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-lg text-left transition-colors ${
                                             activeTab === item.id 
                                             ? 'bg-indigo-500/50 text-white' 
                                             : 'text-white/70 hover:bg-white/10 hover:text-white'
-                                        }`}
+                                        } ${isMandatory && item.id !== 'profile' ? 'opacity-50 cursor-not-allowed' : ''}`}
                                     >
                                        {item.icon}
                                        <span>{item.label}</span>
