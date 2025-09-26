@@ -8,6 +8,7 @@ import { CITIES_DATA, getSupabaseUrl } from '../constants';
 
 interface HomePageProps {
     onLoginClick: () => void;
+    onRegisterClick: () => void;
     onStartRegistration: (data: { rentalGoal: RentalGoal; city: string; locality: string }) => void;
     onOwnersClick: () => void;
     onBlogClick: () => void;
@@ -75,7 +76,7 @@ const faqs = [
     },
 ];
 
-const HomePage: React.FC<HomePageProps> = ({ onLoginClick, onStartRegistration, onOwnersClick, onBlogClick, onAboutClick, onPrivacyClick, onTermsClick, onContactClick }) => {
+const HomePage: React.FC<HomePageProps> = ({ onLoginClick, onRegisterClick, onStartRegistration, onOwnersClick, onBlogClick, onAboutClick, onPrivacyClick, onTermsClick, onContactClick }) => {
     const [rentalGoal, setRentalGoal] = useState<RentalGoal | ''>('');
     const [selectedCity, setSelectedCity] = useState<string>('');
     const [selectedLocality, setSelectedLocality] = useState<string>('');
@@ -113,7 +114,7 @@ const HomePage: React.FC<HomePageProps> = ({ onLoginClick, onStartRegistration, 
 
     return (
         <div className="min-h-screen w-full bg-gradient-to-br from-blue-900 via-indigo-900 to-purple-900 text-white flex flex-col">
-            <Header onLoginClick={onLoginClick} onHomeClick={() => {}} onOwnersClick={onOwnersClick} pageContext="inquilino" />
+            <Header onLoginClick={onLoginClick} onRegisterClick={onRegisterClick} onHomeClick={() => {}} onOwnersClick={onOwnersClick} pageContext="inquilino" />
             
             <main className="flex-grow">
                 {/* Hero Section */}
@@ -337,6 +338,7 @@ const HomePage: React.FC<HomePageProps> = ({ onLoginClick, onStartRegistration, 
                 onPrivacyClick={onPrivacyClick}
                 onTermsClick={onTermsClick}
                 onContactClick={onContactClick}
+                onOwnersClick={onOwnersClick}
             />
         </div>
     );

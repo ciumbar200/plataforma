@@ -213,6 +213,7 @@ const HomePage: React.FC<HomePageProps> = ({ onLoginClick, onRegisterClick, onSt
                 onPrivacyClick={onPrivacyClick}
                 onTermsClick={onTermsClick}
                 onContactClick={onContactClick}
+                onOwnersClick={onOwnersClick}
             />
         </div>
     );

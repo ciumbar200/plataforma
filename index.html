@@ -42,7 +42,22 @@
 }
 </script>
 <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB89VOPrHqUVFJlfmo8utAy36J0gx9hlJk"></script>
-<style>html { scroll-behavior: smooth; }</style>
+<style>
+  html { scroll-behavior: smooth; }
+  @keyframes fadeInDown {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  .animate-fade-in-down {
+    animation: fadeInDown 0.2s ease-out;
+  }
+</style>
 </head>
   <body>
     <div id="root"></div>

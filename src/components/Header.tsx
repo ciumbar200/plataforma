@@ -1,9 +1,9 @@
-import React from 'react';
-import { MoonIcon } from './icons';
+import React, { useState, useEffect, useRef } from 'react';
+import { MoonIcon, ChevronDownIcon } from './icons';
 
 interface HeaderProps {
     onLoginClick: () => void;
-    onRegisterClick?: () => void; // Optional for different variants
+    onRegisterClick?: () => void;
     onHomeClick: () => void;
     onOwnersClick?: () => void;
     pageContext: 'inquilino' | 'propietario';
@@ -13,6 +13,31 @@ const Header: React.FC<HeaderProps> = ({ onLoginClick, onRegisterClick, onHomeCl
     const isTenantContext = pageContext === 'inquilino';
     const switchText = isTenantContext ? 'Propietarios' : 'Inquilinos';
     const switchAction = isTenantContext ? onOwnersClick : onHomeClick;
+
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsDropdownOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
+
+    const handleRegister = () => {
+        onRegisterClick?.();
+        setIsDropdownOpen(false);
+    }
+
+    const handleLogin = () => {
+        onLoginClick();
+        setIsDropdownOpen(false);
+    }
 
     return (
         <header className="sticky top-0 z-50 bg-black/20 backdrop-blur-lg border-b border-white/10 text-white w-full">
@@ -30,37 +55,41 @@ const Header: React.FC<HeaderProps> = ({ onLoginClick, onRegisterClick, onHomeCl
                         {switchAction && (
                              <button
                                 onClick={switchAction}
-                                className="text-sm font-medium text-white/80 hover:text-white transition-colors px-3 py-2 rounded-full hover:bg-white/10"
+                                className="hidden md:flex text-sm font-medium text-white/80 hover:text-white transition-colors px-3 py-2 rounded-full hover:bg-white/10"
                             >
                                {switchText}
                             </button>
                         )}
                         
-                        {onRegisterClick ? (
-                            // Variant for LoginPage, where switching modes is important
-                            <>
-                                <button
-                                    onClick={onLoginClick}
-                                    className="text-sm font-medium text-white/80 hover:text-white transition-colors"
-                                >
-                                    Iniciar Sesión
-                                </button>
-                                <button
-                                    onClick={onRegisterClick}
-                                    className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-full px-5 py-2 text-sm font-semibold hover:bg-white/20 transition-colors"
-                                >
-                                    Crear Cuenta
-                                </button>
-                            </>
-                        ) : (
-                            // Default variant for public pages: a single, clear CTA
+                        <div className="relative" ref={dropdownRef}>
                             <button
-                                onClick={onLoginClick}
-                                className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-full px-5 py-2 text-sm font-semibold hover:bg-white/20 transition-colors"
+                                onClick={() => setIsDropdownOpen(prev => !prev)}
+                                className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-full px-5 py-2 text-sm font-semibold hover:bg-white/20 transition-colors flex items-center gap-2"
                             >
-                                Acceder / Registrarse
+                                Mi Cuenta
+                                <ChevronDownIcon className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
                             </button>
-                        )}
+                            {isDropdownOpen && (
+                                <div className="absolute top-full right-0 mt-2 w-48 bg-slate-800/90 backdrop-blur-2xl border border-white/20 rounded-xl shadow-lg z-50 overflow-hidden animate-fade-in-down">
+                                    <div className="p-2">
+                                        <button
+                                            onClick={handleLogin}
+                                            className="w-full text-left px-4 py-2 text-sm rounded-md hover:bg-white/10 transition-colors"
+                                        >
+                                            Iniciar Sesión
+                                        </button>
+                                        {onRegisterClick && (
+                                            <button
+                                                onClick={handleRegister}
+                                                className="w-full text-left px-4 py-2 text-sm rounded-md hover:bg-white/10 transition-colors"
+                                            >
+                                                Registrarse
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>

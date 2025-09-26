@@ -7,9 +7,10 @@ interface FooterProps {
     onPrivacyClick?: () => void;
     onTermsClick?: () => void;
     onContactClick?: () => void;
+    onOwnersClick?: () => void;
 }
 
-const Footer: React.FC<FooterProps> = ({ onBlogClick, onAboutClick, onPrivacyClick, onTermsClick, onContactClick }) => {
+const Footer: React.FC<FooterProps> = ({ onBlogClick, onAboutClick, onPrivacyClick, onTermsClick, onContactClick, onOwnersClick }) => {
     return (
         <footer className="bg-black/20 backdrop-blur-lg border-t border-white/10 text-white w-full">
             <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
@@ -19,6 +20,7 @@ const Footer: React.FC<FooterProps> = ({ onBlogClick, onAboutClick, onPrivacyCli
                         <span className="text-xl font-bold">MoOn</span>
                     </div>
                     <nav className="flex flex-wrap gap-x-6 gap-y-2 justify-center text-center">
+                        {onOwnersClick && <a href="#" onClick={(e) => { e.preventDefault(); onOwnersClick(); }} className="md:hidden text-sm text-white/70 hover:text-white transition-colors">Propietarios</a>}
                         {onAboutClick && <a href="#" onClick={(e) => { e.preventDefault(); onAboutClick(); }} className="text-sm text-white/70 hover:text-white transition-colors">Sobre Nosotros</a>}
                         {onBlogClick && <a href="#" onClick={(e) => { e.preventDefault(); onBlogClick(); }} className="text-sm text-white/70 hover:text-white transition-colors">Blog</a>}
                         {onContactClick && <a href="#" onClick={(e) => { e.preventDefault(); onContactClick(); }} className="text-sm text-white/70 hover:text-white transition-colors">Contacto</a>}
