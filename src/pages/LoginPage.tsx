@@ -12,7 +12,6 @@ type PublicationData = { property_type: PropertyType; city: string; locality: st
 interface LoginPageProps {
   onLogin: (user: User) => void;
   onRegister: (userData: Partial<User>, password?: string, role?: UserRole) => Promise<void>;
-  onOAuthSignIn: (role: UserRole) => void;
   onHomeClick: () => void;
   onOwnersClick: () => void;
   registrationData?: RegistrationData | null;
@@ -27,7 +26,7 @@ interface LoginPageProps {
 }
 
 const LoginPage: React.FC<LoginPageProps> = (props) => {
-  const { onLogin, onRegister, onOAuthSignIn, onHomeClick, onOwnersClick, registrationData, publicationData, initialMode, ...footerProps } = props;
+  const { onLogin, onRegister, onHomeClick, onOwnersClick, registrationData, publicationData, initialMode, ...footerProps } = props;
   
   const isGuidedRegisterMode = !!registrationData || !!publicationData;
   
@@ -142,7 +141,6 @@ const LoginPage: React.FC<LoginPageProps> = (props) => {
                 const newProfile = {
                     id: authData.user.id,
                     name: authData.user.email?.split('@')[0] || 'Nuevo Usuario',
-                    email: authData.user.email,
                     age: 18,
                     role: UserRole.INQUILINO,
                     avatar_url: `https://placehold.co/200x200/9ca3af/1f2937?text=${(authData.user.email || '?').charAt(0)}`,
@@ -150,7 +148,6 @@ const LoginPage: React.FC<LoginPageProps> = (props) => {
                     lifestyle: [],
                     noise_level: 'Medio' as const,
                     bio: '',
-                    is_profile_complete: false,
                 };
                 
                 const { data: newProfileData, error: newProfileError } = await supabase
@@ -261,19 +258,10 @@ const LoginPage: React.FC<LoginPageProps> = (props) => {
                 </p>
             )}
             <div className="grid grid-cols-2 gap-3">
-              <button 
-                type="button" 
-                onClick={() => onOAuthSignIn(selectedRole)}
-                disabled={(mode === 'register' && !isGuidedRegisterMode && !roleSelectedForSocial)} 
-                className="flex items-center justify-center gap-3 w-full bg-white/10 hover:bg-white/20 text-white font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
+              <button type="button" disabled={mode === 'register' && !isGuidedRegisterMode && !roleSelectedForSocial} className="flex items-center justify-center gap-3 w-full bg-white/10 hover:bg-white/20 text-white font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                 <GoogleIcon className="w-5 h-5" /><span>Google</span>
               </button>
-               <button 
-                type="button" 
-                disabled={(mode === 'register' && !isGuidedRegisterMode && !roleSelectedForSocial)} 
-                className="flex items-center justify-center gap-3 w-full bg-white/10 hover:bg-white/20 text-white font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
+               <button type="button" disabled={mode === 'register' && !isGuidedRegisterMode && !roleSelectedForSocial} className="flex items-center justify-center gap-3 w-full bg-white/10 hover:bg-white/20 text-white font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                 <FacebookIcon className="w-5 h-5" /><span>Facebook</span>
               </button>
             </div>
