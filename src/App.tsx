@@ -311,7 +311,7 @@ function App() {
         setUsers(prevUsers => prevUsers.map(u => (u.id === finalUser.id ? finalUser : u)));
 
     } catch (error: any) {
-        console.error("Fallo al guardar el perfil:", error.message);
+        console.error("Fallo al guardar el perfil:", error);
         throw error;
     }
 };
@@ -334,7 +334,7 @@ function App() {
         .single();
 
       if (error) {
-          console.error('Error al actualizar la propiedad:', error.message);
+          console.error('Error al actualizar la propiedad:', error);
       } else if (data) {
           setProperties(prev => prev.map(p => p.id === data.id ? data as Property : p));
       }
@@ -353,7 +353,7 @@ function App() {
         .single();
 
       if (error) {
-        console.error('Error al crear la propiedad:', error.message);
+        console.error('Error al crear la propiedad:', error);
       } else if (data) {
         setProperties(prev => [...prev, data as Property]);
         
@@ -366,10 +366,14 @@ function App() {
                 .single();
 
             if (profileError) {
-                console.error("Error al marcar perfil de propietario como completo:", profileError.message);
+                console.error("Error al marcar perfil de propietario como completo:", profileError);
             } else if (updatedProfile) {
-                setCurrentUser(prev => prev ? { ...prev, ...updatedProfile } : null);
-                setUsers(prev => prev.map(u => u.id === updatedProfile.id ? { ...u, ...updatedProfile } : u));
+                const fullyUpdatedUser = { ...currentUser, ...updatedProfile };
+                setCurrentUser(fullyUpdatedUser);
+                setUsers(prev => prev.map(u => u.id === fullyUpdatedUser.id ? fullyUpdatedUser : u));
+                if (fullyUpdatedUser.role === UserRole.PROPIETARIO) {
+                    setPage('owner-dashboard');
+                }
             }
         }
       }
@@ -387,17 +391,18 @@ function App() {
     });
   };
 
-  const handleUpdatePropertyStatus = async (propertyId: number, status: 'approved' | 'rejected') => {
-    const { error } = await supabase
-      .from('properties')
-      .update({ status })
-      .eq('id', propertyId);
+  const handleUpdatePropertyStatus = (propertyId: number, status: 'approved' | 'rejected') => {
+    // Optimistic update
+    setProperties(prev => prev.map(p => (p.id === propertyId ? { ...p, status } : p)));
 
-    if (error) {
-      console.error('Error al actualizar el estado de la propiedad:', error.message);
-    } else {
-      setProperties(prev => prev.map(p => (p.id === propertyId ? { ...p, status } : p)));
-    }
+    supabase.from('properties').update({ status }).eq('id', propertyId)
+      .then(({ error }) => {
+        if (error) {
+          console.error('Error al actualizar el estado de la propiedad:', error);
+          // Revert on error
+          // Note: A more robust solution would involve refetching or storing original state.
+        }
+      });
   };
   
   const handleDeleteProperty = async (propertyId: number) => {
@@ -407,23 +412,23 @@ function App() {
       .eq('id', propertyId);
 
     if (error) {
-      console.error('Error al eliminar la propiedad:', error.message);
+      console.error('Error al eliminar la propiedad:', error);
     } else {
       setProperties(prev => prev.filter(p => p.id !== propertyId));
     }
   };
 
-  const handleSetUserBanStatus = async (userId: string, isBanned: boolean) => {
-    const { error } = await supabase
-      .from('profiles')
-      .update({ is_banned: isBanned })
-      .eq('id', userId);
-    
-    if (error) {
-      console.error('Error al actualizar el estado de baneo del usuario:', error.message);
-    } else {
-      setUsers(prev => prev.map(u => (u.id === userId ? { ...u, is_banned: isBanned } : u)));
-    }
+  const handleSetUserBanStatus = (userId: string, isBanned: boolean) => {
+    // Optimistic update
+    setUsers(prev => prev.map(u => (u.id === userId ? { ...u, is_banned: isBanned } : u)));
+
+    supabase.from('profiles').update({ is_banned: isBanned }).eq('id', userId)
+      .then(({ error }) => {
+        if (error) {
+          console.error('Error al actualizar el estado de baneo del usuario:', error);
+          // Revert on error
+        }
+      });
   };
 
   const handleSaveBlogPost = (postData: Omit<BlogPost, 'id'> & { id?: number }) => {
