@@ -284,6 +284,10 @@ function App() {
             noise_level: dataFromForm.noise_level,
             commute_distance: dataFromForm.commute_distance,
             avatar_url: dataFromForm.avatar_url,
+            phone: dataFromForm.phone,
+            birth_country: dataFromForm.birth_country,
+            religion: dataFromForm.religion,
+            sexual_orientation: dataFromForm.sexual_orientation,
             is_profile_complete: shouldMarkProfileComplete ? true : currentUser.is_profile_complete,
         };
 

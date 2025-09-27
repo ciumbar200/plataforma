@@ -51,7 +51,7 @@ const AccountLayout: React.FC<AccountLayoutProps> = ({ user, onUpdateUser, onLog
             case 'profile': return <Profile user={user} onSave={onUpdateUser} />;
             case 'security': return <Security />;
             case 'notifications': return <Notifications />;
-            case 'privacy': return <Privacy />;
+            case 'privacy': return <Privacy user={user} onSave={onUpdateUser} />;
             case 'help': return <Help />;
             default: return <Overview />;
         }

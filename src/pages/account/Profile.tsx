@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { User } from '../../types';
 import GlassCard from '../../components/GlassCard';
-import { CITIES_DATA } from '../../constants';
+import { CITIES_DATA, COUNTRIES } from '../../constants';
 import { CameraIcon } from '../../components/icons';
 import { supabase } from '../../lib/supabaseClient';
 
@@ -18,7 +18,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onSave }) => {
   const [localities, setLocalities] = useState<string[]>(CITIES_DATA[user.city || 'Madrid'] || []);
   const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [bioError, setBioError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<{ [key: string]: string | null }>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Reset form data if the user prop changes (e.g., on re-login)
@@ -26,16 +26,31 @@ const Profile: React.FC<ProfileProps> = ({ user, onSave }) => {
     setFormData(user);
   }, [user]);
 
+  const validateField = (name: string, value: string) => {
+    let fieldError: string | null = null;
+    switch (name) {
+      case 'bio':
+        if (value.length < 100) {
+            fieldError = 'La biografía debe tener al menos 100 caracteres.';
+        }
+        break;
+      case 'phone':
+        if (!value) fieldError = 'El teléfono es obligatorio.';
+        else if (!/^\+?[0-9\s-()]{7,20}$/.test(value)) fieldError = 'El formato del teléfono es inválido.';
+        break;
+      case 'birth_country':
+        if (!value) fieldError = 'El país de nacimiento es obligatorio.';
+        break;
+      default:
+        break;
+    }
+    setErrors(prev => ({ ...prev, [name]: fieldError }));
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    if (name === 'bio') {
-        if (value.length < 100) {
-            setBioError('La biografía debe tener al menos 100 caracteres.');
-        } else {
-            setBioError(null);
-        }
-    }
+    validateField(name, value);
   };
 
   const handleProfilePictureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -72,10 +87,16 @@ const Profile: React.FC<ProfileProps> = ({ user, onSave }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (user.role === 'INQUILINO' && (!formData.bio || formData.bio.length < 100)) {
-        setBioError('La biografía debe tener al menos 100 caracteres para continuar.');
+        setErrors(prev => ({ ...prev, bio: 'La biografía debe tener al menos 100 caracteres para continuar.'}));
         return;
     }
-    setBioError(null);
+    
+    // Quick validation check on mandatory fields
+    if (!formData.phone || !formData.birth_country) {
+        alert('Por favor, completa los campos de teléfono y país de nacimiento.');
+        return;
+    }
+
     setIsUploading(true);
     
     try {
@@ -118,7 +139,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onSave }) => {
       alert('Perfil actualizado con éxito');
       
     } catch (error: any) {
-      console.error("Fallo al guardar el perfil:", error.message);
+      console.error("Fallo al guardar el perfil:", error);
       alert(`Fallo al guardar el perfil:\n${error.message || 'Se produjo un error inesperado.'}`);
       
       if (profileImageFile) {
@@ -164,11 +185,31 @@ const Profile: React.FC<ProfileProps> = ({ user, onSave }) => {
             <input type="number" name="age" id="age" value={formData.age} onChange={handleChange} className="w-full bg-white/10 border border-white/20 rounded-lg p-3 outline-none focus:ring-2 focus:ring-indigo-500" />
           </div>
         </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+           <div>
+              <label htmlFor="phone" className="block text-sm font-medium text-white/80 mb-1">
+                Teléfono
+                <span className="text-xs text-white/60 ml-2">(Solo para uso interno, nunca será público)</span>
+              </label>
+              <input type="tel" name="phone" id="phone" value={formData.phone || ''} onChange={handleChange} onBlur={(e) => validateField('phone', e.target.value)} required className={`w-full bg-white/10 border rounded-lg p-3 outline-none focus:ring-2 focus:ring-indigo-500 ${errors.phone ? 'border-red-500' : 'border-white/20'}`} />
+              {errors.phone && <p className="text-red-400 text-xs mt-1">{errors.phone}</p>}
+            </div>
+            <div>
+              <label htmlFor="birth_country" className="block text-sm font-medium text-white/80 mb-1">País de Nacimiento</label>
+              <select name="birth_country" id="birth_country" value={formData.birth_country || ''} onChange={handleChange} onBlur={(e) => validateField('birth_country', e.target.value)} required className={`w-full bg-white/10 border rounded-lg p-3 outline-none focus:ring-2 focus:ring-indigo-500 ${errors.birth_country ? 'border-red-500' : 'border-white/20'}`}>
+                  <option value="" disabled className="bg-gray-800">Selecciona un país</option>
+                  {COUNTRIES.map(country => <option key={country} value={country} className="bg-gray-800">{country}</option>)}
+              </select>
+              {errors.birth_country && <p className="text-red-400 text-xs mt-1">{errors.birth_country}</p>}
+            </div>
+        </div>
+
         <div>
           <label htmlFor="bio" className="block text-sm font-medium text-white/80 mb-1">Biografía</label>
-          <textarea name="bio" id="bio" value={formData.bio || ''} onChange={handleChange} rows={4} className={`w-full bg-white/10 border rounded-lg p-3 outline-none focus:ring-2 focus:ring-indigo-500 ${bioError ? 'border-red-500' : 'border-white/20'}`}></textarea>
+          <textarea name="bio" id="bio" value={formData.bio || ''} onChange={handleChange} rows={4} className={`w-full bg-white/10 border rounded-lg p-3 outline-none focus:ring-2 focus:ring-indigo-500 ${errors.bio ? 'border-red-500' : 'border-white/20'}`}></textarea>
           <div className="flex justify-between items-center mt-1">
-            {bioError && <p className="text-red-400 text-xs">{bioError}</p>}
+            {errors.bio && <p className="text-red-400 text-xs">{errors.bio}</p>}
             <p className={`text-xs ml-auto ${ (formData.bio?.length || 0) < 100 ? 'text-white/60' : 'text-green-400'}`}>Caracteres: {formData.bio?.length || 0} / 100</p>
           </div>
         </div>

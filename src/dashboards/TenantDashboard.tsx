@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { User, Property, SavedSearch, UserRole, PropertyType, AmenityId, RentalGoal } from '../types';
 import { CompassIcon, BuildingIcon, HeartIcon, UserCircleIcon, MoonIcon, XIcon } from '../components/icons';
@@ -6,7 +7,7 @@ import PropertyCard from './components/PropertyCard';
 import SaveSearchModal from './components/SaveSearchModal';
 import ProfileDropdown from './components/ProfileDropdown';
 import GlassCard from '../components/GlassCard';
-import { CITIES_DATA } from '../constants';
+import { CITIES_DATA, RELIGIONS, SEXUAL_ORIENTATIONS } from '../constants';
 import { AVAILABLE_AMENITIES } from '../components/icons';
 
 export const calculateCompatibility = (userA: User, userB: User): number => {
@@ -112,10 +113,12 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user, allUsers, prope
     const [amenitiesFilter, setAmenitiesFilter] = useState<AmenityId[]>([]);
 
     // State for discover (roommate) filters
-    const [discoverCityFilter, setDiscoverCityFilter] = useState(user.city || '');
-    const [localitiesForDiscoverFilter, setLocalitiesForDiscoverFilter] = useState<string[]>(CITIES_DATA[user.city || ''] || []);
+    const [discoverCityFilter, setDiscoverCityFilter] = useState('');
+    const [localitiesForDiscoverFilter, setLocalitiesForDiscoverFilter] = useState<string[]>([]);
     const [discoverLocalityFilter, setDiscoverLocalityFilter] = useState('');
     const [discoverRentalGoalFilter, setDiscoverRentalGoalFilter] = useState<RentalGoal | ''>('');
+    const [discoverReligionFilter, setDiscoverReligionFilter] = useState('');
+    const [discoverOrientationFilter, setDiscoverOrientationFilter] = useState('');
     
     useEffect(() => {
       const newLocalities = CITIES_DATA[cityFilter] || [];
@@ -141,11 +144,13 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user, allUsers, prope
                 if (discoverCityFilter && u.city !== discoverCityFilter) return false;
                 if (discoverLocalityFilter && u.locality !== discoverLocalityFilter) return false;
                 if (discoverRentalGoalFilter && u.rental_goal !== discoverRentalGoalFilter) return false;
+                if (discoverReligionFilter && u.religion !== discoverReligionFilter) return false;
+                if (discoverOrientationFilter && u.sexual_orientation !== discoverOrientationFilter) return false;
                 return true;
             })
             .map(u => ({...u, compatibility: calculateCompatibility(user, u)}))
             .sort((a, b) => b.compatibility - a.compatibility);
-    }, [allUsers, user, discoverCityFilter, discoverLocalityFilter, discoverRentalGoalFilter]);
+    }, [allUsers, user, discoverCityFilter, discoverLocalityFilter, discoverRentalGoalFilter, discoverReligionFilter, discoverOrientationFilter]);
 
     // Reset card index when filters change
     useEffect(() => {
@@ -214,7 +219,7 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user, allUsers, prope
         );
     };
 
-    const resetFilters = () => {
+    const resetPropertyFilters = () => {
         setCityFilter(user.city || '');
         setLocalityFilter('');
         setMinPriceFilter('');
@@ -224,14 +229,22 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user, allUsers, prope
         setAmenitiesFilter([]);
     };
 
+    const resetDiscoverFilters = () => {
+        setDiscoverCityFilter('');
+        setDiscoverLocalityFilter('');
+        setDiscoverRentalGoalFilter('');
+        setDiscoverReligionFilter('');
+        setDiscoverOrientationFilter('');
+    };
+
     const renderDiscoverView = () => (
         <>
             <h2 className="text-3xl font-bold mb-4 text-center">Encuentra tu compañero ideal</h2>
             <p className="text-white/70 text-center max-w-2xl mx-auto mb-6">Usa los filtros para encontrar personas en tu ciudad actual o en la ciudad a la que planeas mudarte.</p>
             
             {/* Discover Filters */}
-            <GlassCard className="mb-8 max-w-4xl mx-auto">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <GlassCard className="mb-8 max-w-5xl mx-auto">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                     <div>
                         <label htmlFor="discoverCityFilter" className="block text-xs font-medium text-white/70 mb-1">Ciudad</label>
                         <select id="discoverCityFilter" value={discoverCityFilter} onChange={e => setDiscoverCityFilter(e.target.value)} className="w-full bg-white/10 border border-white/20 rounded-lg p-2 text-sm outline-none"><option value="" className="bg-gray-800">Cualquier ciudad</option>{Object.keys(CITIES_DATA).map(c => <option key={c} value={c} className="bg-gray-800">{c}</option>)}</select>
@@ -249,6 +262,23 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user, allUsers, prope
                             <option value={RentalGoal.BOTH} className="bg-gray-800">Ambas opciones</option>
                         </select>
                     </div>
+                    <div>
+                        <label htmlFor="discoverReligionFilter" className="block text-xs font-medium text-white/70 mb-1">Religión</label>
+                        <select id="discoverReligionFilter" value={discoverReligionFilter} onChange={e => setDiscoverReligionFilter(e.target.value)} className="w-full bg-white/10 border border-white/20 rounded-lg p-2 text-sm outline-none">
+                            <option value="" className="bg-gray-800">Cualquiera</option>
+                            {RELIGIONS.map(r => <option key={r} value={r} className="bg-gray-800">{r}</option>)}
+                        </select>
+                    </div>
+                    <div>
+                        <label htmlFor="discoverOrientationFilter" className="block text-xs font-medium text-white/70 mb-1">Orientación Sexual</label>
+                        <select id="discoverOrientationFilter" value={discoverOrientationFilter} onChange={e => setDiscoverOrientationFilter(e.target.value)} className="w-full bg-white/10 border border-white/20 rounded-lg p-2 text-sm outline-none">
+                            <option value="" className="bg-gray-800">Cualquiera</option>
+                            {SEXUAL_ORIENTATIONS.map(o => <option key={o} value={o} className="bg-gray-800">{o}</option>)}
+                        </select>
+                    </div>
+                </div>
+                <div className="mt-4 flex justify-end">
+                    <button onClick={resetDiscoverFilters} className="text-sm text-indigo-300 hover:underline">Limpiar filtros de búsqueda</button>
                 </div>
             </GlassCard>
 
@@ -323,7 +353,7 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user, allUsers, prope
                     </div>
                 </div>
                 <div className="mt-4 flex justify-end">
-                    <button onClick={resetFilters} className="text-sm text-indigo-300 hover:underline">Limpiar filtros</button>
+                    <button onClick={resetPropertyFilters} className="text-sm text-indigo-300 hover:underline">Limpiar filtros</button>
                 </div>
             </GlassCard>
 

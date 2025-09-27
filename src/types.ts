@@ -1,4 +1,5 @@
 
+
 export enum UserRole {
   INQUILINO = 'INQUILINO',
   PROPIETARIO = 'PROPIETARIO',
@@ -32,6 +33,9 @@ export interface User {
   commute_distance?: number; // in minutes
   is_banned?: boolean;
   is_profile_complete?: boolean;
+  birth_country?: string;
+  religion?: string;
+  sexual_orientation?: string;
 }
 
 export type AmenityId = 
