@@ -7,6 +7,7 @@ import UserDetailsModal from './components/UserDetailsModal';
 import PropertyDetailsModal from './components/PropertyDetailsModal';
 import ConfirmationModal from './components/ConfirmationModal';
 import BlogEditorModal from './components/BlogEditorModal';
+import MatchesModal from './components/MatchesModal';
 
 type AdminTab = 'dashboard' | 'users' | 'properties' | 'approval' | 'blog' | 'settings';
 
@@ -41,6 +42,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
     const [modal, setModal] = useState<string | null>(null);
     const [modalPayload, setModalPayload] = useState<any>(null);
+    const [isMatchesModalOpen, setIsMatchesModalOpen] = useState(false);
 
     const openModal = (name: string, payload?: any) => {
         setModal(name);
@@ -61,14 +63,20 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     const activeMatchesCount = useMemo(() => {
         let count = 0;
         const userIds = Object.keys(matches);
-        for (const userId of userIds) {
-            const userMatchesList = matches[userId] || [];
-            for (const matchedUserId of userMatchesList) {
-                if (userId < matchedUserId) {
-                    const otherUserMatchesList = matches[matchedUserId] || [];
-                    if (otherUserMatchesList.includes(userId)) {
-                        count++;
-                    }
+        const processed = new Set<string>();
+
+        for (const userId1 of userIds) {
+            const user1Matches = matches[userId1] || [];
+            for (const userId2 of user1Matches) {
+                const key1 = `${userId1}-${userId2}`;
+                const key2 = `${userId2}-${userId1}`;
+                if (processed.has(key1) || processed.has(key2)) continue;
+                
+                const user2Matches = matches[userId2] || [];
+                if (user2Matches.includes(userId1)) {
+                    count++;
+                    processed.add(key1);
+                    processed.add(key2);
                 }
             }
         }
@@ -89,7 +97,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <h3 className="text-2xl font-bold mb-6 text-white">Resumen General</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <StatCard icon={<UsersIcon className="w-7 h-7 text-white" />} title="Total de Usuarios" value={displayUsers.length.toLocaleString()} color="indigo" />
-                <StatCard icon={<HeartIcon className="w-7 h-7 text-white" />} title="Coincidencias Activas" value={activeMatchesCount.toLocaleString()} color="purple" />
+                <StatCard 
+                    icon={<HeartIcon className="w-7 h-7 text-white" />} 
+                    title="Coincidencias Activas" 
+                    value={activeMatchesCount.toLocaleString()} 
+                    color="purple" 
+                    onClick={() => setIsMatchesModalOpen(true)}
+                />
                 <StatCard icon={<BuildingIcon className="w-7 h-7 text-white" />} title="Propiedades Listadas" value={approvedProperties.length.toLocaleString()} color="blue" />
                 <StatCard icon={<CheckCircleIcon className="w-7 h-7 text-white" />} title="Matches Exitosos" value="0" color="green" />
             </div>
@@ -240,8 +254,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                     <td className="p-3">{prop.city}</td>
                                     <td className="p-3 text-right">
                                         <button onClick={() => setSelectedProperty(prop)} className="bg-white/10 hover:bg-white/20 px-3 py-1 rounded-md text-sm font-semibold transition-colors mr-2">Ver Borrador</button>
-                                        <button onClick={() => onUpdatePropertyStatus(prop.id, 'approved')} className="bg-green-500/80 hover:bg-green-500 px-3 py-1 rounded-md text-sm font-semibold transition-colors mr-2">Aprobar</button>
-                                        <button onClick={() => onUpdatePropertyStatus(prop.id, 'rejected')} className="bg-red-500/80 hover:bg-red-500 px-3 py-1 rounded-md text-sm font-semibold transition-colors">Rechazar</button>
+                                        <button onClick={() => onUpdatePropertyStatus(prop.id, 'approved')} className="inline-flex items-center gap-1.5 bg-green-500/80 hover:bg-green-500 text-white px-3 py-1 rounded-md text-sm font-semibold transition-colors mr-2">
+                                            <CheckMarkIcon className="w-4 h-4" />
+                                            <span>Aprobar</span>
+                                        </button>
+                                        <button onClick={() => onUpdatePropertyStatus(prop.id, 'rejected')} className="inline-flex items-center gap-1.5 bg-red-500/80 hover:bg-red-500 text-white px-3 py-1 rounded-md text-sm font-semibold transition-colors">
+                                            <XIcon className="w-4 h-4" />
+                                            <span>Rechazar</span>
+                                        </button>
                                     </td>
                                 </tr>
                             )) : (
@@ -258,9 +278,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             <p className="text-sm text-white/70">{prop.address}</p>
                             <p className="text-sm text-white/70 mb-3">Ciudad: {prop.city}</p>
                             <div className="flex justify-end flex-wrap gap-2 border-t border-white/10 pt-3">
-                                <button onClick={() => setSelectedProperty(prop)} className="bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-md text-sm font-semibold transition-colors">Ver Borrador</button>
-                                <button onClick={() => onUpdatePropertyStatus(prop.id, 'approved')} className="bg-green-500/80 hover:bg-green-500 px-3 py-1.5 rounded-md text-sm font-semibold transition-colors">Aprobar</button>
-                                <button onClick={() => onUpdatePropertyStatus(prop.id, 'rejected')} className="bg-red-500/80 hover:bg-red-500 px-3 py-1.5 rounded-md text-sm font-semibold transition-colors">Rechazar</button>
+                                <button onClick={() => setSelectedProperty(prop)} className="flex-1 sm:flex-none justify-center bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-md text-sm font-semibold transition-colors text-center">Ver Borrador</button>
+                                <button onClick={() => onUpdatePropertyStatus(prop.id, 'approved')} className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 bg-green-500/80 hover:bg-green-500 text-white px-3 py-1.5 rounded-md text-sm font-semibold transition-colors">
+                                    <CheckMarkIcon className="w-4 h-4" />
+                                    <span>Aprobar</span>
+                                </button>
+                                <button onClick={() => onUpdatePropertyStatus(prop.id, 'rejected')} className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 bg-red-500/80 hover:bg-red-500 text-white px-3 py-1.5 rounded-md text-sm font-semibold transition-colors">
+                                    <XIcon className="w-4 h-4" />
+                                    <span>Rechazar</span>
+                                </button>
                             </div>
                         </div>
                     )) : <p className="p-8 text-center text-white/70">No hay propiedades pendientes.</p>}
@@ -464,6 +490,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     closeModal();
                 }}
                 postToEdit={modalPayload}
+            />
+            <MatchesModal 
+                isOpen={isMatchesModalOpen}
+                onClose={() => setIsMatchesModalOpen(false)}
+                users={users}
+                matches={matches}
             />
         </div>
     );

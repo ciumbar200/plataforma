@@ -118,7 +118,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onSave }) => {
       alert('Perfil actualizado con éxito');
       
     } catch (error: any) {
-      console.error("Fallo al guardar el perfil:", error);
+      console.error("Fallo al guardar el perfil:", error.message);
       alert(`Fallo al guardar el perfil:\n${error.message || 'Se produjo un error inesperado.'}`);
       
       if (profileImageFile) {

@@ -143,7 +143,7 @@ function App() {
     });
 
     if (authError) {
-      console.error('Error en el registro de Auth:', authError);
+      console.error('Error en el registro de Auth:', authError.message);
       throw authError; // Lanza el error para que sea capturado por el componente UI
     }
 
@@ -199,7 +199,7 @@ function App() {
       setLoginInitialMode('login');
 
     } catch (error: any) {
-        console.error("Error en la post-creación del perfil:", error);
+        console.error("Error en la post-creación del perfil:", error.message);
         alert(`Tu cuenta fue creada, pero hubo un problema al configurar tu perfil: ${error.message}. Por favor, contacta a soporte.`);
     }
   };
@@ -311,7 +311,7 @@ function App() {
         setUsers(prevUsers => prevUsers.map(u => (u.id === finalUser.id ? finalUser : u)));
 
     } catch (error: any) {
-        console.error("Fallo al guardar el perfil:", error);
+        console.error("Fallo al guardar el perfil:", error.message);
         throw error;
     }
 };
@@ -334,7 +334,7 @@ function App() {
         .single();
 
       if (error) {
-          console.error('Error al actualizar la propiedad:', error);
+          console.error('Error al actualizar la propiedad:', error.message);
       } else if (data) {
           setProperties(prev => prev.map(p => p.id === data.id ? data as Property : p));
       }
@@ -353,7 +353,7 @@ function App() {
         .single();
 
       if (error) {
-        console.error('Error al crear la propiedad:', error);
+        console.error('Error al crear la propiedad:', error.message);
       } else if (data) {
         setProperties(prev => [...prev, data as Property]);
         
@@ -366,7 +366,7 @@ function App() {
                 .single();
 
             if (profileError) {
-                console.error("Error al marcar perfil de propietario como completo:", profileError);
+                console.error("Error al marcar perfil de propietario como completo:", profileError.message);
             } else if (updatedProfile) {
                 setCurrentUser(prev => prev ? { ...prev, ...updatedProfile } : null);
                 setUsers(prev => prev.map(u => u.id === updatedProfile.id ? { ...u, ...updatedProfile } : u));
@@ -388,17 +388,15 @@ function App() {
   };
 
   const handleUpdatePropertyStatus = async (propertyId: number, status: 'approved' | 'rejected') => {
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('properties')
       .update({ status })
-      .eq('id', propertyId)
-      .select()
-      .single();
+      .eq('id', propertyId);
 
     if (error) {
-      console.error('Error al actualizar el estado de la propiedad:', error);
-    } else if (data) {
-      setProperties(prev => prev.map(p => p.id === propertyId ? data as Property : p));
+      console.error('Error al actualizar el estado de la propiedad:', error.message);
+    } else {
+      setProperties(prev => prev.map(p => (p.id === propertyId ? { ...p, status } : p)));
     }
   };
   
@@ -409,24 +407,22 @@ function App() {
       .eq('id', propertyId);
 
     if (error) {
-      console.error('Error al eliminar la propiedad:', error);
+      console.error('Error al eliminar la propiedad:', error.message);
     } else {
       setProperties(prev => prev.filter(p => p.id !== propertyId));
     }
   };
 
   const handleSetUserBanStatus = async (userId: string, isBanned: boolean) => {
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('profiles')
       .update({ is_banned: isBanned })
-      .eq('id', userId)
-      .select()
-      .single();
+      .eq('id', userId);
     
     if (error) {
-      console.error('Error al actualizar el estado de baneo del usuario:', error);
-    } else if (data) {
-      setUsers(prev => prev.map(u => u.id === userId ? data as User : u));
+      console.error('Error al actualizar el estado de baneo del usuario:', error.message);
+    } else {
+      setUsers(prev => prev.map(u => (u.id === userId ? { ...u, is_banned: isBanned } : u)));
     }
   };
 

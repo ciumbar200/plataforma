@@ -1,4 +1,3 @@
-// FIX: Removed circular dependency by defining AmenityId in this file instead of importing it from components/icons.
 
 export enum UserRole {
   INQUILINO = 'INQUILINO',
@@ -35,7 +34,6 @@ export interface User {
   is_profile_complete?: boolean;
 }
 
-// FIX: Defined AmenityId here to break circular dependency with components/icons.tsx
 export type AmenityId = 
   | 'pool' | 'wifi' | 'airConditioning' | 'heating' | 'furnished' 
   | 'kitchen' | 'washingMachine' | 'parking' | 'elevator' | 'balcony' 
@@ -55,7 +53,6 @@ export enum PropertyType {
 
 export interface Property {
   id: number;
-  // FIX: Added owner_id to align the type with the database schema and application logic.
   owner_id: string;
   title: string;
   address: string; // Street address
@@ -110,7 +107,6 @@ export interface SavedSearch {
   name: string;
   filters: {
     city?: string;
-    // FIX: Added optional 'locality' property to align with mock data and application features.
     locality?: string;
     keyword?: string;
     min_price?: number;

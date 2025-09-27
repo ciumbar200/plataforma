@@ -13,7 +13,6 @@ export const MenuIcon: React.FC<IconProps> = (props) => (
 );
 
 export const MoonIcon: React.FC<IconProps> = (props) => (
-    // FIX: Corrected typo in viewBox attribute from "0 0 24" 24"" to "0 0 24 24".
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
         <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
     </svg>
@@ -242,7 +241,6 @@ export const ConciergeBellIcon: React.FC<IconProps> = (props) => (
 );
 
 export const CalendarIcon: React.FC<IconProps> = (props) => (
-    // FIX: Corrected typo in viewBox attribute from "0 0 24" 24"" to "0 0 24 24".
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
         <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
         <line x1="16" y1="2" x2="16" y2="6"></line>
@@ -399,8 +397,6 @@ export const PhoneIcon: React.FC<IconProps> = (props) => (
 );
 
 
-// FIX: Moved AVAILABLE_AMENITIES here to allow using JSX icons and resolve import issues.
-// FIX: Changed the type of the 'icon' property to be more specific, resolving errors with React.cloneElement.
 export const AVAILABLE_AMENITIES: { id: AmenityId; label: string; icon: React.ReactElement<React.SVGProps<SVGSVGElement>> }[] = [
     { id: 'pool', label: 'Piscina', icon: <SwimmingPoolIcon /> },
     { id: 'wifi', label: 'Wi-Fi', icon: <WifiIcon /> },

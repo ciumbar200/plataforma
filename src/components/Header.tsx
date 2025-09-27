@@ -52,10 +52,10 @@ const Header: React.FC<HeaderProps> = ({ onLoginClick, onRegisterClick, onHomeCl
     }
     
     const headerClasses = `
-        sticky top-0 z-50 text-white w-full transition-all duration-300 h-16 mb-[-4rem]
+        sticky top-0 z-50 text-white w-full transition-all duration-300 h-16
         ${isScrolled 
             ? 'bg-black/20 backdrop-blur-lg border-b border-white/10' 
-            : 'bg-transparent border-b-0'
+            : 'bg-transparent border-b border-transparent'
         }
     `;
 
@@ -69,7 +69,7 @@ const Header: React.FC<HeaderProps> = ({ onLoginClick, onRegisterClick, onHomeCl
                     </button>
                     <nav className="hidden md:flex gap-8">
                         <a href="#como-funciona" className="text-sm font-medium text-white/80 hover:text-white transition-colors">Cómo funciona</a>
-                        <a href="#" className="text-sm font-medium text-white/80 hover:text-white transition-colors">Sobre nosotros</a>
+                        <a href="#faq" className="text-sm font-medium text-white/80 hover:text-white transition-colors">FAQ</a>
                     </nav>
                     <div className="flex items-center gap-4">
                         {switchAction && (

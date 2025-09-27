@@ -1,2 +1,2 @@
-// This file is obsolete. The correct version is located in /src/App.tsx
-// It has been cleared to prevent build conflicts and confusion.
+// This file re-exports the main App component from the main source file in /src
+export { default } from './src/App';

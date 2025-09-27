@@ -1,2 +1,2 @@
-// This file is obsolete. The correct version is located in /src/dashboards/TenantDashboard.tsx
-// It has been cleared to prevent build conflicts and confusion.
+// This file re-exports the dashboard from the main source file in /src
+export { default } from './src/dashboards/TenantDashboard';
