@@ -139,7 +139,7 @@ const OwnerLandingPage: React.FC<OwnerLandingPageProps> = ({ onStartPublication,
                                 </div>
                                 <button
                                     type="submit"
-                                    className="w-full md:w-auto bg-cyan-500 hover:bg-cyan-600 text-gray-900 font-bold py-3 px-6 rounded-xl transition-colors whitespace-nowrap"
+                                    className="w-full md:w-auto bg-cyan-700 hover:bg-cyan-800 text-white font-bold py-3 px-6 rounded-xl transition-colors whitespace-nowrap"
                                 >
                                     Empezar a Publicar
                                 </button>

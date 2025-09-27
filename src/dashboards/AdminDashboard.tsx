@@ -370,7 +370,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             <label className="block text-sm text-white/80 mb-1">Mensaje de Mantenimiento</label>
                             <textarea className="w-full bg-white/10 border border-white/20 rounded-lg p-2 outline-none" rows={4} placeholder="Ej: El sistema estará en mantenimiento esta noche de 02:00 a 03:00 AM."></textarea>
                         </div>
-                        <button type="button" onClick={() => alert('Mensaje global enviado (simulación).')} className="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-2 px-4 rounded-lg transition-colors">Enviar Notificación a Todos</button>
+                        <button type="button" onClick={() => alert('Mensaje global enviado (simulación).')} className="w-full bg-yellow-700 hover:bg-yellow-800 text-white font-bold py-2 px-4 rounded-lg transition-colors">Enviar Notificación a Todos</button>
                      </form>
                 </GlassCard>
             </div>

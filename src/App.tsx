@@ -528,6 +528,7 @@ function App() {
             userMatches={matches[currentUser.id] || []}
             onAddMatch={handleAddMatch}
             onGoToAccountSettings={handleGoToAccountSettings}
+            onLogout={handleLogout}
         />;
       case 'owner-dashboard':
         if (!currentUser) return <LoginPage onLogin={handleLogin} onRegister={handleRegister} initialMode="login" {...loginPageProps}/>;
