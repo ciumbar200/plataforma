@@ -63,16 +63,76 @@ const Feature: React.FC<{ icon: React.ReactNode; title: string; children: React.
 
 const faqs = [
     {
-        question: '¿Cómo funciona el algoritmo de compatibilidad?',
-        answer: 'Nuestro algoritmo analiza docenas de puntos de datos sobre tu estilo de vida, hábitos, horarios e intereses para asignarte una puntuación de compatibilidad con otros usuarios. ¡Es como un matchmaking para tu futuro hogar!',
+        question: '¿Qué es MoOn?',
+        answer: '<p>MoOn es una plataforma de matching inteligente que conecta personas con valores y estilos de vida compatibles para compartir piso de forma segura, justa y sin especulación.</p>',
     },
     {
-        question: '¿Es MoOn gratuito para los inquilinos?',
-        answer: 'Sí, crear tu perfil, buscar compañeros y propiedades, y hacer match es completamente gratuito para inquilinos. Ofreceremos funciones premium opcionales en el futuro.',
+        question: '¿Cómo funciona el “Matching Inteligente”?',
+        answer: "<p>Cuando te registras, completas un perfil con tus hábitos y preferencias. Nuestro algoritmo analiza tu información para sugerirte dos caminos:</p><ul class='list-disc list-inside mt-2 space-y-1'><li><strong>Buscar \"Compañeros y Piso\":</strong> Primero encuentras personas compatibles, formáis un grupo y luego buscáis juntos una propiedad para alquilar desde cero.</li><li><strong>Buscar \"Habitación en Piso\":</strong> Te unes a un piso que ya está formado y tiene una habitación libre.</li></ul><p class='mt-2'>Así reducimos el riesgo de conflictos y creamos comunidades más felices.</p>",
     },
     {
-        question: '¿Qué pasa si tengo un problema con mi compañero de piso?',
-        answer: 'Aunque nuestro objetivo es crear matches perfectos, entendemos que pueden surgir problemas. Ofrecemos recursos de mediación y guías de convivencia para ayudarte a resolver cualquier conflicto de manera amistosa.',
+        question: '¿Cuánto cuesta usar MoOn?',
+        answer: "<ul class='list-disc list-inside space-y-1'><li><strong>Registro y creación de perfil:</strong> Gratis.</li><li><strong>Suscripción Premium:</strong> 10 €/mes, que incluye contratos legales, scoring antifraude, seguro y comunidad exclusiva.</li></ul><p class='text-sm mt-2 text-white/60'>(En la mayoría de ciudades, es menos de lo que pagarías en comisiones de una agencia tradicional).</p>",
+    },
+    {
+        question: '¿Qué seguridad tengo al alquilar?',
+        answer: "<ul class='list-disc list-inside space-y-1'><li>Contratos legales y verificados.</li><li>Seguro de impago, robo y reubicación.</li><li>Scoring antifraude de inquilinos y propietarios.</li><li>Pagos transparentes y digitales.</li></ul>",
+    },
+    {
+        question: '¿Cómo funciona el contrato?',
+        answer: "<ul class='list-disc list-inside space-y-1'><li>Cada contrato está adaptado a la ley local.</li><li>Los gastos comunes se reparten según metros cuadrados ocupados, para evitar especulación.</li><li>Cada inquilino firma con el propietario, garantizando legalidad y transparencia.</li></ul>",
+    },
+    {
+        question: '¿Los gastos (agua, luz, gas, internet) están incluidos?',
+        answer: "<p>Depende del propietario. En cada anuncio verás claramente:</p><ul class='list-disc list-inside mt-2 space-y-1'><li>Piso con gastos incluidos.</li><li>Piso donde los gastos se reparten entre los inquilinos.</li></ul>",
+    },
+    {
+        question: '¿Puedo elegir con quién voy a vivir?',
+        answer: "<p>¡Sí! Antes de cerrar un contrato, puedes:</p><ul class='list-disc list-inside mt-2 space-y-1'><li>Ver perfiles verificados de tus futuros compañeros.</li><li>Revisar su porcentaje de compatibilidad contigo.</li><li>Decidir si quieres convivir con ellos.</li></ul>",
+    },
+    {
+        question: '¿Necesito pagar comisión a una agencia?',
+        answer: "<p>No. MoOn elimina las comisiones abusivas:</p><ul class='list-disc list-inside mt-2 space-y-1'><li>Trato directo con el propietario.</li><li>Sin intermediarios innecesarios.</li><li>Solo pagas tu suscripción a MoOn.</li></ul>",
+    },
+    {
+        question: '¿Soy estudiante, puedo usar MoOn?',
+        answer: "<p>Claro. MoOn está diseñado para:</p><ul class='list-disc list-inside mt-2 space-y-1'><li>Estudiantes universitarios.</li><li>Jóvenes profesionales.</li><li>Personas recién separadas.</li><li>Trabajadores en movilidad laboral.</li></ul>",
+    },
+    {
+        question: '¿Dónde puedo encontrar pisos con MoOn?',
+        answer: "<p>Actualmente en:</p><ul class='list-disc list-inside mt-2 space-y-1'><li>Barcelona y principales ciudades de España.</li></ul><p class='mt-2'>Próximamente: Francia, Alemania y Reino Unido.</p>",
+    },
+    {
+        question: '¿Cuánto tiempo se tarda en encontrar piso?',
+        answer: '<p>En promedio, los usuarios compatibles encuentran piso en menos de 2 semanas, gracias al matching.</p>',
+    },
+    {
+        question: '¿Qué pasa con mis datos?',
+        answer: "<p>Tu información personal está protegida con encriptación.</p><ul class='list-disc list-inside mt-2 space-y-1'><li>No compartimos tus datos sin permiso.</li><li>Cumplimos con RGPD en toda Europa.</li></ul>",
+    },
+    {
+        question: '¿Cómo sé que un anuncio es real?',
+        answer: "<p>Todos los propietarios pasan por un proceso de verificación. Además:</p><ul class='list-disc list-inside mt-2 space-y-1'><li>MoOn bloquea fraudes y anuncios falsos.</li><li>Ofrecemos soporte si detectas algo sospechoso.</li></ul>",
+    },
+    {
+        question: '¿Qué pasa si no me adapto al piso?',
+        answer: "<p>Si la convivencia no funciona:</p><ul class='list-disc list-inside mt-2 space-y-1'><li>Seguro de reubicación.</li><li>Te ayudamos a encontrar una nueva vivienda sin perder tu dinero.</li></ul>",
+    },
+    {
+        question: '¿Qué ventajas tengo frente a Idealista, Badi u otras plataformas?',
+        answer: "<ul class='list-disc list-inside space-y-1'><li>MoOn no es solo un portal de anuncios.</li><li>Tenemos algoritmo de compatibilidad, seguros y comunidad.</li><li>Cuidamos tanto de inquilinos como de propietarios.</li></ul>",
+    },
+    {
+        question: '¿Puedo alquilar solo una habitación?',
+        answer: '<p>Sí. Puedes alquilar una habitación o compartir un piso completo con otros usuarios de MoOn.</p>',
+    },
+    {
+        question: '¿Qué pasa si no pago a tiempo?',
+        answer: "<p>El contrato establece plazos claros.</p><ul class='list-disc list-inside mt-2 space-y-1'><li>Con el seguro de impago, el propietario está protegido.</li><li>Tú también puedes evitar penalizaciones si comunicas con anticipación.</li></ul>",
+    },
+    {
+        question: '¿Hay soporte si tengo dudas?',
+        answer: "<p>Sí, nuestro equipo te atiende:</p><ul class='list-disc list-inside mt-2 space-y-1'><li>Chat online en la web/app.</li><li>Soporte por email.</li><li>Ayuda 24/7 en incidencias urgentes.</li></ul>",
     },
 ];
 
@@ -81,7 +141,7 @@ const HomePage: React.FC<HomePageProps> = ({ onLoginClick, onRegisterClick, onSt
     const [selectedCity, setSelectedCity] = useState<string>('');
     const [selectedLocality, setSelectedLocality] = useState<string>('');
     const [localities, setLocalities] = useState<string[]>([]);
-    const [openFaq, setOpenFaq] = useState<number | null>(null);
+    const [openFaq, setOpenFaq] = useState<number | null>(0);
     const [currentTestimonial, setCurrentTestimonial] = useState(0);
 
     const nextTestimonial = () => {
@@ -315,7 +375,7 @@ const HomePage: React.FC<HomePageProps> = ({ onLoginClick, onRegisterClick, onSt
                 </section>
 
                 {/* FAQ Section */}
-                <section className="py-20">
+                <section id="faq" className="py-20">
                     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
                         <h2 className="text-3xl font-bold text-center mb-2">Preguntas Frecuentes</h2>
                         <p className="text-center text-white/70 mb-10">¿Tienes dudas? Aquí resolvemos las más comunes.</p>
@@ -330,11 +390,9 @@ const HomePage: React.FC<HomePageProps> = ({ onLoginClick, onRegisterClick, onSt
                                         <ChevronDownIcon className={`w-6 h-6 text-white/70 transition-transform duration-300 ${openFaq === index ? 'rotate-180' : ''}`} />
                                     </button>
                                     <div
-                                        className={`overflow-hidden transition-all duration-300 ease-in-out ${openFaq === index ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}
+                                        className={`overflow-hidden transition-all duration-300 ease-in-out ${openFaq === index ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}
                                     >
-                                        <div className="p-6 pt-0 text-white/80">
-                                            <p>{faq.answer}</p>
-                                        </div>
+                                        <div className="p-6 pt-0 text-white/80 prose prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: faq.answer }} />
                                     </div>
                                 </GlassCard>
                             ))}

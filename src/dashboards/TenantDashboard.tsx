@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { User, Property, SavedSearch, UserRole, PropertyType, AmenityId, RentalGoal } from '../types';
 import { CompassIcon, BuildingIcon, HeartIcon, UserCircleIcon, MoonIcon, XIcon } from '../components/icons';
@@ -239,7 +238,7 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user, allUsers, prope
 
     const renderDiscoverView = () => (
         <>
-            <h2 className="text-3xl font-bold mb-4 text-center">Encuentra tu compañero ideal</h2>
+            <h2 className="text-3xl font-bold mb-4 text-center text-white">Encuentra tu compañero ideal</h2>
             <p className="text-white/70 text-center max-w-2xl mx-auto mb-6">Usa los filtros para encontrar personas en tu ciudad actual o en la ciudad a la que planeas mudarte.</p>
             
             {/* Discover Filters */}
@@ -247,33 +246,33 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user, allUsers, prope
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                     <div>
                         <label htmlFor="discoverCityFilter" className="block text-xs font-medium text-white/70 mb-1">Ciudad</label>
-                        <select id="discoverCityFilter" value={discoverCityFilter} onChange={e => setDiscoverCityFilter(e.target.value)} className="w-full bg-white/10 border border-white/20 rounded-lg p-2 text-sm outline-none"><option value="" className="bg-gray-800">Cualquier ciudad</option>{Object.keys(CITIES_DATA).map(c => <option key={c} value={c} className="bg-gray-800">{c}</option>)}</select>
+                        <select id="discoverCityFilter" value={discoverCityFilter} onChange={e => setDiscoverCityFilter(e.target.value)} className="w-full bg-white/10 border border-white/20 rounded-lg p-2 text-sm outline-none text-white"><option value="" className="bg-gray-800 text-white">Cualquier ciudad</option>{Object.keys(CITIES_DATA).map(c => <option key={c} value={c} className="bg-gray-800 text-white">{c}</option>)}</select>
                     </div>
                      <div>
                         <label htmlFor="discoverLocalityFilter" className="block text-xs font-medium text-white/70 mb-1">Localidad</label>
-                        <select id="discoverLocalityFilter" value={discoverLocalityFilter} onChange={e => setDiscoverLocalityFilter(e.target.value)} disabled={!discoverCityFilter} className="w-full bg-white/10 border border-white/20 rounded-lg p-2 text-sm outline-none disabled:opacity-50"><option value="" className="bg-gray-800">Cualquier localidad</option>{localitiesForDiscoverFilter.map(l => <option key={l} value={l} className="bg-gray-800">{l}</option>)}</select>
+                        <select id="discoverLocalityFilter" value={discoverLocalityFilter} onChange={e => setDiscoverLocalityFilter(e.target.value)} disabled={!discoverCityFilter} className="w-full bg-white/10 border border-white/20 rounded-lg p-2 text-sm outline-none disabled:opacity-50 text-white"><option value="" className="bg-gray-800 text-white">Cualquier localidad</option>{localitiesForDiscoverFilter.map(l => <option key={l} value={l} className="bg-gray-800 text-white">{l}</option>)}</select>
                     </div>
                      <div>
                         <label htmlFor="discoverRentalGoalFilter" className="block text-xs font-medium text-white/70 mb-1">Busca</label>
-                        <select id="discoverRentalGoalFilter" value={discoverRentalGoalFilter} onChange={e => setDiscoverRentalGoalFilter(e.target.value as RentalGoal)} className="w-full bg-white/10 border border-white/20 rounded-lg p-2 text-sm outline-none">
-                            <option value="" className="bg-gray-800">Cualquier objetivo</option>
-                            <option value={RentalGoal.FIND_ROOMMATES_AND_APARTMENT} className="bg-gray-800">Compañeros y piso</option>
-                            <option value={RentalGoal.FIND_ROOM_WITH_ROOMMATES} className="bg-gray-800">Habitación en piso</option>
-                            <option value={RentalGoal.BOTH} className="bg-gray-800">Ambas opciones</option>
+                        <select id="discoverRentalGoalFilter" value={discoverRentalGoalFilter} onChange={e => setDiscoverRentalGoalFilter(e.target.value as RentalGoal)} className="w-full bg-white/10 border border-white/20 rounded-lg p-2 text-sm outline-none text-white">
+                            <option value="" className="bg-gray-800 text-white">Cualquier objetivo</option>
+                            <option value={RentalGoal.FIND_ROOMMATES_AND_APARTMENT} className="bg-gray-800 text-white">Compañeros y piso</option>
+                            <option value={RentalGoal.FIND_ROOM_WITH_ROOMMATES} className="bg-gray-800 text-white">Habitación en piso</option>
+                            <option value={RentalGoal.BOTH} className="bg-gray-800 text-white">Ambas opciones</option>
                         </select>
                     </div>
                     <div>
                         <label htmlFor="discoverReligionFilter" className="block text-xs font-medium text-white/70 mb-1">Religión</label>
-                        <select id="discoverReligionFilter" value={discoverReligionFilter} onChange={e => setDiscoverReligionFilter(e.target.value)} className="w-full bg-white/10 border border-white/20 rounded-lg p-2 text-sm outline-none">
-                            <option value="" className="bg-gray-800">Cualquiera</option>
-                            {RELIGIONS.map(r => <option key={r} value={r} className="bg-gray-800">{r}</option>)}
+                        <select id="discoverReligionFilter" value={discoverReligionFilter} onChange={e => setDiscoverReligionFilter(e.target.value)} className="w-full bg-white/10 border border-white/20 rounded-lg p-2 text-sm outline-none text-white">
+                            <option value="" className="bg-gray-800 text-white">Cualquiera</option>
+                            {RELIGIONS.map(r => <option key={r} value={r} className="bg-gray-800 text-white">{r}</option>)}
                         </select>
                     </div>
                     <div>
                         <label htmlFor="discoverOrientationFilter" className="block text-xs font-medium text-white/70 mb-1">Orientación Sexual</label>
-                        <select id="discoverOrientationFilter" value={discoverOrientationFilter} onChange={e => setDiscoverOrientationFilter(e.target.value)} className="w-full bg-white/10 border border-white/20 rounded-lg p-2 text-sm outline-none">
-                            <option value="" className="bg-gray-800">Cualquiera</option>
-                            {SEXUAL_ORIENTATIONS.map(o => <option key={o} value={o} className="bg-gray-800">{o}</option>)}
+                        <select id="discoverOrientationFilter" value={discoverOrientationFilter} onChange={e => setDiscoverOrientationFilter(e.target.value)} className="w-full bg-white/10 border border-white/20 rounded-lg p-2 text-sm outline-none text-white">
+                            <option value="" className="bg-gray-800 text-white">Cualquiera</option>
+                            {SEXUAL_ORIENTATIONS.map(o => <option key={o} value={o} className="bg-gray-800 text-white">{o}</option>)}
                         </select>
                     </div>
                 </div>
@@ -317,7 +316,7 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user, allUsers, prope
     const renderPropertiesView = () => (
         <>
             <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-                <h2 className="text-3xl font-bold">Propiedades Disponibles</h2>
+                <h2 className="text-3xl font-bold text-white">Propiedades Disponibles</h2>
                 <button onClick={() => setSaveSearchModalOpen(true)} className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-colors text-sm">Guardar Búsqueda Actual</button>
             </div>
             
@@ -326,22 +325,22 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user, allUsers, prope
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div>
                         <label htmlFor="cityFilter" className="block text-xs font-medium text-white/70 mb-1">Ciudad</label>
-                        <select id="cityFilter" value={cityFilter} onChange={e => setCityFilter(e.target.value)} className="w-full bg-white/10 border border-white/20 rounded-lg p-2 text-sm outline-none"><option value="" className="bg-gray-800">Cualquier ciudad</option>{Object.keys(CITIES_DATA).map(c => <option key={c} value={c} className="bg-gray-800">{c}</option>)}</select>
+                        <select id="cityFilter" value={cityFilter} onChange={e => setCityFilter(e.target.value)} className="w-full bg-white/10 border border-white/20 rounded-lg p-2 text-sm outline-none text-white"><option value="" className="bg-gray-800 text-white">Cualquier ciudad</option>{Object.keys(CITIES_DATA).map(c => <option key={c} value={c} className="bg-gray-800 text-white">{c}</option>)}</select>
                     </div>
                      <div>
                         <label htmlFor="localityFilter" className="block text-xs font-medium text-white/70 mb-1">Localidad</label>
-                        <select id="localityFilter" value={localityFilter} onChange={e => setLocalityFilter(e.target.value)} disabled={!cityFilter} className="w-full bg-white/10 border border-white/20 rounded-lg p-2 text-sm outline-none disabled:opacity-50"><option value="" className="bg-gray-800">Cualquier localidad</option>{localitiesForFilter.map(l => <option key={l} value={l} className="bg-gray-800">{l}</option>)}</select>
+                        <select id="localityFilter" value={localityFilter} onChange={e => setLocalityFilter(e.target.value)} disabled={!cityFilter} className="w-full bg-white/10 border border-white/20 rounded-lg p-2 text-sm outline-none disabled:opacity-50 text-white"><option value="" className="bg-gray-800 text-white">Cualquier localidad</option>{localitiesForFilter.map(l => <option key={l} value={l} className="bg-gray-800 text-white">{l}</option>)}</select>
                     </div>
                     <div>
                         <label className="block text-xs font-medium text-white/70 mb-1">Precio (€)</label>
                         <div className="flex gap-2">
-                           <input type="number" placeholder="Min" value={minPriceFilter} onChange={e => setMinPriceFilter(e.target.value)} className="w-1/2 bg-white/10 border border-white/20 rounded-lg p-2 text-sm outline-none" />
-                           <input type="number" placeholder="Max" value={maxPriceFilter} onChange={e => setMaxPriceFilter(e.target.value)} className="w-1/2 bg-white/10 border border-white/20 rounded-lg p-2 text-sm outline-none" />
+                           <input type="number" placeholder="Min" value={minPriceFilter} onChange={e => setMinPriceFilter(e.target.value)} className="w-1/2 bg-white/10 border border-white/20 rounded-lg p-2 text-sm outline-none text-white placeholder:text-white/60" />
+                           <input type="number" placeholder="Max" value={maxPriceFilter} onChange={e => setMaxPriceFilter(e.target.value)} className="w-1/2 bg-white/10 border border-white/20 rounded-lg p-2 text-sm outline-none text-white placeholder:text-white/60" />
                         </div>
                     </div>
                      <div>
                         <label htmlFor="propertyTypeFilter" className="block text-xs font-medium text-white/70 mb-1">Tipo</label>
-                        <select id="propertyTypeFilter" value={propertyTypeFilter} onChange={e => setPropertyTypeFilter(e.target.value as PropertyType)} className="w-full bg-white/10 border border-white/20 rounded-lg p-2 text-sm outline-none"><option value="" className="bg-gray-800">Cualquier tipo</option>{Object.values(PropertyType).map(t => <option key={t} value={t} className="bg-gray-800">{t}</option>)}</select>
+                        <select id="propertyTypeFilter" value={propertyTypeFilter} onChange={e => setPropertyTypeFilter(e.target.value as PropertyType)} className="w-full bg-white/10 border border-white/20 rounded-lg p-2 text-sm outline-none text-white"><option value="" className="bg-gray-800 text-white">Cualquier tipo</option>{Object.values(PropertyType).map(t => <option key={t} value={t} className="bg-gray-800 text-white">{t}</option>)}</select>
                     </div>
                 </div>
                  <div className="mt-4 pt-4 border-t border-white/10">
@@ -358,7 +357,7 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user, allUsers, prope
             </GlassCard>
 
             {savedSearches.length > 0 && <div className="mb-6">
-                <h3 className="text-xl font-semibold mb-2">Búsquedas Guardadas</h3>
+                <h3 className="text-xl font-semibold mb-2 text-white">Búsquedas Guardadas</h3>
                 <div className="flex flex-wrap gap-2">
                     {savedSearches.map(s => (
                         <div key={s.id} className="bg-white/10 px-3 py-1.5 rounded-full flex items-center gap-2 text-sm">
@@ -382,7 +381,7 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user, allUsers, prope
 
     const renderMatchesView = () => (
          <>
-            <h2 className="text-3xl font-bold mb-6">Tus Matches</h2>
+            <h2 className="text-3xl font-bold mb-6 text-white">Tus Matches</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {mutualMatches.length > 0 ? mutualMatches.map(u => (
                     <UserProfileCard key={u.id} user={u} />
@@ -408,8 +407,8 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user, allUsers, prope
         <div className="h-full w-full flex flex-col">
             <header className="bg-black/20 backdrop-blur-lg border-b border-white/10 p-2 px-6 flex justify-between items-center flex-shrink-0 z-20">
                 <div className="flex items-center gap-2">
-                    <MoonIcon className="w-7 h-7" />
-                    <span className="text-xl font-bold">Panel de Inquilino</span>
+                    <MoonIcon className="w-7 h-7 text-white" />
+                    <span className="text-xl font-bold text-white">Panel de Inquilino</span>
                 </div>
                 <nav className="hidden md:flex items-center gap-2">
                     {navItems.map(item => (

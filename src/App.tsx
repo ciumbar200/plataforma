@@ -1,7 +1,9 @@
+
+
 import React, { useState, useEffect } from 'react';
 import HomePage from './pages/HomePage';
 import OwnerLandingPage from './pages/OwnerLandingPage';
-import LoginPage from './pages/LoginPage';
+import LoginPage, { PostRegisterPage } from './pages/LoginPage';
 import TenantDashboard from './dashboards/TenantDashboard';
 import OwnerDashboard from './dashboards/OwnerDashboard';
 import AdminDashboard from './dashboards/AdminDashboard';
@@ -16,7 +18,7 @@ import { MOCK_SAVED_SEARCHES, MOCK_BLOG_POSTS, MOCK_NOTIFICATIONS, MOCK_MATCHES 
 import { supabase } from './lib/supabaseClient';
 import { MoonIcon } from './components/icons';
 
-type Page = 'home' | 'owners' | 'login' | 'tenant-dashboard' | 'owner-dashboard' | 'admin-dashboard' | 'account' | 'blog' | 'about' | 'privacy' | 'terms' | 'contact';
+type Page = 'home' | 'owners' | 'login' | 'tenant-dashboard' | 'owner-dashboard' | 'admin-dashboard' | 'account' | 'blog' | 'about' | 'privacy' | 'terms' | 'contact' | 'post-register';
 
 type RegistrationData = { rentalGoal: RentalGoal; city: string; locality: string };
 type PublicationData = { property_type: PropertyType; city: string; locality: string };
@@ -41,8 +43,20 @@ function App() {
   useEffect(() => {
     const initializeApp = async () => {
       try {
-        const [{ data: { session } }, usersRes, propertiesRes] = await Promise.all([
-          supabase.auth.getSession(),
+        // Step 1: Fetch session and handle potential errors gracefully.
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error("Error fetching session:", sessionError.message);
+          // If session fetching fails, treat user as logged out.
+          await supabase.auth.signOut();
+          setCurrentUser(null);
+          setPage('home');
+          return; // Stop initialization
+        }
+
+        // Step 2: Fetch app data.
+        const [usersRes, propertiesRes] = await Promise.all([
           supabase.from('profiles').select('*'),
           supabase.from('properties').select('*')
         ]);
@@ -54,34 +68,40 @@ function App() {
         setUsers(allUsers);
         setProperties(propertiesRes.data as Property[]);
 
+        // Step 3: Process the session and user profile.
         if (session?.user) {
           const profile = allUsers.find(u => u.id === session.user.id);
           
           if (profile) {
-            // Sync avatar_url from auth metadata to profile state on load
             const avatar_url = session.user.user_metadata?.avatar_url || profile.avatar_url;
             const syncedProfile = { ...profile, avatar_url };
 
             setCurrentUser(syncedProfile);
             if (syncedProfile.role === UserRole.ADMIN) setPage('admin-dashboard');
             else if (!syncedProfile.is_profile_complete) {
-              // This is handled by the main render logic, no need to set page here
+              // This is handled by the main render logic.
             } else if (syncedProfile.role === UserRole.PROPIETARIO) {
               setPage('owner-dashboard');
             } else {
               setPage('tenant-dashboard');
             }
           } else {
+            // If an authenticated user exists without a profile, it's an inconsistent state.
+            // Log them out to allow a clean sign-in/sign-up.
+            console.warn("User session found without a matching profile. Signing out.");
             await supabase.auth.signOut();
             setCurrentUser(null);
             setPage('home');
           }
         } else {
+          // No session, ensure user is logged out.
           setCurrentUser(null);
           setPage('home');
         }
       } catch (error: any) {
         console.error("Error al inicializar la aplicación:", error.message || error);
+        // Catch-all for any other errors during init. Force sign out to clear bad state.
+        await supabase.auth.signOut().catch(e => console.error("Sign out failed during error handling:", e));
         setCurrentUser(null);
         setPage('home');
       } finally {
@@ -191,12 +211,10 @@ function App() {
       if (profileError) {
         throw new Error(`Error al crear el perfil: ${profileError.message}`);
       }
-
-      alert('¡Registro exitoso! Por favor, revisa tu correo electrónico para verificar tu cuenta e iniciar sesión.');
+      
       setRegistrationData(null);
       setPublicationData(null);
-      setPage('login');
-      setLoginInitialMode('login');
+      setPage('post-register');
 
     } catch (error: any) {
         console.error("Error en la post-creación del perfil:", error.message);
@@ -395,18 +413,15 @@ function App() {
     });
   };
 
-  const handleUpdatePropertyStatus = (propertyId: number, status: 'approved' | 'rejected') => {
-    // Optimistic update
+  const handleUpdatePropertyStatus = async (propertyId: number, status: 'approved' | 'rejected') => {
+    const originalProperties = [...properties];
     setProperties(prev => prev.map(p => (p.id === propertyId ? { ...p, status } : p)));
 
-    supabase.from('properties').update({ status }).eq('id', propertyId)
-      .then(({ error }) => {
-        if (error) {
-          console.error('Error al actualizar el estado de la propiedad:', error);
-          // Revert on error
-          // Note: A more robust solution would involve refetching or storing original state.
-        }
-      });
+    const { error } = await supabase.from('properties').update({ status }).eq('id', propertyId);
+    if (error) {
+      console.error('Error al actualizar el estado de la propiedad:', error.message);
+      setProperties(originalProperties); // Revert on error
+    }
   };
   
   const handleDeleteProperty = async (propertyId: number) => {
@@ -422,17 +437,15 @@ function App() {
     }
   };
 
-  const handleSetUserBanStatus = (userId: string, isBanned: boolean) => {
-    // Optimistic update
+  const handleSetUserBanStatus = async (userId: string, isBanned: boolean) => {
+    const originalUsers = [...users];
     setUsers(prev => prev.map(u => (u.id === userId ? { ...u, is_banned: isBanned } : u)));
 
-    supabase.from('profiles').update({ is_banned: isBanned }).eq('id', userId)
-      .then(({ error }) => {
-        if (error) {
-          console.error('Error al actualizar el estado de baneo del usuario:', error);
-          // Revert on error
-        }
-      });
+    const { error } = await supabase.from('profiles').update({ is_banned: isBanned }).eq('id', userId);
+    if (error) {
+      console.error('Error al actualizar el estado de baneo del usuario:', error.message);
+      setUsers(originalUsers); // Revert on error
+    }
   };
 
   const handleSaveBlogPost = (postData: Omit<BlogPost, 'id'> & { id?: number }) => {
@@ -514,6 +527,7 @@ function App() {
       case 'home': return <HomePage onStartRegistration={handleStartRegistration} {...pageNavigationProps} onRegisterClick={loginPageProps.onRegisterClick} />;
       case 'owners': return <OwnerLandingPage onStartPublication={handleStartPublication} onLoginClick={handleGoToLogin} onHomeClick={() => setPage('home')} {...pageNavigationProps} />;
       case 'login': return <LoginPage onLogin={handleLogin} onRegister={handleRegister} registrationData={registrationData} publicationData={publicationData} initialMode={loginInitialMode} {...loginPageProps} />;
+      case 'post-register': return <PostRegisterPage onGoToLogin={handleGoToLogin} />;
       case 'blog': return <BlogPage posts={blogPosts} {...loginPageProps} />;
       case 'about': return <AboutPage {...loginPageProps} />;
       case 'privacy': return <PrivacyPolicyPage {...loginPageProps} />;

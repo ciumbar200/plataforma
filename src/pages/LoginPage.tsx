@@ -2,9 +2,40 @@ import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { User, UserRole, RentalGoal, PropertyType } from '../types';
-import { GoogleIcon, FacebookIcon, MoonIcon, UsersIcon, BuildingIcon } from '../components/icons';
+import { GoogleIcon, FacebookIcon, MoonIcon, UsersIcon, BuildingIcon, MailIcon } from '../components/icons';
 import GlassCard from '../components/GlassCard';
 import { supabase } from '../lib/supabaseClient';
+
+interface PostRegisterPageProps {
+    onGoToLogin: () => void;
+}
+
+export const PostRegisterPage: React.FC<PostRegisterPageProps> = ({ onGoToLogin }) => {
+    return (
+        <div className="min-h-screen w-full flex items-center justify-center p-4">
+            <GlassCard className="w-full max-w-md text-center animate-fade-in-up">
+                <MoonIcon className="w-12 h-12 mx-auto text-indigo-400" />
+                <h2 className="text-3xl font-bold mt-4">¡Un último paso!</h2>
+                <p className="text-white/80 mt-2">
+                    Hemos enviado un enlace de verificación a tu correo electrónico.
+                    Por favor, haz clic en el enlace para activar tu cuenta y poder iniciar sesión.
+                </p>
+                <div className="my-8">
+                    <MailIcon className="w-16 h-16 mx-auto text-cyan-400" />
+                </div>
+                <p className="text-sm text-white/70">
+                    ¿No has recibido el correo? Revisa tu carpeta de spam.
+                </p>
+                <button
+                    onClick={onGoToLogin}
+                    className="mt-6 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition-colors"
+                >
+                    Ir a Iniciar Sesión
+                </button>
+            </GlassCard>
+        </div>
+    );
+};
 
 type RegistrationData = { rentalGoal: RentalGoal; city: string; locality: string };
 type PublicationData = { property_type: PropertyType; city: string; locality: string };
