@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect } from 'react';
 import HomePage from './pages/HomePage';
 import OwnerLandingPage from './pages/OwnerLandingPage';
@@ -366,7 +364,7 @@ function App() {
         owner_id: currentUser.id,
         views: 0,
         compatible_candidates: 0,
-        status: 'pending' as const,
+        status: 'approved' as const,
       };
       const { data, error } = await supabase
         .from('properties')
@@ -411,17 +409,6 @@ function App() {
         }
         return prev;
     });
-  };
-
-  const handleUpdatePropertyStatus = async (propertyId: number, status: 'approved' | 'rejected') => {
-    const originalProperties = [...properties];
-    setProperties(prev => prev.map(p => (p.id === propertyId ? { ...p, status } : p)));
-
-    const { error } = await supabase.from('properties').update({ status }).eq('id', propertyId);
-    if (error) {
-      console.error('Error al actualizar el estado de la propiedad:', error.message);
-      setProperties(originalProperties); // Revert on error
-    }
   };
   
   const handleDeleteProperty = async (propertyId: number) => {
@@ -569,7 +556,6 @@ function App() {
             properties={properties}
             blogPosts={blogPosts}
             matches={matches}
-            onUpdatePropertyStatus={handleUpdatePropertyStatus}
             onDeleteProperty={handleDeleteProperty}
             onSetUserBanStatus={handleSetUserBanStatus}
             onSaveBlogPost={handleSaveBlogPost}

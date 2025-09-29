@@ -9,14 +9,13 @@ import ConfirmationModal from './components/ConfirmationModal';
 import BlogEditorModal from './components/BlogEditorModal';
 import MatchesModal from './components/MatchesModal';
 
-type AdminTab = 'dashboard' | 'users' | 'properties' | 'approval' | 'blog' | 'settings';
+type AdminTab = 'dashboard' | 'users' | 'properties' | 'blog' | 'settings';
 
 interface AdminDashboardProps {
     users: User[];
     properties: Property[];
     blogPosts: BlogPost[];
     matches: { [key: string]: string[] };
-    onUpdatePropertyStatus: (propertyId: number, status: 'approved' | 'rejected') => void;
     onDeleteProperty: (propertyId: number) => void;
     onSetUserBanStatus: (userId: string, isBanned: boolean) => void;
     onSaveBlogPost: (post: Omit<BlogPost, 'id'> & { id?: number }) => void;
@@ -29,7 +28,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     properties, 
     blogPosts, 
     matches,
-    onUpdatePropertyStatus, 
     onDeleteProperty,
     onSetUserBanStatus,
     onSaveBlogPost,
@@ -57,7 +55,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     };
     
     const displayUsers = users.filter(u => u.role !== UserRole.ADMIN);
-    const pendingProperties = properties.filter(p => p.status === 'pending');
     const approvedProperties = properties.filter(p => p.status === 'approved');
     
     const activeMatchesCount = useMemo(() => {
@@ -83,14 +80,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         return count;
     }, [matches]);
 
-    const navItems = [
+    // FIX: Calculate pending properties count to be used in navItems.
+    const pendingPropertiesCount = useMemo(() => properties.filter(p => p.status === 'pending').length, [properties]);
+
+    // FIX: Convert navItems to a memoized value to dynamically include the count of pending properties, resolving the TypeScript error.
+    const navItems = useMemo(() => [
         { id: 'dashboard', label: 'Dashboard', icon: <ChartBarIcon className="w-5 h-5" /> },
         { id: 'users', label: 'Usuarios', icon: <UsersIcon className="w-5 h-5" /> },
-        { id: 'properties', label: 'Propiedades', icon: <BuildingIcon className="w-5 h-5" /> },
-        { id: 'approval', label: 'Aprobaciones', icon: <ClockIcon className="w-5 h-5" />, count: pendingProperties.length },
+        { id: 'properties', label: 'Propiedades', icon: <BuildingIcon className="w-5 h-5" />, count: pendingPropertiesCount },
         { id: 'blog', label: 'Blog', icon: <FileTextIcon className="w-5 h-5" /> },
         { id: 'settings', label: 'Ajustes', icon: <SettingsIcon className="w-5 h-5" /> },
-    ];
+    ], [pendingPropertiesCount]);
 
     const renderDashboard = () => (
         <>
@@ -234,67 +234,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </>
     );
 
-    const renderApproval = () => (
-         <>
-            <h3 className="text-2xl font-bold mb-6 text-white">Propiedades Pendientes de Aprobación</h3>
-            <GlassCard>
-                 <div className="overflow-x-auto max-h-[60vh] hidden md:block">
-                    <table className="w-full text-left text-white">
-                        <thead className="sticky top-0 bg-black/40 backdrop-blur-sm">
-                             <tr>
-                                <th className="p-3 font-semibold">Propiedad</th>
-                                <th className="p-3 font-semibold">Ciudad</th>
-                                <th className="p-3 font-semibold text-right">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                           {pendingProperties.length > 0 ? pendingProperties.map(prop => (
-                                <tr key={prop.id} className="border-b border-white/10 hover:bg-white/5">
-                                    <td className="p-3"><p className="font-semibold">{prop.title}</p><p className="text-sm text-white/70">{prop.address}</p></td>
-                                    <td className="p-3">{prop.city}</td>
-                                    <td className="p-3 text-right">
-                                        <button onClick={() => setSelectedProperty(prop)} className="bg-white/10 hover:bg-white/20 px-3 py-1 rounded-md text-sm font-semibold transition-colors mr-2">Ver Borrador</button>
-                                        <button onClick={() => onUpdatePropertyStatus(prop.id, 'approved')} className="inline-flex items-center gap-1.5 bg-green-500/80 hover:bg-green-500 text-white px-3 py-1 rounded-md text-sm font-semibold transition-colors mr-2">
-                                            <CheckMarkIcon className="w-4 h-4" />
-                                            <span>Aprobar</span>
-                                        </button>
-                                        <button onClick={() => onUpdatePropertyStatus(prop.id, 'rejected')} className="inline-flex items-center gap-1.5 bg-red-500/80 hover:bg-red-500 text-white px-3 py-1 rounded-md text-sm font-semibold transition-colors">
-                                            <XIcon className="w-4 h-4" />
-                                            <span>Rechazar</span>
-                                        </button>
-                                    </td>
-                                </tr>
-                            )) : (
-                                <tr><td colSpan={3} className="p-8 text-center text-white/70">No hay propiedades pendientes.</td></tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-                 {/* Mobile Cards */}
-                 <div className="md:hidden space-y-4">
-                    {pendingProperties.length > 0 ? pendingProperties.map(prop => (
-                        <div key={prop.id} className="bg-black/20 p-4 rounded-lg">
-                            <p className="font-bold text-lg">{prop.title}</p>
-                            <p className="text-sm text-white/70">{prop.address}</p>
-                            <p className="text-sm text-white/70 mb-3">Ciudad: {prop.city}</p>
-                            <div className="flex justify-end flex-wrap gap-2 border-t border-white/10 pt-3">
-                                <button onClick={() => setSelectedProperty(prop)} className="flex-1 sm:flex-none justify-center bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-md text-sm font-semibold transition-colors text-center">Ver Borrador</button>
-                                <button onClick={() => onUpdatePropertyStatus(prop.id, 'approved')} className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 bg-green-500/80 hover:bg-green-500 text-white px-3 py-1.5 rounded-md text-sm font-semibold transition-colors">
-                                    <CheckMarkIcon className="w-4 h-4" />
-                                    <span>Aprobar</span>
-                                </button>
-                                <button onClick={() => onUpdatePropertyStatus(prop.id, 'rejected')} className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 bg-red-500/80 hover:bg-red-500 text-white px-3 py-1.5 rounded-md text-sm font-semibold transition-colors">
-                                    <XIcon className="w-4 h-4" />
-                                    <span>Rechazar</span>
-                                </button>
-                            </div>
-                        </div>
-                    )) : <p className="p-8 text-center text-white/70">No hay propiedades pendientes.</p>}
-                </div>
-            </GlassCard>
-        </>
-    );
-
     const renderBlog = () => (
          <>
             <div className="flex justify-between items-center mb-6">
@@ -382,7 +321,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             case 'dashboard': return renderDashboard();
             case 'users': return renderUsers();
             case 'properties': return renderProperties();
-            case 'approval': return renderApproval();
             case 'blog': return renderBlog();
             case 'settings': return renderSettings();
             default: return null;

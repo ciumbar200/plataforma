@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { User, Property, SavedSearch, UserRole, PropertyType, AmenityId, RentalGoal } from '../types';
-import { CompassIcon, BuildingIcon, HeartIcon, UserCircleIcon, MoonIcon, XIcon } from '../components/icons';
+import { CompassIcon, BuildingIcon, SparklesIcon, UserCircleIcon, MoonIcon, XIcon } from '../components/icons';
 import UserProfileCard from './components/UserProfileCard';
 import PropertyCard from './components/PropertyCard';
 import SaveSearchModal from './components/SaveSearchModal';
@@ -69,7 +69,7 @@ interface TenantDashboardProps {
 const navItems = [
     { id: 'discover', icon: <CompassIcon className="w-7 h-7" />, label: 'Descubrir' },
     { id: 'properties', icon: <BuildingIcon className="w-7 h-7" />, label: 'Propiedades' },
-    { id: 'matches', icon: <HeartIcon className="w-7 h-7" />, label: 'Matches' },
+    { id: 'matches', icon: <SparklesIcon className="w-7 h-7" />, label: 'Matches' },
 ] as const;
 
 type View = typeof navItems[number]['id'];
@@ -281,33 +281,35 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user, allUsers, prope
                 </div>
             </GlassCard>
 
-            <div className="flex justify-center items-center h-[65vh] relative">
+            <div className="flex flex-col items-center justify-start min-h-[70vh]">
                 {potentialRoommates.length > 0 ? (
                     currentIndex < potentialRoommates.length ? (
-                        <div className="relative w-full max-w-sm h-full">
-                            {potentialRoommates.slice(currentIndex, currentIndex + 2).reverse().map((u, index) => (
-                                 <div key={u.id} className="absolute w-full h-full transition-all duration-300" style={{ transform: `scale(${1 - index * 0.05}) translateY(${index * -10}px)`, zIndex: 10 - index }}>
-                                    <UserProfileCard user={u} />
-                                </div>
-                            ))}
-                            <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 flex gap-8 z-20">
-                                 <button onClick={handleDislike} aria-label="No me gusta" className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-full p-5 text-red-400 hover:bg-red-500/20 transition-transform hover:scale-110">
+                        <>
+                            <div className="w-full max-w-sm mb-6">
+                                <UserProfileCard user={potentialRoommates[currentIndex]} />
+                            </div>
+                            <div className="flex gap-8 z-20 flex-shrink-0">
+                                <button onClick={handleDislike} aria-label="No me gusta" className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-full p-5 text-red-400 hover:bg-red-500/20 transition-transform hover:scale-110">
                                     <XIcon className="w-8 h-8" />
                                 </button>
-                                 <button onClick={handleLike} aria-label="Me gusta" className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-full p-5 text-green-400 hover:bg-green-500/20 transition-transform hover:scale-110">
-                                    <HeartIcon className="w-8 h-8" />
+                                <button onClick={handleLike} aria-label="Match" className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-full p-5 text-green-400 hover:bg-green-500/20 transition-transform hover:scale-110">
+                                    <SparklesIcon className="w-8 h-8" />
                                 </button>
                             </div>
-                        </div>
+                        </>
                     ) : (
-                        <GlassCard>
-                            <p className="text-center text-white/70">Has visto todos los perfiles de esta búsqueda. ¡Prueba con otros filtros!</p>
-                        </GlassCard>
+                        <div className="flex items-center justify-center flex-grow">
+                            <GlassCard>
+                                <p className="text-center text-white/70">Has visto todos los perfiles de esta búsqueda. ¡Prueba con otros filtros!</p>
+                            </GlassCard>
+                        </div>
                     )
                 ) : (
-                    <GlassCard>
-                        <p className="text-center text-white/70">No se encontraron perfiles con los filtros seleccionados.</p>
-                    </GlassCard>
+                    <div className="flex items-center justify-center flex-grow">
+                        <GlassCard>
+                            <p className="text-center text-white/70">No se encontraron perfiles con los filtros seleccionados.</p>
+                        </GlassCard>
+                    </div>
                 )}
             </div>
         </>

@@ -30,8 +30,8 @@ const UserProfileCard: React.FC<UserProfileCardProps> = ({ user, onCompatibility
 
     return (
         <>
-            <GlassCard className="!p-0 h-full w-full overflow-hidden flex flex-col">
-                <div className="relative h-3/5">
+            <GlassCard className="!p-0 w-full overflow-hidden flex flex-col">
+                <div className="relative h-96">
                     {/* FIX: Corrected property name from 'profile_picture' to 'avatar_url' to match the User type definition. */}
                     <img src={user.avatar_url} alt={user.name} className="w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
@@ -56,7 +56,7 @@ const UserProfileCard: React.FC<UserProfileCardProps> = ({ user, onCompatibility
                         <p className="text-sm text-white/80">{user.locality}, {user.city}</p>
                     </div>
                 </div>
-                <div className="p-4 flex-grow flex flex-col">
+                <div className="p-4 flex flex-col">
                      {user.rental_goal && rentalGoalTextMap[user.rental_goal] && <p className="text-xs font-semibold bg-indigo-500/50 text-indigo-200 px-2 py-1 rounded-full self-start mb-2">{rentalGoalTextMap[user.rental_goal]}</p>}
                     
                     <div className="flex justify-between items-center mb-3">
@@ -78,9 +78,20 @@ const UserProfileCard: React.FC<UserProfileCardProps> = ({ user, onCompatibility
                             ))}
                         </div>
                     </div>
+
+                    {user.lifestyle && user.lifestyle.length > 0 && (
+                        <div className="mb-3">
+                            <h4 className="text-xs font-semibold text-white/60 mb-1">Estilo de Vida</h4>
+                            <div className="flex flex-wrap gap-1.5">
+                                {(user.lifestyle).slice(0, 4).map(style => (
+                                    <span key={style} className="bg-purple-500/30 text-xs text-purple-200 px-2 py-1 rounded-full">{style}</span>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                     
-                    <div className="mt-auto pt-3 border-t border-white/10 text-center">
-                        <p className="text-sm text-white/80 italic line-clamp-2">{user.bio || 'Este usuario aún no ha añadido una biografía.'}</p>
+                    <div className="mt-3 pt-3 border-t border-white/10 text-left">
+                        <p className="text-sm text-white/80 italic">{user.bio || 'Este usuario aún no ha añadido una biografía.'}</p>
                     </div>
                 </div>
             </GlassCard>
