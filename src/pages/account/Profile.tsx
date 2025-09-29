@@ -133,6 +133,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onSave }) => {
         ...finalUserData,
         age: safeNumber(finalUserData.age)!,
         commute_distance: safeNumber(finalUserData.commute_distance),
+        budget: safeNumber(finalUserData.budget),
       };
       
       await onSave(finalDataForSave);
@@ -267,7 +268,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onSave }) => {
                     ))}
                 </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
                     <label htmlFor="noise_level" className="block text-sm font-medium text-white/80 mb-1">Nivel de ruido preferido</label>
                     <select name="noise_level" id="noise_level" value={formData.noise_level} onChange={handleChange} className="w-full bg-white/10 border border-white/20 rounded-lg p-3 outline-none focus:ring-2 focus:ring-indigo-500">
@@ -275,6 +276,10 @@ const Profile: React.FC<ProfileProps> = ({ user, onSave }) => {
                         <option value="Medio" className="bg-gray-800">Medio</option>
                         <option value="Alto" className="bg-gray-800">Alto</option>
                     </select>
+                </div>
+                <div>
+                    <label htmlFor="budget" className="block text-sm font-medium text-white/80 mb-1">Presupuesto Mensual Máx. (€)</label>
+                    <input type="number" name="budget" id="budget" value={formData.budget || ''} onChange={handleChange} className="w-full bg-white/10 border border-white/20 rounded-lg p-3 outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Ej: 500" />
                 </div>
                 <div>
                     <label htmlFor="commute_distance" className="block text-sm font-medium text-white/80 mb-1">Distancia máx. de búsqueda (min)</label>

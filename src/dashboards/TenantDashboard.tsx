@@ -140,8 +140,7 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user, allUsers, prope
     const [localitiesForDiscoverFilter, setLocalitiesForDiscoverFilter] = useState<string[]>([]);
     const [discoverLocalityFilter, setDiscoverLocalityFilter] = useState('');
     const [discoverRentalGoalFilter, setDiscoverRentalGoalFilter] = useState<RentalGoal | ''>('');
-    const [discoverReligionFilter, setDiscoverReligionFilter] = useState('');
-    const [discoverOrientationFilter, setDiscoverOrientationFilter] = useState('');
+    const [discoverBudgetFilter, setDiscoverBudgetFilter] = useState('');
     
     useEffect(() => {
       const newLocalities = CITIES_DATA[cityFilter] || [];
@@ -167,13 +166,12 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user, allUsers, prope
                 if (discoverCityFilter && u.city !== discoverCityFilter) return false;
                 if (discoverLocalityFilter && u.locality !== discoverLocalityFilter) return false;
                 if (discoverRentalGoalFilter && u.rental_goal !== discoverRentalGoalFilter) return false;
-                if (discoverReligionFilter && u.religion !== discoverReligionFilter) return false;
-                if (discoverOrientationFilter && u.sexual_orientation !== discoverOrientationFilter) return false;
+                if (discoverBudgetFilter && (!u.budget || u.budget > Number(discoverBudgetFilter))) return false;
                 return true;
             })
             .map(u => ({...u, compatibility: calculateCompatibility(user, u)}))
             .sort((a, b) => b.compatibility - a.compatibility);
-    }, [allUsers, user, discoverCityFilter, discoverLocalityFilter, discoverRentalGoalFilter, discoverReligionFilter, discoverOrientationFilter]);
+    }, [allUsers, user, discoverCityFilter, discoverLocalityFilter, discoverRentalGoalFilter, discoverBudgetFilter]);
 
     // Reset card index when filters change
     useEffect(() => {
@@ -264,8 +262,7 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user, allUsers, prope
         setDiscoverCityFilter('');
         setDiscoverLocalityFilter('');
         setDiscoverRentalGoalFilter('');
-        setDiscoverReligionFilter('');
-        setDiscoverOrientationFilter('');
+        setDiscoverBudgetFilter('');
     };
 
     const renderDiscoverView = () => (
@@ -294,18 +291,15 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user, allUsers, prope
                         </select>
                     </div>
                     <div>
-                        <label htmlFor="discoverReligionFilter" className="block text-xs font-medium text-white/70 mb-1">Religión</label>
-                        <select id="discoverReligionFilter" value={discoverReligionFilter} onChange={e => setDiscoverReligionFilter(e.target.value)} className="w-full bg-white/10 border border-white/20 rounded-lg p-2 text-sm outline-none text-white">
-                            <option value="" className="bg-gray-800 text-white">Cualquiera</option>
-                            {RELIGIONS.map(r => <option key={r} value={r} className="bg-gray-800 text-white">{r}</option>)}
-                        </select>
-                    </div>
-                    <div>
-                        <label htmlFor="discoverOrientationFilter" className="block text-xs font-medium text-white/70 mb-1">Orientación Sexual</label>
-                        <select id="discoverOrientationFilter" value={discoverOrientationFilter} onChange={e => setDiscoverOrientationFilter(e.target.value)} className="w-full bg-white/10 border border-white/20 rounded-lg p-2 text-sm outline-none text-white">
-                            <option value="" className="bg-gray-800 text-white">Cualquiera</option>
-                            {SEXUAL_ORIENTATIONS.map(o => <option key={o} value={o} className="bg-gray-800 text-white">{o}</option>)}
-                        </select>
+                        <label htmlFor="discoverBudgetFilter" className="block text-xs font-medium text-white/70 mb-1">Presupuesto Máx (€)</label>
+                        <input 
+                            type="number" 
+                            id="discoverBudgetFilter" 
+                            value={discoverBudgetFilter} 
+                            onChange={e => setDiscoverBudgetFilter(e.target.value)} 
+                            className="w-full bg-white/10 border border-white/20 rounded-lg p-2 text-sm outline-none text-white placeholder:text-white/60"
+                            placeholder="Ej: 500"
+                        />
                     </div>
                 </div>
                 <div className="mt-4 flex justify-end">

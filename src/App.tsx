@@ -299,6 +299,7 @@ function App() {
             lifestyle: dataFromForm.lifestyle,
             noise_level: dataFromForm.noise_level,
             commute_distance: dataFromForm.commute_distance,
+            budget: dataFromForm.budget,
             avatar_url: dataFromForm.avatar_url,
             phone: dataFromForm.phone,
             birth_country: dataFromForm.birth_country,

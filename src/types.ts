@@ -34,6 +34,7 @@ export interface User {
   is_banned?: boolean;
   is_profile_complete?: boolean;
   birth_country?: string;
+  budget?: number; // Monthly budget for rent
   religion?: string;
   sexual_orientation?: string;
 }
