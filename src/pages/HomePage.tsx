@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import { CompassIcon, UsersIcon, BuildingIcon, ChevronDownIcon, PencilIcon, SearchIcon, SignatureIcon, ChevronLeftIcon } from '../components/icons';
+import { CompassIcon, UsersIcon, BuildingIcon, ChevronDownIcon, PencilIcon, SearchIcon, SignatureIcon, ChevronLeftIcon, CheckCircleIcon, SparklesIcon, ShieldCheckIcon, XIcon } from '../components/icons';
 import GlassCard from '../components/GlassCard';
 import { RentalGoal } from '../types';
 import { CITIES_DATA, getSupabaseUrl } from '../constants';
@@ -136,21 +136,16 @@ const faqs = [
     },
 ];
 
-const HomePage: React.FC<HomePageProps> = ({ onLoginClick, onRegisterClick, onStartRegistration, onOwnersClick, onBlogClick, onAboutClick, onPrivacyClick, onTermsClick, onContactClick }) => {
+
+const GuidedSearchModal: React.FC<{
+    isOpen: boolean;
+    onClose: () => void;
+    onSubmit: (data: { rentalGoal: RentalGoal; city: string; locality: string }) => void;
+}> = ({ isOpen, onClose, onSubmit }) => {
     const [rentalGoal, setRentalGoal] = useState<RentalGoal | ''>('');
     const [selectedCity, setSelectedCity] = useState<string>('');
     const [selectedLocality, setSelectedLocality] = useState<string>('');
     const [localities, setLocalities] = useState<string[]>([]);
-    const [openFaq, setOpenFaq] = useState<number | null>(0);
-    const [currentTestimonial, setCurrentTestimonial] = useState(0);
-
-    const nextTestimonial = () => {
-        setCurrentTestimonial(prev => (prev + 1) % testimonials.length);
-    };
-
-    const prevTestimonial = () => {
-        setCurrentTestimonial(prev => (prev - 1 + testimonials.length) % testimonials.length);
-    };
 
     useEffect(() => {
         if (selectedCity && CITIES_DATA[selectedCity]) {
@@ -169,7 +164,67 @@ const HomePage: React.FC<HomePageProps> = ({ onLoginClick, onRegisterClick, onSt
             alert('Por favor, completa todos los campos para continuar.');
             return;
         }
-        onStartRegistration({ rentalGoal, city: selectedCity, locality: selectedLocality });
+        onSubmit({ rentalGoal, city: selectedCity, locality: selectedLocality });
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in-down">
+            <GlassCard className="w-full max-w-lg relative">
+                <button onClick={onClose} className="absolute top-4 right-4 text-white/70 hover:text-white" aria-label="Cerrar modal">
+                    <XIcon className="w-6 h-6" />
+                </button>
+                <div className="text-center">
+                    <h2 className="text-2xl font-bold">Empecemos tu búsqueda</h2>
+                    <p className="text-white/70 mt-1">Dinos qué necesitas para encontrar tu match perfecto.</p>
+                </div>
+                <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+                    <div>
+                        <label htmlFor="rentalGoal" className="block text-sm font-medium text-white/80 mb-2">1. ¿Cuál es tu objetivo?</label>
+                        <select id="rentalGoal" value={rentalGoal} onChange={(e) => setRentalGoal(e.target.value as RentalGoal)} className={`w-full appearance-none bg-white/10 border border-white/20 rounded-lg p-3 pr-10 font-semibold focus:outline-none focus:ring-2 focus:ring-purple-400 ${!rentalGoal ? 'text-white/70' : 'text-white'}`}>
+                            <option value="" disabled>Busco...</option>
+                            <option value={RentalGoal.FIND_ROOMMATES_AND_APARTMENT} className="bg-gray-800 text-white">Compañeros y piso</option>
+                            <option value={RentalGoal.FIND_ROOM_WITH_ROOMMATES} className="bg-gray-800 text-white">Habitación en piso</option>
+                            <option value={RentalGoal.BOTH} className="bg-gray-800 text-white">Ambas opciones</option>
+                        </select>
+                    </div>
+                     <div>
+                        <label htmlFor="city" className="block text-sm font-medium text-white/80 mb-2">2. ¿Dónde quieres vivir?</label>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <select id="city" value={selectedCity} onChange={(e) => setSelectedCity(e.target.value)} className={`w-full appearance-none bg-white/10 border border-white/20 rounded-lg p-3 pr-10 font-semibold focus:outline-none focus:ring-2 focus:ring-purple-400 ${!selectedCity ? 'text-white/70' : 'text-white'}`}>
+                                <option value="" disabled>Ciudad</option>
+                                {Object.keys(CITIES_DATA).map(city => <option key={city} value={city} className="bg-gray-800 text-white">{city}</option>)}
+                            </select>
+                            <select id="locality" value={selectedLocality} onChange={(e) => setSelectedLocality(e.target.value)} disabled={!selectedCity} className={`w-full appearance-none bg-white/10 border border-white/20 rounded-lg p-3 pr-10 font-semibold focus:outline-none focus:ring-2 focus:ring-purple-400 disabled:opacity-50 ${!selectedLocality ? 'text-white/70' : 'text-white'}`}>
+                                <option value="" disabled>Localidad</option>
+                                {localities.map(loc => <option key={loc} value={loc} className="bg-gray-800 text-white">{loc}</option>)}
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit" className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-3 px-6 rounded-lg transition-all shadow-lg hover:shadow-purple-500/50">
+                        <SearchIcon className="w-5 h-5" />
+                        <span>Continuar</span>
+                    </button>
+                </form>
+            </GlassCard>
+        </div>
+    );
+};
+
+
+const HomePage: React.FC<HomePageProps> = ({ onLoginClick, onRegisterClick, onStartRegistration, onOwnersClick, onBlogClick, onAboutClick, onPrivacyClick, onTermsClick, onContactClick }) => {
+    const [openFaq, setOpenFaq] = useState<number | null>(0);
+    const [currentTestimonial, setCurrentTestimonial] = useState(0);
+    const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
+
+
+    const nextTestimonial = () => {
+        setCurrentTestimonial(prev => (prev + 1) % testimonials.length);
+    };
+
+    const prevTestimonial = () => {
+        setCurrentTestimonial(prev => (prev - 1 + testimonials.length) % testimonials.length);
     };
 
     return (
@@ -186,76 +241,29 @@ const HomePage: React.FC<HomePageProps> = ({ onLoginClick, onRegisterClick, onSt
                     ></div>
                     <div className="absolute inset-0 bg-gradient-to-b from-gray-900/30 to-indigo-900/70" aria-hidden="true"></div>
                     <div className="relative z-10 max-w-4xl mx-auto px-4">
-                        <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-white">
-                            <span className="block animate-fade-in-up" style={{ animationDelay: '0.1s' }}>Vive Digno.</span>
-                            <span className="block animate-fade-in-up" style={{ animationDelay: '0.2s' }}>Vive Seguro.</span>
-                            <span className="block animate-fade-in-up" style={{ animationDelay: '0.3s' }}>Vive Acompañado.</span>
+                        <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-white animate-fade-in-up">
+                           Encuentra <span className="text-cyan-300">con quién</span> vivir, no solo dónde.
                         </h1>
-                        <p className="mt-6 text-lg sm:text-xl max-w-2xl mx-auto text-white/80 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
-                            Encuentra compañeros de piso compatibles y propiedades increíbles. Di adiós a las convivencias incómodas.
+                        <p className="mt-6 text-lg sm:text-xl max-w-2xl mx-auto text-white/80 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+                            Di adiós a las convivencias incómodas. Conectamos personas compatibles para crear hogares felices.
                         </p>
+
+                        <div className="mt-8 flex flex-col sm:flex-row justify-center items-center gap-4 sm:gap-8 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+                            <div className="flex items-center gap-2 text-sm"><CheckCircleIcon className="w-5 h-5 text-green-400"/>Perfiles Verificados</div>
+                            <div className="flex items-center gap-2 text-sm"><SparklesIcon className="w-5 h-5 text-yellow-400"/>Matching por Afinidad</div>
+                            <div className="flex items-center gap-2 text-sm"><ShieldCheckIcon className="w-5 h-5 text-cyan-400"/>Contratos Seguros</div>
+                        </div>
                         
-                        <form onSubmit={handleSubmit} className="mt-10 max-w-5xl mx-auto animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
-                           <GlassCard className="!bg-white/20">
-                                <div className="flex flex-col md:flex-row items-center justify-center gap-4">
-                                    {/* Rental Goal Select */}
-                                    <div className="relative w-full md:w-64">
-                                        <select 
-                                            id="rentalGoal" 
-                                            value={rentalGoal} 
-                                            onChange={(e) => setRentalGoal(e.target.value as RentalGoal)} 
-                                            className={`w-full appearance-none bg-purple-600/40 backdrop-blur-sm border border-white/20 rounded-xl px-5 py-3 pr-10 font-semibold focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all ${!rentalGoal ? 'text-white/70' : 'text-white'}`}
-                                        >
-                                            <option value="" disabled>Busco...</option>
-                                            <option value={RentalGoal.FIND_ROOMMATES_AND_APARTMENT} className="bg-gray-800 text-white">Compañeros y piso</option>
-                                            <option value={RentalGoal.FIND_ROOM_WITH_ROOMMATES} className="bg-gray-800 text-white">Habitación en piso</option>
-                                            <option value={RentalGoal.BOTH} className="bg-gray-800 text-white">Ambas opciones</option>
-                                        </select>
-                                        <ChevronDownIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/80 pointer-events-none" />
-                                    </div>
+                        <div className="mt-10 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+                            <button
+                                onClick={() => setIsSearchModalOpen(true)}
+                                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-4 px-10 rounded-xl transition-all shadow-lg hover:shadow-purple-500/50 transform hover:-translate-y-1 text-lg"
+                            >
+                                Empezar a descubrir
+                            </button>
+                        </div>
 
-                                    {/* City Select */}
-                                    <div className="relative w-full md:w-64">
-                                        <select 
-                                            id="city" 
-                                            value={selectedCity} 
-                                            onChange={(e) => setSelectedCity(e.target.value)}
-                                            className={`w-full appearance-none bg-purple-600/40 backdrop-blur-sm border border-white/20 rounded-xl px-5 py-3 pr-10 font-semibold focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all ${!selectedCity ? 'text-white/70' : 'text-white'}`}
-                                        >
-                                            <option value="" disabled>Ciudad</option>
-                                            {Object.keys(CITIES_DATA).map(city => <option key={city} value={city} className="bg-gray-800 text-white">{city}</option>)}
-                                        </select>
-                                        <ChevronDownIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/80 pointer-events-none" />
-                                    </div>
-
-                                    {/* Locality Select */}
-                                    <div className="relative w-full md:w-64">
-                                        <select 
-                                            id="locality" 
-                                            value={selectedLocality} 
-                                            onChange={(e) => setSelectedLocality(e.target.value)} 
-                                            disabled={!selectedCity}
-                                            className={`w-full appearance-none bg-purple-600/40 backdrop-blur-sm border border-white/20 rounded-xl px-5 py-3 pr-10 font-semibold focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all disabled:cursor-not-allowed ${!selectedLocality ? 'text-white/70' : 'text-white'}`}
-                                        >
-                                            <option value="" disabled>Localidad</option>
-                                            {localities.map(loc => <option key={loc} value={loc} className="bg-gray-800 text-white">{loc}</option>)}
-                                        </select>
-                                        <ChevronDownIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/80 pointer-events-none" />
-                                    </div>
-                                    
-                                    {/* Submit Button */}
-                                    <button
-                                        type="submit"
-                                        className="w-full md:w-auto flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-3 px-8 rounded-xl transition-all shadow-lg hover:shadow-purple-500/50 transform hover:-translate-y-0.5"
-                                    >
-                                        <SearchIcon className="w-5 h-5" />
-                                        <span>Buscar</span>
-                                    </button>
-                                </div>
-                            </GlassCard>
-                        </form>
-
-                        <div className="mt-8 flex flex-col items-center gap-4 animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
+                        <div className="mt-8 flex flex-col items-center gap-4 animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
                             <div className="flex -space-x-2">
                                 <img className="inline-block h-8 w-8 rounded-full ring-2 ring-slate-900 object-cover" src="https://images.unsplash.com/photo-1491528323818-fdd1faba62cc?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="Usuario 1"/>
                                 <img className="inline-block h-8 w-8 rounded-full ring-2 ring-slate-900 object-cover" src="https://images.unsplash.com/photo-1550525811-e586910b323f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="Usuario 2"/>
@@ -409,6 +417,12 @@ const HomePage: React.FC<HomePageProps> = ({ onLoginClick, onRegisterClick, onSt
                 onTermsClick={onTermsClick}
                 onContactClick={onContactClick}
                 onOwnersClick={onOwnersClick}
+            />
+
+            <GuidedSearchModal
+                isOpen={isSearchModalOpen}
+                onClose={() => setIsSearchModalOpen(false)}
+                onSubmit={onStartRegistration}
             />
         </div>
     );
