@@ -8,48 +8,71 @@ import ProfileDropdown from './components/ProfileDropdown';
 import GlassCard from '../components/GlassCard';
 import { CITIES_DATA, RELIGIONS, SEXUAL_ORIENTATIONS } from '../constants';
 import { AVAILABLE_AMENITIES } from '../components/icons';
+import CompatibilityModal from './components/CompatibilityModal';
 
-export const calculateCompatibility = (userA: User, userB: User): number => {
-    let score = 0;
-    let maxScore = 0;
 
-    // Interests (40 points)
+export const calculateCompatibilityBreakdown = (userA: User, userB: User): { name: string, score: number, maxScore: number }[] => {
+    const breakdown: { name: string, score: number, maxScore: number }[] = [];
+
+    // Interests
     const interestsA = new Set(userA.interests || []);
     const interestsB = new Set(userB.interests || []);
     if (interestsA.size > 0 || interestsB.size > 0) {
         const sharedInterests = [...interestsA].filter(interest => interestsB.has(interest));
-        maxScore += 40;
         const smallerInterestSetSize = Math.max(1, Math.min(interestsA.size, interestsB.size));
-        score += (sharedInterests.length / smallerInterestSetSize) * 40;
+        breakdown.push({
+            name: 'Intereses',
+            score: (sharedInterests.length / smallerInterestSetSize) * 40,
+            maxScore: 40
+        });
     }
     
-    // Age (20 points)
-    maxScore += 20;
+    // Age
     const ageDiff = Math.abs(userA.age - userB.age);
-    score += Math.max(0, 20 - ageDiff * 2);
+    breakdown.push({
+        name: 'Edad',
+        score: Math.max(0, 20 - ageDiff * 2),
+        maxScore: 20
+    });
 
-    // Noise Level (20 points)
+    // Noise Level
     const noiseMap = { 'Bajo': 1, 'Medio': 2, 'Alto': 3 };
     if (userA.noise_level && userB.noise_level) {
-        maxScore += 20;
         const noiseDiff = Math.abs(noiseMap[userA.noise_level] - noiseMap[userB.noise_level]);
-        if (noiseDiff === 0) score += 20;
-        else if (noiseDiff === 1) score += 10;
+        let noiseScore = 0;
+        if (noiseDiff === 0) noiseScore = 20;
+        else if (noiseDiff === 1) noiseScore = 10;
+        breakdown.push({
+            name: 'Nivel de Ruido',
+            score: noiseScore,
+            maxScore: 20
+        });
     }
 
-    // Lifestyle (20 points)
+    // Lifestyle
     const lifestyleA = new Set(userA.lifestyle || []);
     const lifestyleB = new Set(userB.lifestyle || []);
     if (lifestyleA.size > 0 || lifestyleB.size > 0) {
         const sharedLifestyle = [...lifestyleA].filter(style => lifestyleB.has(style));
-        maxScore += 20;
         const smallerLifestyleSetSize = Math.max(1, Math.min(lifestyleA.size, lifestyleB.size));
-        score += (sharedLifestyle.length / smallerLifestyleSetSize) * 20;
+        breakdown.push({
+            name: 'Estilo de Vida',
+            score: (sharedLifestyle.length / smallerLifestyleSetSize) * 20,
+            maxScore: 20
+        });
     }
 
-    if (maxScore === 0) return 50;
+    return breakdown;
+};
+
+export const calculateCompatibility = (userA: User, userB: User): number => {
+    const breakdown = calculateCompatibilityBreakdown(userA, userB);
+    const totalScore = breakdown.reduce((sum, item) => sum + item.score, 0);
+    const maxTotalScore = breakdown.reduce((sum, item) => sum + item.maxScore, 0);
+
+    if (maxTotalScore === 0) return 50;
     
-    return Math.min(99, Math.round((score / maxScore) * 100));
+    return Math.min(99, Math.round((totalScore / maxTotalScore) * 100));
 };
 
 interface TenantDashboardProps {
@@ -100,6 +123,7 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user, allUsers, prope
     const [view, setView] = useState<View>('discover');
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isSaveSearchModalOpen, setSaveSearchModalOpen] = useState(false);
+    const [compatibilityUser, setCompatibilityUser] = useState<User | null>(null);
 
     // State for property filters
     const [cityFilter, setCityFilter] = useState(user.city || '');
@@ -217,6 +241,14 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user, allUsers, prope
                 : [...prev, amenityId]
         );
     };
+    
+    const handleShowCompatibility = (userToShow: User) => {
+        setCompatibilityUser(userToShow);
+    };
+
+    const handleCloseCompatibility = () => {
+        setCompatibilityUser(null);
+    };
 
     const resetPropertyFilters = () => {
         setCityFilter(user.city || '');
@@ -286,7 +318,10 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user, allUsers, prope
                     currentIndex < potentialRoommates.length ? (
                         <>
                             <div className="w-full max-w-sm mb-6">
-                                <UserProfileCard user={potentialRoommates[currentIndex]} />
+                                <UserProfileCard 
+                                    user={potentialRoommates[currentIndex]} 
+                                    onCompatibilityClick={() => handleShowCompatibility(potentialRoommates[currentIndex])}
+                                />
                             </div>
                             <div className="flex gap-8 z-20 flex-shrink-0">
                                 <button onClick={handleDislike} aria-label="No me gusta" className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-full p-5 text-red-400 hover:bg-red-500/20 transition-transform hover:scale-110">
@@ -386,7 +421,11 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user, allUsers, prope
             <h2 className="text-3xl font-bold mb-6 text-white">Tus Matches</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {mutualMatches.length > 0 ? mutualMatches.map(u => (
-                    <UserProfileCard key={u.id} user={u} />
+                    <UserProfileCard 
+                        key={u.id} 
+                        user={u}
+                        onCompatibilityClick={() => handleShowCompatibility(u)}
+                    />
                 )) : (
                      <GlassCard className="md:col-span-2 lg:col-span-3 min-h-[200px] flex items-center justify-center">
                         <p className="text-center text-white/70">Aún no tienes matches. ¡Sigue descubriendo!</p>
@@ -433,6 +472,15 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user, allUsers, prope
                     {renderContent()}
                 </div>
             </main>
+            
+            <CompatibilityModal 
+                isOpen={!!compatibilityUser}
+                onClose={handleCloseCompatibility}
+                currentUser={user}
+                otherUser={compatibilityUser}
+                breakdown={compatibilityUser ? calculateCompatibilityBreakdown(user, compatibilityUser) : []}
+            />
+
             <SaveSearchModal isOpen={isSaveSearchModalOpen} onClose={() => setSaveSearchModalOpen(false)} onSave={handleSaveSearch} />
             <BottomNavBar activeView={view} setView={setView} onGoToAccountSettings={onGoToAccountSettings} />
         </div>
