@@ -330,6 +330,10 @@ function App() {
 
         setCurrentUser(finalUser);
         setUsers(prevUsers => prevUsers.map(u => (u.id === finalUser.id ? finalUser : u)));
+        
+        if (shouldMarkProfileComplete && finalUser.role === UserRole.INQUILINO) {
+            setPage('tenant-dashboard');
+        }
 
     } catch (error: any) {
         console.error("Fallo al guardar el perfil:", error);

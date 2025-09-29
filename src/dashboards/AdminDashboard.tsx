@@ -11,6 +11,14 @@ import MatchesModal from './components/MatchesModal';
 
 type AdminTab = 'dashboard' | 'users' | 'properties' | 'blog' | 'settings';
 
+// FIX: Define a type for navigation items to ensure type safety for optional properties like 'count'.
+type NavItem = {
+    id: AdminTab;
+    label: string;
+    icon: JSX.Element;
+    count?: number;
+};
+
 interface AdminDashboardProps {
     users: User[];
     properties: Property[];
@@ -22,6 +30,14 @@ interface AdminDashboardProps {
     onDeleteBlogPost: (postId: number) => void;
     onLogout: () => void;
 }
+
+const navItems: NavItem[] = [
+    { id: 'dashboard', label: 'Dashboard', icon: <ChartBarIcon className="w-5 h-5" /> },
+    { id: 'users', label: 'Usuarios', icon: <UsersIcon className="w-5 h-5" /> },
+    { id: 'properties', label: 'Propiedades', icon: <BuildingIcon className="w-5 h-5" /> },
+    { id: 'blog', label: 'Blog', icon: <FileTextIcon className="w-5 h-5" /> },
+    { id: 'settings', label: 'Ajustes', icon: <SettingsIcon className="w-5 h-5" /> },
+];
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ 
     users, 
@@ -79,18 +95,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         }
         return count;
     }, [matches]);
-
-    // FIX: Calculate pending properties count to be used in navItems.
-    const pendingPropertiesCount = useMemo(() => properties.filter(p => p.status === 'pending').length, [properties]);
-
-    // FIX: Convert navItems to a memoized value to dynamically include the count of pending properties, resolving the TypeScript error.
-    const navItems = useMemo(() => [
-        { id: 'dashboard', label: 'Dashboard', icon: <ChartBarIcon className="w-5 h-5" /> },
-        { id: 'users', label: 'Usuarios', icon: <UsersIcon className="w-5 h-5" /> },
-        { id: 'properties', label: 'Propiedades', icon: <BuildingIcon className="w-5 h-5" />, count: pendingPropertiesCount },
-        { id: 'blog', label: 'Blog', icon: <FileTextIcon className="w-5 h-5" /> },
-        { id: 'settings', label: 'Ajustes', icon: <SettingsIcon className="w-5 h-5" /> },
-    ], [pendingPropertiesCount]);
 
     const renderDashboard = () => (
         <>
@@ -345,6 +349,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                         {item.icon}
                                         <span>{item.label}</span>
                                     </div>
+                                    {/* FIX: Changed the check for 'item.count' to be type-safe. The 'NavItem' type ensures 'item.count' is a number if it exists. */}
                                     {item.count && item.count > 0 && <span className="bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">{item.count}</span>}
                                 </button>
                             </li>

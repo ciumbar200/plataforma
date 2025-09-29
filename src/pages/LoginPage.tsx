@@ -15,7 +15,7 @@ export const PostRegisterPage: React.FC<PostRegisterPageProps> = ({ onGoToLogin 
         <div className="min-h-screen w-full flex items-center justify-center p-4">
             <GlassCard className="w-full max-w-md text-center animate-fade-in-up">
                 <MoonIcon className="w-12 h-12 mx-auto text-indigo-400" />
-                <h2 className="text-3xl font-bold mt-4">¡Un último paso!</h2>
+                <h2 className="text-3xl font-bold mt-4 text-white">¡Un último paso!</h2>
                 <p className="text-white/80 mt-2">
                     Hemos enviado un enlace de verificación a tu correo electrónico.
                     Por favor, haz clic en el enlace para activar tu cuenta y poder iniciar sesión.
