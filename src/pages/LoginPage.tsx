@@ -78,6 +78,13 @@ const LoginPage: React.FC<LoginPageProps> = (props) => {
     setErrors({});
   }, [initialMode, isGuidedRegisterMode]);
 
+  useEffect(() => {
+    if (isGuidedRegisterMode) {
+      setSelectedRole(publicationData ? UserRole.PROPIETARIO : UserRole.INQUILINO);
+      setRoleSelectedForSocial(true);
+    }
+  }, [isGuidedRegisterMode, publicationData]);
+
   const validateField = (name: string, value: string) => {
     let fieldError: string | null = null;
     switch (name) {
@@ -136,7 +143,7 @@ const LoginPage: React.FC<LoginPageProps> = (props) => {
 
     if (mode === 'register') {
         try {
-            await onRegister({ email, name, age: parseInt(age, 10) }, password, isGuidedRegisterMode ? undefined : selectedRole);
+            await onRegister({ email, name, age: parseInt(age, 10) }, password, selectedRole);
         } catch (err: any) {
             console.error("Error de registro:", err);
             if (err.message && err.message.toLowerCase().includes('user already registered')) {
@@ -200,6 +207,28 @@ const LoginPage: React.FC<LoginPageProps> = (props) => {
         }
     }
     setLoading(false);
+  };
+
+  const handleGoogleLogin = async () => {
+    if (mode === 'register' && !isGuidedRegisterMode && !roleSelectedForSocial) {
+      setError('Por favor, selecciona si eres Inquilino o Propietario antes de continuar.');
+      return;
+    }
+    
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        data: {
+          role: selectedRole,
+        },
+      },
+    });
+
+    if (error) {
+      setError(`Error al iniciar sesión con Google: ${error.message}`);
+      setLoading(false);
+    }
   };
 
   const getSubtitle = () => {
@@ -289,7 +318,7 @@ const LoginPage: React.FC<LoginPageProps> = (props) => {
                 </p>
             )}
             <div className="grid grid-cols-2 gap-3">
-              <button type="button" disabled={mode === 'register' && !isGuidedRegisterMode && !roleSelectedForSocial} className="flex items-center justify-center gap-3 w-full bg-white/10 hover:bg-white/20 text-white font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+              <button type="button" onClick={handleGoogleLogin} disabled={mode === 'register' && !isGuidedRegisterMode && !roleSelectedForSocial} className="flex items-center justify-center gap-3 w-full bg-white/10 hover:bg-white/20 text-white font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                 <GoogleIcon className="w-5 h-5" /><span>Google</span>
               </button>
                <button type="button" disabled={mode === 'register' && !isGuidedRegisterMode && !roleSelectedForSocial} className="flex items-center justify-center gap-3 w-full bg-white/10 hover:bg-white/20 text-white font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">

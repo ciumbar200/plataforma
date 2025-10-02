@@ -10,7 +10,7 @@ type InitialPropertyData = { property_type: PropertyType; city: string; locality
 interface AddPropertyModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (property: Omit<Property, 'id' | 'views' | 'compatible_candidates' | 'owner_id'> & { id?: number }) => void;
+  onSave: (property: Omit<Property, 'id' | 'views' | 'compatible_candidates' | 'owner_id' | 'image_urls'> & { id?: number; imageFiles: File[]; image_urls: string[] }) => void;
   propertyToEdit?: Property | null;
   initialData?: InitialPropertyData | null;
   isMandatory?: boolean;
@@ -180,24 +180,13 @@ const AddPropertyModal: React.FC<AddPropertyModalProps> = ({ isOpen, onClose, on
     if (!validateForm()) {
         return;
     }
-    
-    const fileToDataUrl = (file: File): Promise<string> => {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result as string);
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
-        });
-    };
-
-    const newImageUrls = await Promise.all(imageFiles.map(fileToDataUrl));
-    const finalImageUrls = [...existingImageUrls, ...newImageUrls];
 
     onSave({
       ...formData,
       price: parseInt(formData.price, 10) || 0,
       id: propertyToEdit?.id,
-      image_urls: finalImageUrls,
+      image_urls: existingImageUrls,
+      imageFiles: imageFiles,
     });
   };
 
