@@ -7,7 +7,7 @@ import { supabase } from '../../lib/supabaseClient';
 
 interface ProfileProps {
   user: User;
-  onSave: (updatedUser: User) => boolean;
+  onSave: (updatedUser: User) => Promise<void>;
 }
 
 const ALL_INTERESTS = ['Yoga', 'Cocina Vegana', 'Viajar', 'Fotografía', 'Senderismo', 'Música Indie', 'Música en vivo', 'Cine', 'Salir de tapas', 'Arte Urbano', 'Videojuegos', 'Lectura', 'Teatro', 'Museos', 'Brunch', 'Deportes', 'Series', 'Fitness', 'Cocinar'];
@@ -17,13 +17,15 @@ const Profile: React.FC<ProfileProps> = ({ user, onSave }) => {
   const [formData, setFormData] = useState(user);
   const [localities, setLocalities] = useState<string[]>(CITIES_DATA[user.city || 'Madrid'] || []);
   const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string | null }>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  // Reset form data if the user prop changes (e.g., on re-login)
   useEffect(() => {
     setFormData(user);
+    if (user.city) {
+        setLocalities(CITIES_DATA[user.city] || []);
+    }
   }, [user]);
 
   const validateField = (name: string, value: string) => {
@@ -96,19 +98,8 @@ const Profile: React.FC<ProfileProps> = ({ user, onSave }) => {
         return;
     }
 
-    setIsUploading(true);
-    
-    // The onSave function now handles redirection optimistically and does the save
-    // in the background. It returns a boolean indicating if a redirect was triggered.
-    const wasRedirected = onSave(formData);
-      
-    if (!wasRedirected) {
-        // If we were not redirected, it was a normal profile update,
-        // so we show a success message and reset the loading state.
-        setIsUploading(false);
-        alert('Perfil actualizado con éxito');
-    }
-    // If we were redirected, this component will unmount, so no need to manage state.
+    setIsSaving(true);
+    onSave(formData);
   };
 
   return (
@@ -249,8 +240,8 @@ const Profile: React.FC<ProfileProps> = ({ user, onSave }) => {
         </>
 
         <div className="flex justify-end pt-4">
-          <button type="submit" disabled={isUploading} className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg transition-colors disabled:bg-gray-500 disabled:cursor-not-allowed">
-            {isUploading ? 'Guardando...' : 'Guardar Cambios'}
+          <button type="submit" disabled={isSaving} className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg transition-colors disabled:bg-gray-500 disabled:cursor-not-allowed">
+            {isSaving ? 'Guardando...' : 'Guardar Cambios'}
           </button>
         </div>
       </form>

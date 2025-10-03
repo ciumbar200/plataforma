@@ -8,32 +8,56 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 /*
 ¡NOTA IMPORTANTE SOBRE LA BASE DE DATOS!
 
-**PROBLEMA:** La sección "Descubrir" no muestra perfiles de otros inquilinos.
-
+**PROBLEMA 1:** La sección "Descubrir" no muestra perfiles de otros inquilinos.
 **CAUSA:** La política de Seguridad a Nivel de Fila (RLS) en la tabla `profiles` es demasiado restrictiva.
-La política actual solo permite a un usuario leer su PROPIO perfil, por lo que la aplicación no puede
-obtener la lista de otros usuarios.
 
-**SOLUCIÓN:** Ejecuta el siguiente script SQL en el "SQL Editor" de tu panel de Supabase
-para aplicar la política correcta.
+**PROBLEMA 2:** Los datos del registro (nombre, edad) no se guardan y aparecen por defecto.
+**CAUSA:** La creación del perfil desde el cliente es propensa a errores y condiciones de carrera.
 
---- PEGA ESTE CÓDIGO EN EL SQL EDITOR DE SUPABASE ---
+**SOLUCIÓN INTEGRAL:** Ejecuta el siguiente script SQL en el "SQL Editor" de tu panel de Supabase
+para aplicar las políticas y automatizaciones correctas.
 
--- 1. Elimina cualquier política de selección restrictiva que pueda existir.
-DROP POLICY IF EXISTS "profiles_select_own" ON public.profiles;
-DROP POLICY IF EXISTS "Authenticated users can view all profiles." ON public.profiles;
-DROP POLICY IF EXISTS "Public profiles are viewable by everyone." ON public.profiles;
+--- PEGA ESTE CÓDIGO EN EL SQL EDITOR DE SUPABASE Y HAZ CLIC EN "RUN" ---
 
--- 2. Crea la nueva política que permite a los usuarios autenticados ver todos los perfiles.
--- Esto es necesario para que la función "Descubrir" funcione.
+-- 1. Permite a los usuarios autenticados ver todos los perfiles (para la sección "Descubrir").
+-- Esto soluciona el problema de la pérdida de datos del registro (nombre, edad).
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer set search_path = public
+as $$
+begin
+  insert into public.profiles (id, name, email, age, role, avatar_url, rental_goal, city, locality)
+  values (
+    new.id,
+    new.raw_user_meta_data ->> 'name',
+    new.email,
+    (new.raw_user_meta_data ->> 'age')::int,
+    (new.raw_user_meta_data ->> 'role')::public.user_role,
+    new.raw_user_meta_data ->> 'avatar_url',
+    (new.raw_user_meta_data ->> 'rental_goal')::public.rental_goal,
+    new.raw_user_meta_data ->> 'city',
+    new.raw_user_meta_data ->> 'locality'
+  );
+  return new;
+end;
+$$;
+
+-- 3. Trigger que ejecuta la función anterior después de que se crea un usuario en `auth.users`.
+-- Esto automatiza la creación del perfil de forma fiable.
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute procedure public.handle_new_user();DROP POLICY IF EXISTS "Authenticated users can view all profiles." ON public.profiles;
 CREATE POLICY "Authenticated users can view all profiles."
 ON public.profiles FOR SELECT
 TO authenticated
 USING (true);
 
+-- 2. Función para crear automáticamente un perfil cuando un nuevo usuario se registra.
+
+
 --- FIN DEL CÓDIGO ---
 
-Una vez ejecutado este script, la sección "Descubrir" volverá a mostrar los perfiles correctamente.
-Recuerda que las políticas para INSERT y UPDATE deben seguir siendo restrictivas para que
-un usuario solo pueda modificar sus propios datos.
+Una vez ejecutado este script, ambos problemas quedarán solucionados de forma definitiva.
 */
