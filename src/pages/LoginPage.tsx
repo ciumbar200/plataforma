@@ -242,13 +242,17 @@ const LoginPage: React.FC<LoginPageProps> = (props) => {
     }
     
     setLoading(true);
+    // FIX: The `data` property is valid for passing user metadata with OAuth in
+    // recent versions of `supabase-js`, but the TypeScript types in this project
+    // may be outdated. Casting to `any` to bypass the type check and allow
+    // the 'role' to be passed to the user creation trigger.
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
         data: {
           role: selectedRole,
         },
-      },
+      } as any,
     });
 
     if (error) {

@@ -56,7 +56,7 @@ function App() {
             const [allUsersRes, propertiesRes, matchesRes] = await Promise.all([
                 supabase.from('profiles').select('*'),
                 supabase.from('properties').select('*'),
-                supabase.from('matches').select('matched_user_id').eq('user_id', session.user.id)
+                supabase.from('matches').select('*') // Fetch all matches for now for owner dashboard
             ]);
             
             if (allUsersRes.data) setUsers(allUsersRes.data as User[]);
@@ -65,8 +65,15 @@ function App() {
             if (matchesRes.error) {
                 console.error("Error fetching matches:", matchesRes.error.message);
             } else if (matchesRes.data) {
-                const userMatches = matchesRes.data.map(match => match.matched_user_id);
-                setMatches({ [session.user.id]: userMatches });
+                const allMatches = matchesRes.data;
+                const matchesByuser = allMatches.reduce((acc, match) => {
+                    if (!acc[match.user_id]) {
+                        acc[match.user_id] = [];
+                    }
+                    acc[match.user_id].push(match.matched_user_id);
+                    return acc;
+                }, {} as { [key: string]: string[] });
+                setMatches(matchesByuser);
             }
 
             const { data: profile, error: profileError } = await supabase
@@ -191,11 +198,9 @@ function App() {
     if (error) {
         console.error("Error al cerrar sesión:", error.message);
         alert(`Error al cerrar sesión: ${error.message}`);
-    } else {
-        setCurrentUser(null);
-        setMatches({});
-        setPage('home');
     }
+    // The onAuthStateChange listener will handle the rest:
+    // clearing state (setCurrentUser, setMatches) and redirecting (setPage).
   };
 
   const handleStartRegistration = (data: RegistrationData) => {
