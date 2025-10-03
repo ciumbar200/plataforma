@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { User, Property, SavedSearch, UserRole, PropertyType, AmenityId, RentalGoal } from '../types';
-import { CompassIcon, BuildingIcon, SparklesIcon, UserCircleIcon, MoonIcon, XIcon } from '../components/icons';
+import { CompassIcon, BuildingIcon, SparklesIcon, UserCircleIcon, MoonIcon, XIcon, ChevronLeftIcon, PaperAirplaneIcon, CheckIcon } from '../components/icons';
 import UserProfileCard from './components/UserProfileCard';
 import PropertyCard from './components/PropertyCard';
 import SaveSearchModal from './components/SaveSearchModal';
@@ -9,6 +9,7 @@ import GlassCard from '../components/GlassCard';
 import { CITIES_DATA, RELIGIONS, SEXUAL_ORIENTATIONS } from '../constants';
 import { AVAILABLE_AMENITIES } from '../components/icons';
 import CompatibilityModal from './components/CompatibilityModal';
+import GoogleMap from './components/GoogleMap';
 
 
 export const calculateCompatibilityBreakdown = (userA: User, userB: User): { name: string, score: number, maxScore: number }[] => {
@@ -95,7 +96,7 @@ const navItems = [
     { id: 'matches', icon: <SparklesIcon className="w-7 h-7" />, label: 'Matches' },
 ] as const;
 
-type View = typeof navItems[number]['id'];
+type View = typeof navItems[number]['id'] | 'propertyDetail';
 
 const BottomNavBar = ({ activeView, setView, onGoToAccountSettings }: { activeView: View; setView: (view: View) => void; onGoToAccountSettings: () => void; }) => (
     <div className="fixed bottom-0 left-0 right-0 h-20 bg-black/30 backdrop-blur-xl border-t border-white/20 z-30 grid grid-cols-4 items-center md:hidden">
@@ -119,11 +120,20 @@ const BottomNavBar = ({ activeView, setView, onGoToAccountSettings }: { activeVi
     </div>
 );
 
+const BackButton = ({ onClick, text }: { onClick: () => void; text: string; }) => (
+    <button onClick={onClick} className="flex items-center gap-2 text-white/80 hover:text-white transition-colors z-10 bg-black/20 backdrop-blur-sm px-4 py-2 rounded-lg border border-white/10 mb-4">
+      <ChevronLeftIcon className="w-5 h-5" />
+      <span>{text}</span>
+    </button>
+);
+
 const TenantDashboard: React.FC<TenantDashboardProps> = ({ user, allUsers, properties, onSendInterest, savedSearches, onSaveSearch, onDeleteSearch, userMatches, onAddMatch, onGoToAccountSettings, onLogout }) => {
     const [view, setView] = useState<View>('discover');
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isSaveSearchModalOpen, setSaveSearchModalOpen] = useState(false);
     const [compatibilityUser, setCompatibilityUser] = useState<User | null>(null);
+    const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
+    const [interestSent, setInterestSent] = useState(false);
 
     // State for property filters
     const [cityFilter, setCityFilter] = useState(user.city || '');
@@ -252,6 +262,12 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user, allUsers, prope
 
     const handleCloseCompatibility = () => {
         setCompatibilityUser(null);
+    };
+
+    const handlePropertyClick = (property: Property) => {
+        setSelectedProperty(property);
+        setInterestSent(false); // Reset interest sent status
+        setView('propertyDetail');
     };
 
     const resetPropertyFilters = () => {
@@ -406,7 +422,7 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user, allUsers, prope
             </div>}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredProperties.length > 0 ? (
-                    filteredProperties.map(prop => <PropertyCard key={prop.id} property={prop} />)
+                    filteredProperties.map(prop => <PropertyCard key={prop.id} property={prop} onCardClick={handlePropertyClick} />)
                 ) : (
                     <GlassCard className="md:col-span-2 lg:col-span-3 min-h-[200px] flex items-center justify-center">
                         <p className="text-center text-white/70">No se encontraron propiedades con los filtros seleccionados.</p>
@@ -435,11 +451,92 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user, allUsers, prope
         </>
     );
 
+    const renderPropertyDetailView = () => {
+        if (!selectedProperty) return null;
+
+        const handleSendInterest = () => {
+            onSendInterest(selectedProperty.id);
+            setInterestSent(true);
+        };
+        
+        const availableAmenities = AVAILABLE_AMENITIES.filter(amenity => selectedProperty.features && selectedProperty.features[amenity.id]);
+        const fullAddress = [selectedProperty.address, selectedProperty.locality, selectedProperty.city, selectedProperty.postal_code].filter(Boolean).join(', ');
+
+        return (
+            <div>
+                <BackButton onClick={() => setView('properties')} text="Volver a Propiedades" />
+                <GlassCard className="!p-0 overflow-hidden">
+                    <div className="grid grid-cols-1 md:grid-cols-2">
+                        <div className="p-2">
+                            <img src={selectedProperty.image_urls[0]} alt={selectedProperty.title} className="w-full h-auto object-cover rounded-lg" />
+                             {selectedProperty.image_urls.length > 1 && (
+                                <div className="grid grid-cols-3 gap-2 mt-2">
+                                    {selectedProperty.image_urls.slice(1, 4).map((url, index) => (
+                                        <img key={index} src={url} alt={`${selectedProperty.title} ${index + 2}`} className="w-full h-24 object-cover rounded-md" />
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                        <div className="p-6 flex flex-col">
+                            <h2 className="text-3xl font-bold mb-2 text-white">{selectedProperty.title}</h2>
+                            <p className="text-white/70 mb-4">{fullAddress}</p>
+                            
+                            <p className="text-4xl font-bold text-indigo-300 mb-4">
+                                €{selectedProperty.price}
+                                <span className="text-lg font-normal text-white/70">/mes</span>
+                            </p>
+                            
+                            <button 
+                                onClick={handleSendInterest}
+                                disabled={interestSent}
+                                className={`w-full py-3 rounded-lg font-bold text-lg transition-colors flex items-center justify-center gap-2 ${interestSent ? 'bg-green-600 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'}`}
+                            >
+                                {interestSent ? <><CheckIcon className="w-6 h-6"/> Interés Enviado</> : <><PaperAirplaneIcon className="w-6 h-6"/> Mostrar Interés</>}
+                            </button>
+                        </div>
+                    </div>
+                    <div className="p-6 space-y-6 border-t border-white/20">
+                         {availableAmenities.length > 0 && (
+                            <div>
+                                <h4 className="text-xl font-bold mb-3 text-white">Comodidades</h4>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                                    {availableAmenities.map(amenity => (
+                                        <div key={amenity.id} className="flex items-center gap-3 text-white/90">
+                                            {React.cloneElement(amenity.icon, { className: 'w-6 h-6 text-indigo-300 flex-shrink-0' })}
+                                            <span className="text-sm">{amenity.label}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {selectedProperty.conditions && (
+                            <div>
+                                <h4 className="text-xl font-bold mb-3 text-white">Condiciones del Propietario</h4>
+                                <p className="text-sm text-white/80 whitespace-pre-wrap bg-black/20 p-4 rounded-lg">{selectedProperty.conditions}</p>
+                            </div>
+                        )}
+
+                        {selectedProperty.lat != null && selectedProperty.lng != null && (
+                            <div>
+                                <h4 className="text-xl font-bold mb-3 text-white">Ubicación</h4>
+                                <div className="rounded-2xl overflow-hidden border-2 border-white/10 shadow-lg">
+                                    <GoogleMap lat={selectedProperty.lat} lng={selectedProperty.lng} />
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </GlassCard>
+            </div>
+        );
+    };
+
     const renderContent = () => {
         switch(view) {
             case 'discover': return renderDiscoverView();
             case 'properties': return renderPropertiesView();
             case 'matches': return renderMatchesView();
+            case 'propertyDetail': return renderPropertyDetailView();
             default: return renderDiscoverView();
         }
     };
