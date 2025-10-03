@@ -12,7 +12,7 @@ import ContactPage from './pages/ContactPage';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 import TermsPage from './pages/TermsPage';
 import { User, UserRole, RentalGoal, Property, PropertyType, SavedSearch, BlogPost, Notification } from './types';
-import { MOCK_SAVED_SEARCHES, MOCK_BLOG_POSTS, MOCK_NOTIFICATIONS, MOCK_MATCHES } from './constants';
+import { MOCK_SAVED_SEARCHES, MOCK_BLOG_POSTS, MOCK_NOTIFICATIONS } from './constants';
 import { supabase } from './lib/supabaseClient';
 import { MoonIcon } from './components/icons';
 
@@ -32,7 +32,7 @@ function App() {
   const [savedSearches, setSavedSearches] = useState<SavedSearch[]>(MOCK_SAVED_SEARCHES);
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>(MOCK_BLOG_POSTS);
   const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS);
-  const [matches, setMatches] = useState<{ [key: string]: string[] }>(MOCK_MATCHES);
+  const [matches, setMatches] = useState<{ [key: string]: string[] }>({});
 
   const [registrationData, setRegistrationData] = useState<RegistrationData | null>(null);
   const [publicationData, setPublicationData] = useState<PublicationData | null>(null);
@@ -46,18 +46,28 @@ function App() {
             setCurrentUser(null);
             setUsers([]);
             setProperties([]);
+            setMatches({});
             setPage('home');
             setLoading(false);
             return;
         }
 
         try {
-            const [allUsersRes, propertiesRes] = await Promise.all([
+            const [allUsersRes, propertiesRes, matchesRes] = await Promise.all([
                 supabase.from('profiles').select('*'),
-                supabase.from('properties').select('*')
+                supabase.from('properties').select('*'),
+                supabase.from('matches').select('matched_user_id').eq('user_id', session.user.id)
             ]);
+            
             if (allUsersRes.data) setUsers(allUsersRes.data as User[]);
             if (propertiesRes.data) setProperties(propertiesRes.data as Property[]);
+            
+            if (matchesRes.error) {
+                console.error("Error fetching matches:", matchesRes.error.message);
+            } else if (matchesRes.data) {
+                const userMatches = matchesRes.data.map(match => match.matched_user_id);
+                setMatches({ [session.user.id]: userMatches });
+            }
 
             const { data: profile, error: profileError } = await supabase
               .from('profiles')
@@ -91,6 +101,39 @@ function App() {
       subscription.unsubscribe();
     };
   }, []);
+
+  const triggerWelcomeEmail = async (user: User) => {
+    if (!user || !user.email || !user.name || !user.role) {
+      console.error("DEBUG: Cannot trigger welcome email, user data is incomplete.", user);
+      return;
+    }
+    
+    console.log(`DEBUG: Attempting to trigger welcome email for user: ${user.email} with role: ${user.role}`);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('send-welcome-email', {
+        body: {
+          email: user.email,
+          name: user.name,
+          role: user.role,
+        },
+      });
+  
+      if (error) {
+        // This catches invocation-level errors (e.g., function not found, RLS issues)
+        throw error;
+      }
+  
+      console.log("DEBUG: Welcome email function invoked successfully. Response:", data);
+    } catch (error) {
+      // This catches both invocation errors and network errors
+      // Don't block the UI for this, just log it for debugging.
+      console.error(
+        "DEBUG: Failed to invoke 'send-welcome-email' function. Check the Supabase Edge Function logs for details.",
+        error
+      );
+    }
+  };
 
   const handleLogin = (user: User) => {
     setUsers(prev => prev.find(u => u.id === user.id) ? prev : [...prev, user]);
@@ -150,6 +193,7 @@ function App() {
         alert(`Error al cerrar sesión: ${error.message}`);
     } else {
         setCurrentUser(null);
+        setMatches({});
         setPage('home');
     }
   };
@@ -216,6 +260,9 @@ function App() {
         setUsers(prev => prev.map(u => (u.id === finalUser.id ? finalUser : u)));
         
         if (shouldMarkProfileComplete) {
+            // Invoke the welcome email function
+            triggerWelcomeEmail(finalUser);
+
             // Defer CRM sync to run after UI updates, preventing blocking.
             setTimeout(() => {
                 if (finalUser.role === UserRole.INQUILINO) {
@@ -316,6 +363,10 @@ function App() {
                         const fullyUpdatedUser = { ...currentUser, ...updatedProfile };
                         setCurrentUser(fullyUpdatedUser);
                         setUsers(prev => prev.map(u => u.id === fullyUpdatedUser.id ? fullyUpdatedUser : u));
+                        
+                        // Invoke the welcome email function
+                        triggerWelcomeEmail(fullyUpdatedUser);
+
                         if (fullyUpdatedUser.role === UserRole.PROPIETARIO) {
                             setPage('post-owner-register');
                         }
@@ -329,15 +380,36 @@ function App() {
     }
   };
 
-  const handleAddMatch = (matchedUserId: string) => {
+  const handleAddMatch = async (matchedUserId: string) => {
     if (!currentUser) return;
-    setMatches(prev => {
-        const currentMatches = prev[currentUser.id] || [];
-        if (!currentMatches.includes(matchedUserId)) {
-            return { ...prev, [currentUser.id]: [...currentMatches, matchedUserId] };
-        }
-        return prev;
-    });
+    
+    const userId = currentUser.id;
+    const previousMatches = { ...matches };
+    const currentMatches = previousMatches[userId] || [];
+
+    if (currentMatches.includes(matchedUserId)) return;
+
+    // Optimistic UI update
+    const newMatchesForUser = [...currentMatches, matchedUserId];
+    setMatches(prev => ({ ...prev, [userId]: newMatchesForUser }));
+
+    // Persist to database
+    try {
+      const { error } = await supabase
+        .from('matches')
+        .insert({ user_id: userId, matched_user_id: matchedUserId });
+
+      if (error) {
+        console.error('Error guardando el match:', error.message);
+        // Revert optimistic update on failure
+        setMatches(previousMatches); 
+        alert(`No se pudo guardar el match: ${error.message}`);
+      }
+    } catch (err: any) {
+      console.error("Error inesperado al guardar el match:", err.message);
+      setMatches(previousMatches); // Revert on unexpected errors
+      alert('Ocurrió un error inesperado al guardar el match.');
+    }
   };
   
   const handleDeleteProperty = async (propertyId: number) => {
