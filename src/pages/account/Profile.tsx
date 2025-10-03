@@ -7,7 +7,7 @@ import { supabase } from '../../lib/supabaseClient';
 
 interface ProfileProps {
   user: User;
-  onSave: (updatedUser: User) => Promise<void>;
+  onSave: (updatedUser: User) => boolean;
 }
 
 const ALL_INTERESTS = ['Yoga', 'Cocina Vegana', 'Viajar', 'Fotografía', 'Senderismo', 'Música Indie', 'Música en vivo', 'Cine', 'Salir de tapas', 'Arte Urbano', 'Videojuegos', 'Lectura', 'Teatro', 'Museos', 'Brunch', 'Deportes', 'Series', 'Fitness', 'Cocinar'];
@@ -84,14 +84,13 @@ const Profile: React.FC<ProfileProps> = ({ user, onSave }) => {
     setFormData(prev => ({ ...prev, lifestyle }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (user.role === 'INQUILINO' && (!formData.bio || formData.bio.length < 100)) {
         setErrors(prev => ({ ...prev, bio: 'La biografía debe tener al menos 100 caracteres para continuar.'}));
         return;
     }
     
-    // Quick validation check on mandatory fields
     if (!formData.phone || !formData.birth_country) {
         alert('Por favor, completa los campos de teléfono y país de nacimiento.');
         return;
@@ -99,56 +98,17 @@ const Profile: React.FC<ProfileProps> = ({ user, onSave }) => {
 
     setIsUploading(true);
     
-    try {
-      let finalUserData = { ...formData };
-
-      if (profileImageFile) {
-        const fileExt = profileImageFile.name.split('.').pop();
-        const filePath = `${user.id}/${new Date().getTime()}.${fileExt}`;
-        const { error: uploadError } = await supabase.storage
-          .from('avatars')
-          .upload(filePath, profileImageFile, { upsert: true });
-
-        if (uploadError) {
-          throw new Error(`Error al subir la imagen: ${uploadError.message}`);
-        }
-
-        const { data: urlData } = supabase.storage
-          .from('avatars')
-          .getPublicUrl(filePath);
-        
-        finalUserData.avatar_url = urlData.publicUrl;
-      }
+    // The onSave function now handles redirection optimistically and does the save
+    // in the background. It returns a boolean indicating if a redirect was triggered.
+    const wasRedirected = onSave(formData);
       
-      const safeNumber = (value: any): number | undefined => {
-          if (value === '' || value === null || value === undefined) return undefined;
-          const num = Number(value);
-          if (isNaN(num)) {
-            throw new Error(`El valor '${value}' para un campo numérico no es válido.`);
-          }
-          return num;
-      };
-
-      const finalDataForSave: User = {
-        ...finalUserData,
-        age: safeNumber(finalUserData.age)!,
-        commute_distance: safeNumber(finalUserData.commute_distance),
-        budget: safeNumber(finalUserData.budget),
-      };
-      
-      await onSave(finalDataForSave);
-      alert('Perfil actualizado con éxito');
-      
-    } catch (error: any) {
-      console.error("Fallo al guardar el perfil:", error);
-      alert(`Fallo al guardar el perfil:\n${error.message || 'Se produjo un error inesperado.'}`);
-      
-      if (profileImageFile) {
-          setFormData(prev => ({ ...prev, avatar_url: user.avatar_url }));
-      }
-    } finally {
-      setIsUploading(false);
+    if (!wasRedirected) {
+        // If we were not redirected, it was a normal profile update,
+        // so we show a success message and reset the loading state.
+        setIsUploading(false);
+        alert('Perfil actualizado con éxito');
     }
+    // If we were redirected, this component will unmount, so no need to manage state.
   };
 
   return (

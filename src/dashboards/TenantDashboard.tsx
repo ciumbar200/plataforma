@@ -162,11 +162,17 @@ const TenantDashboard: React.FC<TenantDashboardProps> = ({ user, allUsers, prope
     const potentialRoommates = useMemo(() => {
         return allUsers
             .filter(u => {
-                if (u.id === user.id || u.role !== UserRole.INQUILINO || u.is_banned) return false;
+                // Basic exclusion criteria
+                if (u.id === user.id || u.role !== UserRole.INQUILINO || u.is_banned) {
+                    return false;
+                }
+
+                // User-applied filters
                 if (discoverCityFilter && u.city !== discoverCityFilter) return false;
                 if (discoverLocalityFilter && u.locality !== discoverLocalityFilter) return false;
                 if (discoverRentalGoalFilter && u.rental_goal !== discoverRentalGoalFilter) return false;
                 if (discoverBudgetFilter && (!u.budget || u.budget > Number(discoverBudgetFilter))) return false;
+                
                 return true;
             })
             .map(u => ({...u, compatibility: calculateCompatibility(user, u)}))
