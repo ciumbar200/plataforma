@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { User, UserRole, RentalGoal, PropertyType } from '../types';
-import { GoogleIcon, FacebookIcon, MoonIcon, UsersIcon, BuildingIcon, MailIcon } from '../components/icons';
+import { GoogleIcon, FacebookIcon, MoonIcon, UsersIcon, BuildingIcon, MailIcon, CheckCircleIcon } from '../components/icons';
 import GlassCard from '../components/GlassCard';
 import { supabase } from '../lib/supabaseClient';
 
@@ -31,6 +31,32 @@ export const PostRegisterPage: React.FC<PostRegisterPageProps> = ({ onGoToLogin 
                     className="mt-6 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition-colors"
                 >
                     Ir a Iniciar Sesión
+                </button>
+            </GlassCard>
+        </div>
+    );
+};
+
+export const PostOwnerRegisterPage: React.FC<{ onGoToDashboard: () => void }> = ({ onGoToDashboard }) => {
+    return (
+        <div className="min-h-screen w-full flex items-center justify-center p-4">
+            <GlassCard className="w-full max-w-md text-center animate-fade-in-up">
+                <CheckCircleIcon className="w-16 h-16 mx-auto text-green-400" />
+                <h2 className="text-3xl font-bold mt-4 text-white">¡Felicidades!</h2>
+                <p className="text-white/80 mt-2">
+                    Tu propiedad ha sido publicada y tu perfil de propietario está completo.
+                </p>
+                <div className="my-8">
+                    <BuildingIcon className="w-16 h-16 mx-auto text-cyan-400" />
+                </div>
+                <p className="text-sm text-white/70">
+                    Ya puedes acceder a tu panel para gestionar tus propiedades y ver candidatos.
+                </p>
+                <button
+                    onClick={onGoToDashboard}
+                    className="mt-6 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition-colors"
+                >
+                    Ir a mi panel
                 </button>
             </GlassCard>
         </div>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import HomePage from './pages/HomePage';
 import OwnerLandingPage from './pages/OwnerLandingPage';
-import LoginPage, { PostRegisterPage } from './pages/LoginPage';
+import LoginPage, { PostRegisterPage, PostOwnerRegisterPage } from './pages/LoginPage';
 import TenantDashboard from './dashboards/TenantDashboard';
 import OwnerDashboard from './dashboards/OwnerDashboard';
 import AdminDashboard from './dashboards/AdminDashboard';
@@ -16,7 +16,7 @@ import { MOCK_SAVED_SEARCHES, MOCK_BLOG_POSTS, MOCK_NOTIFICATIONS, MOCK_MATCHES 
 import { supabase } from './lib/supabaseClient';
 import { MoonIcon } from './components/icons';
 
-type Page = 'home' | 'owners' | 'login' | 'tenant-dashboard' | 'owner-dashboard' | 'admin-dashboard' | 'account' | 'blog' | 'about' | 'privacy' | 'terms' | 'contact' | 'post-register';
+type Page = 'home' | 'owners' | 'login' | 'tenant-dashboard' | 'owner-dashboard' | 'admin-dashboard' | 'account' | 'blog' | 'about' | 'privacy' | 'terms' | 'contact' | 'post-register' | 'post-owner-register';
 
 type RegistrationData = { rentalGoal: RentalGoal; city: string; locality: string };
 type PublicationData = { property_type: PropertyType; city: string; locality: string };
@@ -51,35 +51,40 @@ function App() {
             return;
         }
 
-        const [allUsersRes, propertiesRes] = await Promise.all([
-            supabase.from('profiles').select('*'),
-            supabase.from('properties').select('*')
-        ]);
-        if (allUsersRes.data) setUsers(allUsersRes.data as User[]);
-        if (propertiesRes.data) setProperties(propertiesRes.data as Property[]);
+        try {
+            const [allUsersRes, propertiesRes] = await Promise.all([
+                supabase.from('profiles').select('*'),
+                supabase.from('properties').select('*')
+            ]);
+            if (allUsersRes.data) setUsers(allUsersRes.data as User[]);
+            if (propertiesRes.data) setProperties(propertiesRes.data as Property[]);
 
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
+            const { data: profile, error: profileError } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', session.user.id)
+              .single();
 
-        if (profileError && profileError.code === 'PGRST116') {
-            console.error("CRITICAL: Profile not found for an authenticated user. The DB trigger might be missing or failed. Signing out.");
-            await supabase.auth.signOut();
-        } else if (profileError) {
-            console.error("Error fetching profile:", profileError.message);
-            await supabase.auth.signOut();
-        } else if (profile) {
-            setCurrentUser(profile as User);
-            if (profile.role === UserRole.ADMIN) {
-                setPage('admin-dashboard');
-            } else if (profile.is_profile_complete) {
-                setPage(profile.role === UserRole.PROPIETARIO ? 'owner-dashboard' : 'tenant-dashboard');
+            if (profileError && profileError.code === 'PGRST116') {
+                console.error("CRITICAL: Profile not found for an authenticated user. The DB trigger might be missing or failed. Signing out.");
+                await supabase.auth.signOut();
+            } else if (profileError) {
+                console.error("Error fetching profile:", profileError.message);
+                await supabase.auth.signOut();
+            } else if (profile) {
+                setCurrentUser(profile as User);
+                if (profile.role === UserRole.ADMIN) {
+                    setPage('admin-dashboard');
+                } else if (profile.is_profile_complete) {
+                    setPage(profile.role === UserRole.PROPIETARIO ? 'owner-dashboard' : 'tenant-dashboard');
+                }
             }
+        } catch (error) {
+            console.error("Error during initial data load:", error);
+            // Handle error, maybe show an error screen or log out the user
+        } finally {
+            setLoading(false);
         }
-        
-        setLoading(false);
     });
 
     return () => {
@@ -312,7 +317,7 @@ function App() {
                         setCurrentUser(fullyUpdatedUser);
                         setUsers(prev => prev.map(u => u.id === fullyUpdatedUser.id ? fullyUpdatedUser : u));
                         if (fullyUpdatedUser.role === UserRole.PROPIETARIO) {
-                            setPage('owner-dashboard');
+                            setPage('post-owner-register');
                         }
                     }
                 }
@@ -438,6 +443,7 @@ function App() {
       case 'owners': return <OwnerLandingPage onStartPublication={handleStartPublication} onLoginClick={handleGoToLogin} onHomeClick={() => setPage('home')} {...pageNavigationProps} />;
       case 'login': return <LoginPage onLogin={handleLogin} onRegister={handleRegister} registrationData={registrationData} publicationData={publicationData} initialMode={loginInitialMode} {...loginPageProps} />;
       case 'post-register': return <PostRegisterPage onGoToLogin={handleGoToLogin} />;
+      case 'post-owner-register': return <PostOwnerRegisterPage onGoToDashboard={() => setPage('owner-dashboard')} />;
       case 'blog': return <BlogPage posts={blogPosts} {...loginPageProps} />;
       case 'about': return <AboutPage {...loginPageProps} />;
       case 'privacy': return <PrivacyPolicyPage {...loginPageProps} />;
