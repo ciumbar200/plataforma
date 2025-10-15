@@ -38,6 +38,19 @@ function App() {
   const [publicationData, setPublicationData] = useState<PublicationData | null>(null);
   const [accountInitialTab, setAccountInitialTab] = useState<string>('overview');
   
+  const handleLogin = (user: User) => {
+    setUsers(prev => prev.find(u => u.id === user.id) ? prev : [...prev, user]);
+    setCurrentUser(user);
+    setRegistrationData(null);
+    setPublicationData(null);
+    if (user.role === UserRole.ADMIN) setPage('admin-dashboard');
+    else if (!user.is_profile_complete) {
+        // Handled by main render logic
+    }
+    else if (user.role === UserRole.PROPIETARIO) setPage('owner-dashboard');
+    else setPage('tenant-dashboard');
+  };
+
   useEffect(() => {
     const initializeApp = async () => {
       try {
@@ -84,12 +97,9 @@ function App() {
               setPage('tenant-dashboard');
             }
           } else {
-            // If an authenticated user exists without a profile, it's an inconsistent state.
-            // Log them out to allow a clean sign-in/sign-up.
-            console.warn("User session found without a matching profile. Signing out.");
-            await supabase.auth.signOut();
-            setCurrentUser(null);
-            setPage('home');
+            // Profile might be created by onAuthStateChange after OAuth redirect.
+            // Do nothing here to avoid logging them out prematurely.
+            console.warn("User session found without a matching profile. Awaiting onAuthStateChange handler.");
           }
         } else {
           // No session, ensure user is logged out.
@@ -109,21 +119,75 @@ function App() {
 
     initializeApp();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-        const userInState = users.find(u => u.id === session?.user?.id);
-        
-        if (session?.user && userInState) {
-          if (currentUser?.id !== userInState.id) {
-            const avatar_url = session.user.user_metadata?.avatar_url || userInState.avatar_url;
-            const syncedProfile = { ...userInState, avatar_url };
-            setCurrentUser(syncedProfile);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+        if (session?.user) {
+          // Avoid re-running logic if user is already logged in
+          if (currentUser?.id === session.user.id) {
+            return;
+          }
 
-            if (syncedProfile.role === UserRole.ADMIN) setPage('admin-dashboard');
-            else if (!syncedProfile.is_profile_complete) {
-              // Let main render logic handle this
+          // Check for profile in Supabase
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+
+          if (profile) {
+            // Profile exists, log them in
+            if (profile.is_banned) {
+              await supabase.auth.signOut();
+              // Here we could set an error state to show a message on the login page
+              return;
             }
-            else if (syncedProfile.role === UserRole.PROPIETARIO) setPage('owner-dashboard');
-            else setPage('tenant-dashboard');
+            setUsers(prev => prev.find(u => u.id === profile.id) ? prev.map(u => u.id === profile.id ? profile : u) : [...prev, profile]);
+            handleLogin(profile as User);
+          } else {
+            // Profile doesn't exist, create it for new OAuth user
+            const roleFromStorage = localStorage.getItem('social_signup_role');
+            localStorage.removeItem('social_signup_role'); // clean up
+
+            let targetRole: UserRole;
+            if (publicationData) {
+                targetRole = UserRole.PROPIETARIO;
+            } else if (registrationData) {
+                targetRole = UserRole.INQUILINO;
+            } else {
+                targetRole = roleFromStorage === UserRole.PROPIETARIO ? UserRole.PROPIETARIO : UserRole.INQUILINO;
+            }
+
+            const newProfileData = {
+              id: session.user.id,
+              name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'Nuevo Usuario',
+              email: session.user.email,
+              avatar_url: session.user.user_metadata?.avatar_url || `https://placehold.co/200x200/9ca3af/1f2937?text=${(session.user.email || '?').charAt(0)}`,
+              role: targetRole,
+              is_profile_complete: false,
+              age: 18,
+              interests: [],
+              lifestyle: [],
+              noise_level: 'Medio' as const,
+              bio: '',
+              city: publicationData?.city || registrationData?.city,
+              locality: publicationData?.locality || registrationData?.locality,
+              rental_goal: registrationData?.rentalGoal,
+            };
+
+            const { data: newProfile, error: insertError } = await supabase
+              .from('profiles')
+              .insert(newProfileData)
+              .select()
+              .single();
+
+            if (insertError) {
+              console.error("Error creating profile for OAuth user:", insertError);
+              await supabase.auth.signOut();
+            } else if (newProfile) {
+              setUsers(prev => [...prev, newProfile]);
+              handleLogin(newProfile as User);
+              setRegistrationData(null);
+              setPublicationData(null);
+            }
           }
         } else if (!session?.user && currentUser !== null) {
              setCurrentUser(null);
@@ -131,23 +195,12 @@ function App() {
         }
     });
 
+
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [currentUser, registrationData, publicationData]);
 
-  const handleLogin = (user: User) => {
-    setUsers(prev => prev.find(u => u.id === user.id) ? prev : [...prev, user]);
-    setCurrentUser(user);
-    setRegistrationData(null);
-    setPublicationData(null);
-    if (user.role === UserRole.ADMIN) setPage('admin-dashboard');
-    else if (!user.is_profile_complete) {
-        // Handled by main render logic
-    }
-    else if (user.role === UserRole.PROPIETARIO) setPage('owner-dashboard');
-    else setPage('tenant-dashboard');
-  };
   
   const handleRegister = async (userData: Partial<User>, password?: string, role?: UserRole) => {
     if (!password || !userData.email) {

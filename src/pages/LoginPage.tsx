@@ -201,6 +201,32 @@ const LoginPage: React.FC<LoginPageProps> = (props) => {
     }
     setLoading(false);
   };
+  
+  const handleGoogleLogin = async () => {
+    setError('');
+    setLoading(true);
+
+    if (mode === 'register' && !isGuidedRegisterMode) {
+      if (!roleSelectedForSocial) {
+        setError('Por favor, selecciona si eres Inquilino o Propietario antes de continuar.');
+        setLoading(false);
+        return;
+      }
+      localStorage.setItem('social_signup_role', selectedRole);
+    } else {
+      localStorage.removeItem('social_signup_role');
+    }
+
+    const { error: oauthError } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+    });
+
+    if (oauthError) {
+      setError(`Error con el inicio de sesión de Google: ${oauthError.message}`);
+      setLoading(false);
+    }
+    // No need to setLoading(false) on success because the page will redirect.
+  };
 
   const getSubtitle = () => {
     if (mode === 'register') {
@@ -289,10 +315,10 @@ const LoginPage: React.FC<LoginPageProps> = (props) => {
                 </p>
             )}
             <div className="grid grid-cols-2 gap-3">
-              <button type="button" disabled={mode === 'register' && !isGuidedRegisterMode && !roleSelectedForSocial} className="flex items-center justify-center gap-3 w-full bg-white/10 hover:bg-white/20 text-white font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+              <button type="button" onClick={handleGoogleLogin} disabled={loading || (mode === 'register' && !isGuidedRegisterMode && !roleSelectedForSocial)} className="flex items-center justify-center gap-3 w-full bg-white/10 hover:bg-white/20 text-white font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                 <GoogleIcon className="w-5 h-5" /><span>Google</span>
               </button>
-               <button type="button" disabled={mode === 'register' && !isGuidedRegisterMode && !roleSelectedForSocial} className="flex items-center justify-center gap-3 w-full bg-white/10 hover:bg-white/20 text-white font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+               <button type="button" disabled={true} className="flex items-center justify-center gap-3 w-full bg-white/10 hover:bg-white/20 text-white font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                 <FacebookIcon className="w-5 h-5" /><span>Facebook</span>
               </button>
             </div>
