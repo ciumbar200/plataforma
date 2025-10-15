@@ -6,10 +6,11 @@ interface HeaderProps {
     onRegisterClick?: () => void;
     onHomeClick: () => void;
     onOwnersClick?: () => void;
+    onSilverClick?: () => void;
     pageContext: 'inquilino' | 'propietario';
 }
 
-const Header: React.FC<HeaderProps> = ({ onLoginClick, onRegisterClick, onHomeClick, onOwnersClick, pageContext }) => {
+const Header: React.FC<HeaderProps> = ({ onLoginClick, onRegisterClick, onHomeClick, onOwnersClick, onSilverClick, pageContext }) => {
     const isTenantContext = pageContext === 'inquilino';
     const switchText = isTenantContext ? 'Propietarios' : 'Inquilinos';
     const switchAction = isTenantContext ? onOwnersClick : onHomeClick;
@@ -72,6 +73,7 @@ const Header: React.FC<HeaderProps> = ({ onLoginClick, onRegisterClick, onHomeCl
 
                     <nav className="hidden md:flex gap-8 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
                         <a href="#como-funciona" className="text-sm font-medium text-white/80 hover:text-white transition-colors">Cómo funciona</a>
+                        {onSilverClick && <a href="#" onClick={(e) => { e.preventDefault(); onSilverClick(); }} className="text-sm font-medium text-white/80 hover:text-white transition-colors">Silver</a>}
                         <a href="#faq" className="text-sm font-medium text-white/80 hover:text-white transition-colors">FAQ</a>
                     </nav>
                     

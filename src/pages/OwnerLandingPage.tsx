@@ -1,7 +1,3 @@
-
-
-
-
 import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -27,6 +23,7 @@ interface OwnerLandingPageProps {
     onPrivacyClick: () => void;
     onTermsClick: () => void;
     onContactClick: () => void;
+    onSilverClick?: () => void;
 }
 
 const FeatureCard: React.FC<{ icon: React.ReactNode; title: string; children: React.ReactNode }> = ({ icon, title, children }) => (
@@ -58,7 +55,7 @@ const testimonials = [
     }
 ];
 
-const OwnerLandingPage: React.FC<OwnerLandingPageProps> = ({ onStartPublication, onHomeClick, onLoginClick, onOwnersClick, onBlogClick, onAboutClick, onPrivacyClick, onTermsClick, onContactClick }) => {
+const OwnerLandingPage: React.FC<OwnerLandingPageProps> = ({ onStartPublication, onHomeClick, onLoginClick, onOwnersClick, onBlogClick, onAboutClick, onPrivacyClick, onTermsClick, onContactClick, onSilverClick }) => {
     const [currentTestimonial, setCurrentTestimonial] = useState(0);
     const [propertyType, setPropertyType] = useState<PropertyType | ''>('');
     const [selectedCity, setSelectedCity] = useState<string>('');
@@ -95,7 +92,7 @@ const OwnerLandingPage: React.FC<OwnerLandingPageProps> = ({ onStartPublication,
 
     return (
         <div className="min-h-screen w-full bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-900 text-white flex flex-col">
-            <Header onLoginClick={onLoginClick} onHomeClick={onHomeClick} onOwnersClick={onHomeClick} pageContext="propietario" />
+            <Header onLoginClick={onLoginClick} onHomeClick={onHomeClick} onOwnersClick={onHomeClick} onSilverClick={onSilverClick} pageContext="propietario" />
             <main className="flex-grow">
                 {/* Hero Section */}
                 <section className="relative py-16 sm:py-32 text-center overflow-hidden">
@@ -222,6 +219,7 @@ const OwnerLandingPage: React.FC<OwnerLandingPageProps> = ({ onStartPublication,
                 onPrivacyClick={onPrivacyClick}
                 onTermsClick={onTermsClick}
                 onContactClick={onContactClick}
+                onSilverClick={onSilverClick}
             />
         </div>
     );

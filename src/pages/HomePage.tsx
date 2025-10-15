@@ -16,6 +16,7 @@ interface HomePageProps {
     onPrivacyClick: () => void;
     onTermsClick: () => void;
     onContactClick: () => void;
+    onSilverClick?: () => void;
 }
 
 const testimonials = [
@@ -92,7 +93,7 @@ const faqs = [
     },
     {
         question: '¿Necesito pagar comisión a una agencia?',
-        answer: "<p>No. MoOn elimina las comisiones abusivas:</p><ul class='list-disc list-inside mt-2 space-y-1'><li>Trato directo con el propietario.</li><li>Sin intermediarios innecesarios.</li><li>Solo pagas tu suscripción a MoOn.</li></ul>",
+        answer: "<p>No. MoOn elimina las comisiones abusivas:</p><ul class='list-disc list-inside space-y-1'><li>Trato directo con el propietario.</li><li>Sin intermediarios innecesarios.</li><li>Solo pagas tu suscripción a MoOn.</li></ul>",
     },
     {
         question: '¿Soy estudiante, puedo usar MoOn?',
@@ -213,7 +214,7 @@ const GuidedSearchModal: React.FC<{
 };
 
 
-const HomePage: React.FC<HomePageProps> = ({ onLoginClick, onRegisterClick, onStartRegistration, onOwnersClick, onBlogClick, onAboutClick, onPrivacyClick, onTermsClick, onContactClick }) => {
+const HomePage: React.FC<HomePageProps> = ({ onLoginClick, onRegisterClick, onStartRegistration, onOwnersClick, onBlogClick, onAboutClick, onPrivacyClick, onTermsClick, onContactClick, onSilverClick }) => {
     const [openFaq, setOpenFaq] = useState<number | null>(0);
     const [currentTestimonial, setCurrentTestimonial] = useState(0);
     const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
@@ -229,7 +230,7 @@ const HomePage: React.FC<HomePageProps> = ({ onLoginClick, onRegisterClick, onSt
 
     return (
         <div className="min-h-screen w-full bg-gradient-to-br from-blue-900 via-indigo-900 to-purple-900 text-white flex flex-col">
-            <Header onLoginClick={onLoginClick} onRegisterClick={onRegisterClick} onHomeClick={() => {}} onOwnersClick={onOwnersClick} pageContext="inquilino" />
+            <Header onLoginClick={onLoginClick} onRegisterClick={onRegisterClick} onHomeClick={() => {}} onOwnersClick={onOwnersClick} onSilverClick={onSilverClick} pageContext="inquilino" />
             
             <main className="flex-grow">
                 {/* Hero Section */}
@@ -417,6 +418,7 @@ const HomePage: React.FC<HomePageProps> = ({ onLoginClick, onRegisterClick, onSt
                 onTermsClick={onTermsClick}
                 onContactClick={onContactClick}
                 onOwnersClick={onOwnersClick}
+                onSilverClick={onSilverClick}
             />
 
             <GuidedSearchModal

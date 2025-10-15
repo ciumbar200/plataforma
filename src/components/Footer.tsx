@@ -8,9 +8,10 @@ interface FooterProps {
     onTermsClick?: () => void;
     onContactClick?: () => void;
     onOwnersClick?: () => void;
+    onSilverClick?: () => void;
 }
 
-const Footer: React.FC<FooterProps> = ({ onBlogClick, onAboutClick, onPrivacyClick, onTermsClick, onContactClick, onOwnersClick }) => {
+const Footer: React.FC<FooterProps> = ({ onBlogClick, onAboutClick, onPrivacyClick, onTermsClick, onContactClick, onOwnersClick, onSilverClick }) => {
     return (
         <footer className="bg-black/20 backdrop-blur-lg border-t border-white/10 text-white w-full">
             <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
@@ -23,6 +24,7 @@ const Footer: React.FC<FooterProps> = ({ onBlogClick, onAboutClick, onPrivacyCli
                         {onOwnersClick && <a href="#" onClick={(e) => { e.preventDefault(); onOwnersClick(); }} className="md:hidden text-sm text-white/70 hover:text-white transition-colors">Propietarios</a>}
                         {onAboutClick && <a href="#" onClick={(e) => { e.preventDefault(); onAboutClick(); }} className="text-sm text-white/70 hover:text-white transition-colors">Sobre Nosotros</a>}
                         {onBlogClick && <a href="#" onClick={(e) => { e.preventDefault(); onBlogClick(); }} className="text-sm text-white/70 hover:text-white transition-colors">Blog</a>}
+                        {onSilverClick && <a href="#" onClick={(e) => { e.preventDefault(); onSilverClick(); }} className="text-sm text-white/70 hover:text-white transition-colors">Silver</a>}
                         {onContactClick && <a href="#" onClick={(e) => { e.preventDefault(); onContactClick(); }} className="text-sm text-white/70 hover:text-white transition-colors">Contacto</a>}
                         {onPrivacyClick && <a href="#" onClick={(e) => { e.preventDefault(); onPrivacyClick(); }} className="text-sm text-white/70 hover:text-white transition-colors">Política de Privacidad</a>}
                         {onTermsClick && <a href="#" onClick={(e) => { e.preventDefault(); onTermsClick(); }} className="text-sm text-white/70 hover:text-white transition-colors">Términos de Servicio</a>}

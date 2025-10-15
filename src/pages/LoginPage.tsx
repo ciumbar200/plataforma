@@ -54,10 +54,11 @@ interface LoginPageProps {
   onTermsClick: () => void;
   onContactClick: () => void;
   onRegisterClick: () => void;
+  onSilverClick?: () => void;
 }
 
 const LoginPage: React.FC<LoginPageProps> = (props) => {
-  const { onLogin, onRegister, onHomeClick, onOwnersClick, registrationData, publicationData, initialMode, ...footerProps } = props;
+  const { onLogin, onRegister, onHomeClick, onOwnersClick, onSilverClick, registrationData, publicationData, initialMode, ...footerProps } = props;
   
   const isGuidedRegisterMode = !!registrationData || !!publicationData;
   
@@ -239,7 +240,7 @@ const LoginPage: React.FC<LoginPageProps> = (props) => {
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-900 text-white flex flex-col">
-      <Header onLoginClick={() => setMode('login')} onRegisterClick={() => setMode('register')} onHomeClick={onHomeClick} onOwnersClick={onOwnersClick} pageContext={publicationData ? 'propietario' : 'inquilino'} />
+      <Header onLoginClick={() => setMode('login')} onRegisterClick={() => setMode('register')} onHomeClick={onHomeClick} onOwnersClick={onOwnersClick} onSilverClick={onSilverClick} pageContext={publicationData ? 'propietario' : 'inquilino'} />
       <main className="flex-grow flex items-center justify-center p-4">
         <GlassCard className="w-full max-w-md">
           <div className="text-center mb-8">

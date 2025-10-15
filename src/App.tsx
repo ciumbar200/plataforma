@@ -11,12 +11,13 @@ import AboutPage from './pages/AboutPage';
 import ContactPage from './pages/ContactPage';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 import TermsPage from './pages/TermsPage';
+import SilverPage from './pages/SilverPage';
 import { User, UserRole, RentalGoal, Property, PropertyType, SavedSearch, BlogPost, Notification } from './types';
 import { MOCK_SAVED_SEARCHES, MOCK_BLOG_POSTS, MOCK_NOTIFICATIONS, MOCK_MATCHES } from './constants';
 import { supabase } from './lib/supabaseClient';
 import { MoonIcon } from './components/icons';
 
-type Page = 'home' | 'owners' | 'login' | 'tenant-dashboard' | 'owner-dashboard' | 'admin-dashboard' | 'account' | 'blog' | 'about' | 'privacy' | 'terms' | 'contact' | 'post-register';
+type Page = 'home' | 'owners' | 'login' | 'tenant-dashboard' | 'owner-dashboard' | 'admin-dashboard' | 'account' | 'blog' | 'about' | 'privacy' | 'terms' | 'contact' | 'post-register' | 'silver';
 
 type RegistrationData = { rentalGoal: RentalGoal; city: string; locality: string };
 type PublicationData = { property_type: PropertyType; city: string; locality: string };
@@ -524,6 +525,7 @@ function App() {
     onPrivacyClick: () => setPage('privacy'),
     onTermsClick: () => setPage('terms'),
     onContactClick: () => setPage('contact'),
+    onSilverClick: () => setPage('silver'),
   };
   
   if (loading) {
@@ -566,10 +568,11 @@ function App() {
   }
 
   const renderPage = () => {
-    const loginPageProps = { ...pageNavigationProps, onRegisterClick: () => { setLoginInitialMode('register'); setPage('login'); } };
+    const registerClick = () => { setLoginInitialMode('register'); setPage('login'); };
+    const loginPageProps = { ...pageNavigationProps, onRegisterClick: registerClick };
     
     switch (page) {
-      case 'home': return <HomePage onStartRegistration={handleStartRegistration} {...pageNavigationProps} onRegisterClick={loginPageProps.onRegisterClick} />;
+      case 'home': return <HomePage onStartRegistration={handleStartRegistration} {...pageNavigationProps} onRegisterClick={registerClick} />;
       case 'owners': return <OwnerLandingPage onStartPublication={handleStartPublication} onLoginClick={handleGoToLogin} onHomeClick={() => setPage('home')} {...pageNavigationProps} />;
       case 'login': return <LoginPage onLogin={handleLogin} onRegister={handleRegister} registrationData={registrationData} publicationData={publicationData} initialMode={loginInitialMode} {...loginPageProps} />;
       case 'post-register': return <PostRegisterPage onGoToLogin={handleGoToLogin} />;
@@ -578,6 +581,7 @@ function App() {
       case 'privacy': return <PrivacyPolicyPage {...loginPageProps} />;
       case 'terms': return <TermsPage {...loginPageProps} />;
       case 'contact': return <ContactPage {...loginPageProps} />;
+      case 'silver': return <SilverPage onRegisterClick={registerClick} {...pageNavigationProps} />;
       case 'tenant-dashboard':
         if (!currentUser) return <LoginPage onLogin={handleLogin} onRegister={handleRegister} initialMode="login" {...loginPageProps} />;
         return <TenantDashboard 
@@ -631,7 +635,7 @@ function App() {
             initialTab={accountInitialTab}
             {...pageNavigationProps}
         />
-      default: return <HomePage onStartRegistration={handleStartRegistration} {...pageNavigationProps} onRegisterClick={loginPageProps.onRegisterClick} />;
+      default: return <HomePage onStartRegistration={handleStartRegistration} {...pageNavigationProps} onRegisterClick={registerClick} />;
     }
   };
 

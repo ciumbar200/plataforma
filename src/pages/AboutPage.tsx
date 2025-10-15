@@ -14,6 +14,7 @@ interface PageProps {
   onPrivacyClick: () => void;
   onTermsClick: () => void;
   onContactClick: () => void;
+  onSilverClick?: () => void;
 }
 
 const TeamMemberCard: React.FC<{ imgSrc: string; name: string; title: string; }> = ({ imgSrc, name, title }) => (
@@ -24,13 +25,13 @@ const TeamMemberCard: React.FC<{ imgSrc: string; name: string; title: string; }>
     </div>
 );
 
-const AboutPage: React.FC<PageProps> = ({ onHomeClick, onLoginClick, onOwnersClick, onBlogClick, onAboutClick, onPrivacyClick, onTermsClick, onContactClick }) => {
+const AboutPage: React.FC<PageProps> = ({ onHomeClick, onLoginClick, onOwnersClick, onBlogClick, onAboutClick, onPrivacyClick, onTermsClick, onContactClick, onSilverClick }) => {
     
-    const footerProps = { onBlogClick, onAboutClick, onPrivacyClick, onTermsClick, onContactClick };
+    const footerProps = { onBlogClick, onAboutClick, onPrivacyClick, onTermsClick, onContactClick, onSilverClick };
     
     return (
         <div className="min-h-screen w-full bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-900 text-white flex flex-col">
-            <Header onLoginClick={onLoginClick} onHomeClick={onHomeClick} onOwnersClick={onOwnersClick} pageContext="inquilino" />
+            <Header onLoginClick={onLoginClick} onHomeClick={onHomeClick} onOwnersClick={onOwnersClick} onSilverClick={onSilverClick} pageContext="inquilino" />
             
             <main className="flex-grow">
                 {/* Hero Section */}

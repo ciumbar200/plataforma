@@ -13,6 +13,7 @@ interface PageProps {
   onPrivacyClick: () => void;
   onTermsClick: () => void;
   onContactClick: () => void;
+  onSilverClick?: () => void;
 }
 
 const ContactInfoItem: React.FC<{ icon: React.ReactNode; title: string; children: React.ReactNode }> = ({ icon, title, children }) => (
@@ -36,6 +37,7 @@ const ContactPage: React.FC<PageProps> = (props) => {
         onPrivacyClick: props.onPrivacyClick, 
         onTermsClick: props.onTermsClick,
         onContactClick: props.onContactClick,
+        onSilverClick: props.onSilverClick,
     };
     
     const handleSubmit = (e: React.FormEvent) => {
@@ -46,7 +48,7 @@ const ContactPage: React.FC<PageProps> = (props) => {
 
     return (
         <div className="min-h-screen w-full bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-900 text-white flex flex-col">
-            <Header onLoginClick={props.onLoginClick} onHomeClick={props.onHomeClick} onOwnersClick={props.onOwnersClick} pageContext="inquilino" />
+            <Header onLoginClick={props.onLoginClick} onHomeClick={props.onHomeClick} onOwnersClick={props.onOwnersClick} onSilverClick={props.onSilverClick} pageContext="inquilino" />
             
             <main className="flex-grow">
                 <section className="py-20">
