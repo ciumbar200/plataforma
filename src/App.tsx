@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import HomePage from './pages/HomePage';
 import OwnerLandingPage from './pages/OwnerLandingPage';
-import LoginPage, { PostRegisterPage, PostOwnerRegisterPage } from './pages/LoginPage';
+import LoginPage, { PostRegisterPage } from './pages/LoginPage';
 import TenantDashboard from './dashboards/TenantDashboard';
 import OwnerDashboard from './dashboards/OwnerDashboard';
 import AdminDashboard from './dashboards/AdminDashboard';
@@ -12,11 +12,11 @@ import ContactPage from './pages/ContactPage';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 import TermsPage from './pages/TermsPage';
 import { User, UserRole, RentalGoal, Property, PropertyType, SavedSearch, BlogPost, Notification } from './types';
-import { MOCK_SAVED_SEARCHES, MOCK_BLOG_POSTS, MOCK_NOTIFICATIONS } from './constants';
+import { MOCK_SAVED_SEARCHES, MOCK_BLOG_POSTS, MOCK_NOTIFICATIONS, MOCK_MATCHES } from './constants';
 import { supabase } from './lib/supabaseClient';
 import { MoonIcon } from './components/icons';
 
-type Page = 'home' | 'owners' | 'login' | 'tenant-dashboard' | 'owner-dashboard' | 'admin-dashboard' | 'account' | 'blog' | 'about' | 'privacy' | 'terms' | 'contact' | 'post-register' | 'post-owner-register';
+type Page = 'home' | 'owners' | 'login' | 'tenant-dashboard' | 'owner-dashboard' | 'admin-dashboard' | 'account' | 'blog' | 'about' | 'privacy' | 'terms' | 'contact' | 'post-register';
 
 type RegistrationData = { rentalGoal: RentalGoal; city: string; locality: string };
 type PublicationData = { property_type: PropertyType; city: string; locality: string };
@@ -32,75 +32,102 @@ function App() {
   const [savedSearches, setSavedSearches] = useState<SavedSearch[]>(MOCK_SAVED_SEARCHES);
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>(MOCK_BLOG_POSTS);
   const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS);
-  const [matches, setMatches] = useState<{ [key: string]: string[] }>({});
+  const [matches, setMatches] = useState<{ [key: string]: string[] }>(MOCK_MATCHES);
 
   const [registrationData, setRegistrationData] = useState<RegistrationData | null>(null);
   const [publicationData, setPublicationData] = useState<PublicationData | null>(null);
   const [accountInitialTab, setAccountInitialTab] = useState<string>('overview');
   
   useEffect(() => {
-    setLoading(true);
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-        if (!session?.user) {
-            setCurrentUser(null);
-            setUsers([]);
-            setProperties([]);
-            setMatches({});
-            setPage('home');
-            setLoading(false);
-            return;
+    const initializeApp = async () => {
+      try {
+        // Step 1: Fetch session and handle potential errors gracefully.
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error("Error fetching session:", sessionError.message);
+          // If session fetching fails, treat user as logged out.
+          await supabase.auth.signOut();
+          setCurrentUser(null);
+          setPage('home');
+          return; // Stop initialization
         }
 
-        try {
-            const [allUsersRes, propertiesRes, matchesRes] = await Promise.all([
-                supabase.from('profiles').select('*'),
-                supabase.from('properties').select('*'),
-                supabase.from('matches').select('*') // Fetch all matches for now for owner dashboard
-            ]);
-            
-            if (allUsersRes.data) setUsers(allUsersRes.data as User[]);
-            if (propertiesRes.data) setProperties(propertiesRes.data as Property[]);
-            
-            if (matchesRes.error) {
-                console.error("Error fetching matches:", matchesRes.error.message);
-            } else if (matchesRes.data) {
-                const allMatches = matchesRes.data;
-                const matchesByuser = allMatches.reduce((acc, match) => {
-                    if (!acc[match.user_id]) {
-                        acc[match.user_id] = [];
-                    }
-                    acc[match.user_id].push(match.matched_user_id);
-                    return acc;
-                }, {} as { [key: string]: string[] });
-                setMatches(matchesByuser);
-            }
+        // Step 2: Fetch app data.
+        const [usersRes, propertiesRes] = await Promise.all([
+          supabase.from('profiles').select('*'),
+          supabase.from('properties').select('*')
+        ]);
 
-            const { data: profile, error: profileError } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', session.user.id)
-              .single();
+        if (usersRes.error) throw usersRes.error;
+        if (propertiesRes.error) throw propertiesRes.error;
 
-            if (profileError && profileError.code === 'PGRST116') {
-                console.error("CRITICAL: Profile not found for an authenticated user. The DB trigger might be missing or failed. Signing out.");
-                await supabase.auth.signOut();
-            } else if (profileError) {
-                console.error("Error fetching profile:", profileError.message);
-                await supabase.auth.signOut();
-            } else if (profile) {
-                setCurrentUser(profile as User);
-                if (profile.role === UserRole.ADMIN) {
-                    setPage('admin-dashboard');
-                } else if (profile.is_profile_complete) {
-                    setPage(profile.role === UserRole.PROPIETARIO ? 'owner-dashboard' : 'tenant-dashboard');
-                }
+        const allUsers = usersRes.data as User[];
+        setUsers(allUsers);
+        setProperties(propertiesRes.data as Property[]);
+
+        // Step 3: Process the session and user profile.
+        if (session?.user) {
+          const profile = allUsers.find(u => u.id === session.user.id);
+          
+          if (profile) {
+            const avatar_url = session.user.user_metadata?.avatar_url || profile.avatar_url;
+            const syncedProfile = { ...profile, avatar_url };
+
+            setCurrentUser(syncedProfile);
+            if (syncedProfile.role === UserRole.ADMIN) setPage('admin-dashboard');
+            else if (!syncedProfile.is_profile_complete) {
+              // This is handled by the main render logic.
+            } else if (syncedProfile.role === UserRole.PROPIETARIO) {
+              setPage('owner-dashboard');
+            } else {
+              setPage('tenant-dashboard');
             }
-        } catch (error) {
-            console.error("Error during initial data load:", error);
-            // Handle error, maybe show an error screen or log out the user
-        } finally {
-            setLoading(false);
+          } else {
+            // If an authenticated user exists without a profile, it's an inconsistent state.
+            // Log them out to allow a clean sign-in/sign-up.
+            console.warn("User session found without a matching profile. Signing out.");
+            await supabase.auth.signOut();
+            setCurrentUser(null);
+            setPage('home');
+          }
+        } else {
+          // No session, ensure user is logged out.
+          setCurrentUser(null);
+          setPage('home');
+        }
+      } catch (error: any) {
+        console.error("Error al inicializar la aplicación:", error.message || error);
+        // Catch-all for any other errors during init. Force sign out to clear bad state.
+        await supabase.auth.signOut().catch(e => console.error("Sign out failed during error handling:", e));
+        setCurrentUser(null);
+        setPage('home');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initializeApp();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        const userInState = users.find(u => u.id === session?.user?.id);
+        
+        if (session?.user && userInState) {
+          if (currentUser?.id !== userInState.id) {
+            const avatar_url = session.user.user_metadata?.avatar_url || userInState.avatar_url;
+            const syncedProfile = { ...userInState, avatar_url };
+            setCurrentUser(syncedProfile);
+
+            if (syncedProfile.role === UserRole.ADMIN) setPage('admin-dashboard');
+            else if (!syncedProfile.is_profile_complete) {
+              // Let main render logic handle this
+            }
+            else if (syncedProfile.role === UserRole.PROPIETARIO) setPage('owner-dashboard');
+            else setPage('tenant-dashboard');
+          }
+        } else if (!session?.user && currentUser !== null) {
+             setCurrentUser(null);
+             setPage('home');
         }
     });
 
@@ -109,46 +136,14 @@ function App() {
     };
   }, []);
 
-  const triggerWelcomeEmail = async (user: User) => {
-    if (!user || !user.email || !user.name || !user.role) {
-      console.error("DEBUG: Cannot trigger welcome email, user data is incomplete.", user);
-      return;
-    }
-    
-    console.log(`DEBUG: Attempting to trigger welcome email for user: ${user.email} with role: ${user.role}`);
-    
-    try {
-      const { data, error } = await supabase.functions.invoke('send-welcome-email', {
-        body: {
-          email: user.email,
-          name: user.name,
-          role: user.role,
-        },
-      });
-  
-      if (error) {
-        // This catches invocation-level errors (e.g., function not found, RLS issues)
-        throw error;
-      }
-  
-      console.log("DEBUG: Welcome email function invoked successfully. Response:", data);
-    } catch (error) {
-      // This catches both invocation errors and network errors
-      // Don't block the UI for this, just log it for debugging.
-      console.error(
-        "DEBUG: Failed to invoke 'send-welcome-email' function. Check the Supabase Edge Function logs for details.",
-        error
-      );
-    }
-  };
-
   const handleLogin = (user: User) => {
     setUsers(prev => prev.find(u => u.id === user.id) ? prev : [...prev, user]);
     setCurrentUser(user);
     setRegistrationData(null);
     setPublicationData(null);
     if (user.role === UserRole.ADMIN) setPage('admin-dashboard');
-    else if (user.is_profile_complete === false) {
+    else if (!user.is_profile_complete) {
+        // Handled by main render logic
     }
     else if (user.role === UserRole.PROPIETARIO) setPage('owner-dashboard');
     else setPage('tenant-dashboard');
@@ -158,38 +153,71 @@ function App() {
     if (!password || !userData.email) {
       throw new Error("Email y contraseña son requeridos para el registro.");
     }
-    
-    const roleToRegister = role || (publicationData ? UserRole.PROPIETARIO : UserRole.INQUILINO);
-    const dataForAuth = {
-        name: userData.name,
-        age: userData.age,
-        role: roleToRegister,
-        city: publicationData?.city || registrationData?.city,
-        locality: publicationData?.locality || registrationData?.locality,
-        rental_goal: registrationData?.rentalGoal,
-        avatar_url: `https://placehold.co/200x200/9ca3af/1f2937?text=${(userData.name || '?').charAt(0)}`,
-    };
 
+    // Paso 1: Registrar al usuario en Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: userData.email,
       password: password,
-      options: {
-        data: dataForAuth
-      }
     });
 
     if (authError) {
       console.error('Error en el registro de Auth:', authError.message);
-      throw authError;
+      throw authError; // Lanza el error para que sea capturado por el componente UI
     }
 
     if (!authData.user) {
       throw new Error('Registro completado, pero no se pudo obtener la información del usuario. Por favor, verifica tu email e intenta iniciar sesión.');
     }
-    
-    setRegistrationData(null);
-    setPublicationData(null);
-    setPage('post-register');
+
+    // Paso 2: Si el registro en Auth es exitoso, crear el perfil manualmente en la tabla 'profiles'
+    try {
+      const avatar_url = `https://placehold.co/200x200/9ca3af/1f2937?text=${(userData.name || '?').charAt(0)}`;
+      
+      const baseProfile = {
+          id: authData.user.id,
+          name: userData.name || 'Nuevo Usuario',
+          age: userData.age || 18,
+          interests: [],
+          lifestyle: [],
+          noise_level: 'Medio' as const,
+          avatar_url,
+          bio: '',
+          is_profile_complete: false,
+      };
+
+      let targetRole: UserRole;
+      if (publicationData) {
+          targetRole = UserRole.PROPIETARIO;
+      } else if (registrationData) {
+          targetRole = UserRole.INQUILINO;
+      } else {
+          targetRole = role || UserRole.INQUILINO;
+      }
+      
+      const profile_to_insert = { 
+          ...baseProfile, 
+          role: targetRole,
+          city: publicationData?.city || registrationData?.city,
+          locality: publicationData?.locality || registrationData?.locality,
+          rental_goal: registrationData?.rentalGoal,
+      };
+
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert(profile_to_insert);
+
+      if (profileError) {
+        throw new Error(`Error al crear el perfil: ${profileError.message}`);
+      }
+      
+      setRegistrationData(null);
+      setPublicationData(null);
+      setPage('post-register');
+
+    } catch (error: any) {
+        console.error("Error en la post-creación del perfil:", error.message);
+        alert(`Tu cuenta fue creada, pero hubo un problema al configurar tu perfil: ${error.message}. Por favor, contacta a soporte.`);
+    }
   };
 
 
@@ -198,9 +226,10 @@ function App() {
     if (error) {
         console.error("Error al cerrar sesión:", error.message);
         alert(`Error al cerrar sesión: ${error.message}`);
+    } else {
+        setCurrentUser(null);
+        setPage('home');
     }
-    // The onAuthStateChange listener will handle the rest:
-    // clearing state (setCurrentUser, setMatches) and redirecting (setPage).
   };
 
   const handleStartRegistration = (data: RegistrationData) => {
@@ -230,191 +259,161 @@ function App() {
   };
 
   const handleUpdateUser = async (updatedUser: User): Promise<void> => {
-    if (!currentUser) return;
-    
-    const shouldMarkProfileComplete = !currentUser.is_profile_complete && updatedUser.bio && updatedUser.bio.length >= 100;
-
-    // Optimistic UI update for redirection
-    if (shouldMarkProfileComplete) {
-        const newPage = updatedUser.role === UserRole.INQUILINO ? 'tenant-dashboard' : 'owner-dashboard';
-        const tempUser = { ...currentUser, ...updatedUser, is_profile_complete: true };
-        setCurrentUser(tempUser);
-        setUsers(prev => prev.map(u => (u.id === tempUser.id ? tempUser : u)));
-        setPage(newPage);
+    if (!currentUser) {
+        throw new Error("No hay un usuario autenticado para actualizar.");
     }
-    
+
     try {
-        const profileDataToUpdate = {
-            ...updatedUser,
-            is_profile_complete: shouldMarkProfileComplete || currentUser.is_profile_complete,
-        };
+        const { id, ...dataFromForm } = updatedUser;
+
+        let shouldMarkProfileComplete = false;
+        if (!currentUser.is_profile_complete && dataFromForm.bio && dataFromForm.bio.length >= 100) {
+            shouldMarkProfileComplete = true;
+        }
+
+        const metadataToUpdate: { [key: string]: any } = {};
+        if (dataFromForm.name && dataFromForm.name !== currentUser.name) {
+            metadataToUpdate.name = dataFromForm.name;
+        }
+        if (dataFromForm.avatar_url && dataFromForm.avatar_url !== currentUser.avatar_url) {
+            metadataToUpdate.avatar_url = dataFromForm.avatar_url;
+        }
         
-        const { data: finalProfile, error } = await supabase
+        if (Object.keys(metadataToUpdate).length > 0) {
+            const { error: authError } = await supabase.auth.updateUser({
+                data: metadataToUpdate
+            });
+            if (authError) {
+                throw new Error(`Error al actualizar metadatos de autenticación: ${authError.message}`);
+            }
+        }
+        
+        const profileDataToUpdate = {
+            name: dataFromForm.name,
+            age: dataFromForm.age,
+            bio: dataFromForm.bio,
+            city: dataFromForm.city,
+            locality: dataFromForm.locality,
+            video_url: dataFromForm.video_url,
+            interests: dataFromForm.interests,
+            lifestyle: dataFromForm.lifestyle,
+            noise_level: dataFromForm.noise_level,
+            commute_distance: dataFromForm.commute_distance,
+            budget: dataFromForm.budget,
+            avatar_url: dataFromForm.avatar_url,
+            phone: dataFromForm.phone,
+            birth_country: dataFromForm.birth_country,
+            religion: dataFromForm.religion,
+            sexual_orientation: dataFromForm.sexual_orientation,
+            is_profile_complete: shouldMarkProfileComplete ? true : currentUser.is_profile_complete,
+        };
+
+        const { data: updatedProfile, error: profileError } = await supabase
             .from('profiles')
             .update(profileDataToUpdate)
-            .eq('id', currentUser.id)
+            .eq('id', id)
             .select()
             .single();
 
-        if (error) throw error;
-        
-        const finalUser = finalProfile as User;
-        
-        // Final, authoritative update
-        setCurrentUser(finalUser);
-        setUsers(prev => prev.map(u => (u.id === finalUser.id ? finalUser : u)));
-        
-        if (shouldMarkProfileComplete) {
-            // Invoke the welcome email function
-            triggerWelcomeEmail(finalUser);
-
-            // Defer CRM sync to run after UI updates, preventing blocking.
-            setTimeout(() => {
-                if (finalUser.role === UserRole.INQUILINO) {
-                    console.log("Invoking CRM sync for tenant...");
-                    supabase.functions.invoke('sync-tenant-to-fluentcrm', { body: finalUser })
-                        .then(({ error: invokeError }) => {
-                            if (invokeError) console.error("CRM sync error:", invokeError.message);
-                            else console.log("CRM sync initiated successfully.");
-                        });
-                }
-            }, 500);
-        } else {
-            alert('Perfil actualizado con éxito');
+        if (profileError) {
+            throw new Error(`Error de base de datos al actualizar el perfil: ${profileError.message}`);
         }
 
-    } catch (err: any) {
-        console.error("Failed to save profile:", err.message);
-        alert(`Error al guardar el perfil: ${err.message}`);
-        // Here you might want to add logic to revert the optimistic update on failure
+        if (!updatedProfile) {
+            throw new Error("La base de datos no devolvió el perfil actualizado.");
+        }
+        
+        const finalUser: User = { 
+            ...currentUser, 
+            ...updatedProfile,
+        };
+
+        setCurrentUser(finalUser);
+        setUsers(prevUsers => prevUsers.map(u => (u.id === finalUser.id ? finalUser : u)));
+        
+        if (shouldMarkProfileComplete && finalUser.role === UserRole.INQUILINO) {
+            setPage('tenant-dashboard');
+        }
+
+    } catch (error: any) {
+        console.error("Fallo al guardar el perfil:", error);
+        throw error;
     }
 };
 
-  const handleSaveProperty = async (propertyData: Omit<Property, 'id' | 'views' | 'compatible_candidates' | 'owner_id' | 'image_urls'> & { id?: number; imageFiles: File[]; image_urls: string[] }) => {
+  const handleSaveProperty = async (propertyData: Omit<Property, 'id' | 'views' | 'compatible_candidates' | 'owner_id'> & { id?: number }) => {
     if (!currentUser) return;
     
-    try {
-        let uploadedImageUrls: string[] = [];
-        if (propertyData.imageFiles && propertyData.imageFiles.length > 0) {
-            const uploadPromises = propertyData.imageFiles.map(async (file) => {
-                const fileExt = file.name.split('.').pop();
-                const filePath = `${currentUser.id}/${Date.now()}-${file.name}`;
-                
-                const { error: uploadError } = await supabase.storage
-                    .from('property-media')
-                    .upload(filePath, file);
+    const dataToSave = {
+      ...propertyData,
+      price: Number(propertyData.price),
+    };
 
-                if (uploadError) {
-                    throw new Error(`Error al subir la imagen: ${uploadError.message}`);
-                }
+    if (propertyData.id) { // Update
+      const { id, ...updateData } = dataToSave;
+      const { data, error } = await supabase
+        .from('properties')
+        .update(updateData)
+        .eq('id', id)
+        .select()
+        .single();
 
-                const { data: urlData } = supabase.storage
-                    .from('property-media')
-                    .getPublicUrl(filePath);
-                
-                return urlData.publicUrl;
-            });
-            uploadedImageUrls = await Promise.all(uploadPromises);
-        }
+      if (error) {
+          console.error('Error al actualizar la propiedad:', error);
+      } else if (data) {
+          setProperties(prev => prev.map(p => p.id === data.id ? data as Property : p));
+      }
+    } else { // Insert
+      const newPropertyData = {
+        ...dataToSave,
+        owner_id: currentUser.id,
+        views: 0,
+        compatible_candidates: 0,
+        status: 'approved' as const,
+      };
+      const { data, error } = await supabase
+        .from('properties')
+        .insert(newPropertyData)
+        .select()
+        .single();
 
-        const finalImageUrls = [...(propertyData.image_urls || []), ...uploadedImageUrls];
-
-        const { imageFiles, ...dbData } = propertyData;
-        const dataToSave = {
-          ...dbData,
-          image_urls: finalImageUrls,
-          price: Number(propertyData.price),
-        };
-
-        if (propertyData.id) { // Update
-            const { id, ...updateData } = dataToSave;
-            const { data, error } = await supabase
-                .from('properties')
-                .update(updateData)
-                .eq('id', id)
+      if (error) {
+        console.error('Error al crear la propiedad:', error);
+      } else if (data) {
+        setProperties(prev => [...prev, data as Property]);
+        
+        if (!currentUser.is_profile_complete) {
+            const { data: updatedProfile, error: profileError } = await supabase
+                .from('profiles')
+                .update({ is_profile_complete: true })
+                .eq('id', currentUser.id)
                 .select()
                 .single();
 
-            if (error) throw error;
-            if (data) setProperties(prev => prev.map(p => p.id === data.id ? data as Property : p));
-
-        } else { // Insert
-            const newPropertyData = {
-                ...dataToSave,
-                owner_id: currentUser.id,
-                views: 0,
-                compatible_candidates: 0,
-                status: 'approved' as const,
-            };
-            const { data, error } = await supabase
-                .from('properties')
-                .insert(newPropertyData)
-                .select()
-                .single();
-
-            if (error) throw error;
-            if (data) {
-                setProperties(prev => [...prev, data as Property]);
-                if (!currentUser.is_profile_complete) {
-                    const { data: updatedProfile, error: profileError } = await supabase
-                        .from('profiles')
-                        .update({ is_profile_complete: true })
-                        .eq('id', currentUser.id)
-                        .select()
-                        .single();
-
-                    if (profileError) throw profileError;
-                    if (updatedProfile) {
-                        const fullyUpdatedUser = { ...currentUser, ...updatedProfile };
-                        setCurrentUser(fullyUpdatedUser);
-                        setUsers(prev => prev.map(u => u.id === fullyUpdatedUser.id ? fullyUpdatedUser : u));
-                        
-                        // Invoke the welcome email function
-                        triggerWelcomeEmail(fullyUpdatedUser);
-
-                        if (fullyUpdatedUser.role === UserRole.PROPIETARIO) {
-                            setPage('post-owner-register');
-                        }
-                    }
+            if (profileError) {
+                console.error("Error al marcar perfil de propietario como completo:", profileError);
+            } else if (updatedProfile) {
+                const fullyUpdatedUser = { ...currentUser, ...updatedProfile };
+                setCurrentUser(fullyUpdatedUser);
+                setUsers(prev => prev.map(u => u.id === fullyUpdatedUser.id ? fullyUpdatedUser : u));
+                if (fullyUpdatedUser.role === UserRole.PROPIETARIO) {
+                    setPage('owner-dashboard');
                 }
             }
         }
-    } catch (error: any) {
-        console.error("Error al guardar la propiedad:", error.message);
-        alert(`Error al guardar la propiedad: ${error.message}. Asegúrate de que el bucket 'property-media' existe y es público.`);
+      }
     }
   };
 
-  const handleAddMatch = async (matchedUserId: string) => {
+  const handleAddMatch = (matchedUserId: string) => {
     if (!currentUser) return;
-    
-    const userId = currentUser.id;
-    const previousMatches = { ...matches };
-    const currentMatches = previousMatches[userId] || [];
-
-    if (currentMatches.includes(matchedUserId)) return;
-
-    // Optimistic UI update
-    const newMatchesForUser = [...currentMatches, matchedUserId];
-    setMatches(prev => ({ ...prev, [userId]: newMatchesForUser }));
-
-    // Persist to database
-    try {
-      const { error } = await supabase
-        .from('matches')
-        .insert({ user_id: userId, matched_user_id: matchedUserId });
-
-      if (error) {
-        console.error('Error guardando el match:', error.message);
-        // Revert optimistic update on failure
-        setMatches(previousMatches); 
-        alert(`No se pudo guardar el match: ${error.message}`);
-      }
-    } catch (err: any) {
-      console.error("Error inesperado al guardar el match:", err.message);
-      setMatches(previousMatches); // Revert on unexpected errors
-      alert('Ocurrió un error inesperado al guardar el match.');
-    }
+    setMatches(prev => {
+        const currentMatches = prev[currentUser.id] || [];
+        if (!currentMatches.includes(matchedUserId)) {
+            return { ...prev, [currentUser.id]: [...currentMatches, matchedUserId] };
+        }
+        return prev;
+    });
   };
   
   const handleDeleteProperty = async (propertyId: number) => {
@@ -483,13 +482,14 @@ function App() {
     );
   }
 
+  // Mandatory Profile/Property completion flow
   if (currentUser && !currentUser.is_profile_complete) {
     if (currentUser.role === UserRole.INQUILINO) {
         return <AccountLayout 
             user={currentUser}
             onUpdateUser={handleUpdateUser}
             onLogout={handleLogout}
-            onBack={() => {}} 
+            onBack={() => {}} // No-op, should not be visible
             isMandatory={true}
             initialTab="profile"
             {...pageNavigationProps}
@@ -520,7 +520,6 @@ function App() {
       case 'owners': return <OwnerLandingPage onStartPublication={handleStartPublication} onLoginClick={handleGoToLogin} onHomeClick={() => setPage('home')} {...pageNavigationProps} />;
       case 'login': return <LoginPage onLogin={handleLogin} onRegister={handleRegister} registrationData={registrationData} publicationData={publicationData} initialMode={loginInitialMode} {...loginPageProps} />;
       case 'post-register': return <PostRegisterPage onGoToLogin={handleGoToLogin} />;
-      case 'post-owner-register': return <PostOwnerRegisterPage onGoToDashboard={() => setPage('owner-dashboard')} />;
       case 'blog': return <BlogPage posts={blogPosts} {...loginPageProps} />;
       case 'about': return <AboutPage {...loginPageProps} />;
       case 'privacy': return <PrivacyPolicyPage {...loginPageProps} />;
@@ -570,9 +569,7 @@ function App() {
         />;
       case 'account':
         if (!currentUser) return <LoginPage onLogin={handleLogin} onRegister={handleRegister} initialMode="login" {...loginPageProps} />;
-        const backPage = currentUser.is_profile_complete 
-            ? (currentUser.role === UserRole.INQUILINO ? 'tenant-dashboard' : 'owner-dashboard')
-            : 'account';
+        const backPage = currentUser.role === UserRole.INQUILINO ? 'tenant-dashboard' : 'owner-dashboard';
         return <AccountLayout 
             user={currentUser}
             onUpdateUser={handleUpdateUser}

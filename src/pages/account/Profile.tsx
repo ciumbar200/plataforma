@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { User } from '../../types';
+import { User, UserRole } from '../../types';
 import GlassCard from '../../components/GlassCard';
 import { CITIES_DATA, COUNTRIES } from '../../constants';
-import { CameraIcon } from '../../components/icons';
+import { CameraIcon, ShieldCheckIcon } from '../../components/icons';
 import { supabase } from '../../lib/supabaseClient';
 
 interface ProfileProps {
@@ -17,16 +17,44 @@ const Profile: React.FC<ProfileProps> = ({ user, onSave }) => {
   const [formData, setFormData] = useState(user);
   const [localities, setLocalities] = useState<string[]>(CITIES_DATA[user.city || 'Madrid'] || []);
   const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string | null }>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
   
+  // Reset form data if the user prop changes (e.g., on re-login)
   useEffect(() => {
     setFormData(user);
-    if (user.city) {
-        setLocalities(CITIES_DATA[user.city] || []);
-    }
   }, [user]);
+
+  const startVerification = async () => {
+    try {
+      const res = await fetch('/api/start-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          firstName: user.name,
+          lastName: user.last_name || '',
+          email: user.email,
+        }),
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`Error del servidor: ${res.status} ${errorText}`);
+      }
+
+      const data = await res.json();
+      if (data.verificationUrl) {
+        window.open(data.verificationUrl, '_blank');
+      } else {
+        throw new Error('No se recibió la URL de verificación');
+      }
+    } catch (error) {
+      console.error('Error en la verificación:', error);
+      alert('Hubo un problema al iniciar la verificación. Por favor, inténtalo de nuevo más tarde.');
+    }
+  };
 
   const validateField = (name: string, value: string) => {
     let fieldError: string | null = null;
@@ -86,20 +114,71 @@ const Profile: React.FC<ProfileProps> = ({ user, onSave }) => {
     setFormData(prev => ({ ...prev, lifestyle }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (user.role === 'INQUILINO' && (!formData.bio || formData.bio.length < 100)) {
         setErrors(prev => ({ ...prev, bio: 'La biografía debe tener al menos 100 caracteres para continuar.'}));
         return;
     }
     
+    // Quick validation check on mandatory fields
     if (!formData.phone || !formData.birth_country) {
         alert('Por favor, completa los campos de teléfono y país de nacimiento.');
         return;
     }
 
-    setIsSaving(true);
-    onSave(formData);
+    setIsUploading(true);
+    
+    try {
+      let finalUserData = { ...formData };
+
+      if (profileImageFile) {
+        const fileExt = profileImageFile.name.split('.').pop();
+        const filePath = `${user.id}/${new Date().getTime()}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage
+          .from('avatars')
+          .upload(filePath, profileImageFile, { upsert: true });
+
+        if (uploadError) {
+          throw new Error(`Error al subir la imagen: ${uploadError.message}`);
+        }
+
+        const { data: urlData } = supabase.storage
+          .from('avatars')
+          .getPublicUrl(filePath);
+        
+        finalUserData.avatar_url = urlData.publicUrl;
+      }
+      
+      const safeNumber = (value: any): number | undefined => {
+          if (value === '' || value === null || value === undefined) return undefined;
+          const num = Number(value);
+          if (isNaN(num)) {
+            throw new Error(`El valor '${value}' para un campo numérico no es válido.`);
+          }
+          return num;
+      };
+
+      const finalDataForSave: User = {
+        ...finalUserData,
+        age: safeNumber(finalUserData.age)!,
+        commute_distance: safeNumber(finalUserData.commute_distance),
+        budget: safeNumber(finalUserData.budget),
+      };
+      
+      await onSave(finalDataForSave);
+      alert('Perfil actualizado con éxito');
+      
+    } catch (error: any) {
+      console.error("Fallo al guardar el perfil:", error);
+      alert(`Fallo al guardar el perfil:\n${error.message || 'Se produjo un error inesperado.'}`);
+      
+      if (profileImageFile) {
+          setFormData(prev => ({ ...prev, avatar_url: user.avatar_url }));
+      }
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
@@ -238,10 +317,34 @@ const Profile: React.FC<ProfileProps> = ({ user, onSave }) => {
                 </div>
             </div>
         </>
+        
+        {user.role === UserRole.INQUILINO && (
+            <div className="pt-6 border-t border-white/10">
+                <h3 className="text-lg font-semibold text-white/90 mb-2">Verificación de Identidad</h3>
+                {formData.is_verified ? (
+                    <div className="flex items-center gap-2 text-green-400 font-semibold bg-green-500/10 p-3 rounded-lg">
+                        <ShieldCheckIcon className="w-6 h-6" />
+                        <span>Identidad Verificada</span>
+                    </div>
+                ) : (
+                    <>
+                        <p className="text-sm text-white/70 mb-4">Verifica tu identidad para aumentar la confianza en la comunidad y acceder a más y mejores oportunidades.</p>
+                        <button
+                            type="button"
+                            onClick={startVerification}
+                            className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-4 rounded-lg transition-colors flex items-center gap-2"
+                        >
+                            <ShieldCheckIcon className="w-5 h-5" />
+                            Verificar mi identidad
+                        </button>
+                    </>
+                )}
+            </div>
+        )}
 
         <div className="flex justify-end pt-4">
-          <button type="submit" disabled={isSaving} className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg transition-colors disabled:bg-gray-500 disabled:cursor-not-allowed">
-            {isSaving ? 'Guardando...' : 'Guardar Cambios'}
+          <button type="submit" disabled={isUploading} className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg transition-colors disabled:bg-gray-500 disabled:cursor-not-allowed">
+            {isUploading ? 'Guardando...' : 'Guardar Cambios'}
           </button>
         </div>
       </form>

@@ -22,7 +22,7 @@ type InitialPropertyData = { property_type: PropertyType; city: string; locality
 interface OwnerDashboardProps {
     user: User;
     properties: Property[];
-    onSaveProperty: (propertyData: Omit<Property, 'id' | 'views' | 'compatible_candidates' | 'owner_id' | 'image_urls'> & { id?: number; imageFiles: File[]; image_urls: string[] }) => void;
+    onSaveProperty: (propertyData: Omit<Property, 'id' | 'views' | 'compatible_candidates' | 'owner_id'> & { id?: number }) => void;
     initialPropertyData: InitialPropertyData | null;
     onClearInitialPropertyData: () => void;
     allUsers: User[];
@@ -117,7 +117,7 @@ const OwnerDashboard: React.FC<OwnerDashboardProps> = ({ user, properties, onSav
         }
     };
 
-    const handleSaveAndClose = (propertyData: Omit<Property, 'id' | 'views' | 'compatible_candidates' | 'owner_id' | 'image_urls'> & { id?: number; imageFiles: File[]; image_urls: string[] }) => {
+    const handleSaveAndClose = (propertyData: Omit<Property, 'id' | 'views' | 'compatible_candidates' | 'owner_id'> & { id?: number }) => {
         onSaveProperty(propertyData);
         handleCloseModal();
     };

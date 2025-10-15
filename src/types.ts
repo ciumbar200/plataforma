@@ -37,6 +37,7 @@ export interface User {
   budget?: number; // Monthly budget for rent
   religion?: string;
   sexual_orientation?: string;
+  is_verified?: boolean;
 }
 
 export type AmenityId = 

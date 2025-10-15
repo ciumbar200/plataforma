@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { User, UserRole, RentalGoal, PropertyType } from '../types';
-import { GoogleIcon, FacebookIcon, MoonIcon, UsersIcon, BuildingIcon, MailIcon, CheckCircleIcon } from '../components/icons';
+import { GoogleIcon, FacebookIcon, MoonIcon, UsersIcon, BuildingIcon, MailIcon } from '../components/icons';
 import GlassCard from '../components/GlassCard';
 import { supabase } from '../lib/supabaseClient';
 
@@ -31,32 +31,6 @@ export const PostRegisterPage: React.FC<PostRegisterPageProps> = ({ onGoToLogin 
                     className="mt-6 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition-colors"
                 >
                     Ir a Iniciar Sesión
-                </button>
-            </GlassCard>
-        </div>
-    );
-};
-
-export const PostOwnerRegisterPage: React.FC<{ onGoToDashboard: () => void }> = ({ onGoToDashboard }) => {
-    return (
-        <div className="min-h-screen w-full flex items-center justify-center p-4">
-            <GlassCard className="w-full max-w-md text-center animate-fade-in-up">
-                <CheckCircleIcon className="w-16 h-16 mx-auto text-green-400" />
-                <h2 className="text-3xl font-bold mt-4 text-white">¡Felicidades!</h2>
-                <p className="text-white/80 mt-2">
-                    Tu propiedad ha sido publicada y tu perfil de propietario está completo.
-                </p>
-                <div className="my-8">
-                    <BuildingIcon className="w-16 h-16 mx-auto text-cyan-400" />
-                </div>
-                <p className="text-sm text-white/70">
-                    Ya puedes acceder a tu panel para gestionar tus propiedades y ver candidatos.
-                </p>
-                <button
-                    onClick={onGoToDashboard}
-                    className="mt-6 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition-colors"
-                >
-                    Ir a mi panel
                 </button>
             </GlassCard>
         </div>
@@ -103,13 +77,6 @@ const LoginPage: React.FC<LoginPageProps> = (props) => {
     setMode(isGuidedRegisterMode ? 'register' : initialMode);
     setErrors({});
   }, [initialMode, isGuidedRegisterMode]);
-
-  useEffect(() => {
-    if (isGuidedRegisterMode) {
-      setSelectedRole(publicationData ? UserRole.PROPIETARIO : UserRole.INQUILINO);
-      setRoleSelectedForSocial(true);
-    }
-  }, [isGuidedRegisterMode, publicationData]);
 
   const validateField = (name: string, value: string) => {
     let fieldError: string | null = null;
@@ -169,7 +136,7 @@ const LoginPage: React.FC<LoginPageProps> = (props) => {
 
     if (mode === 'register') {
         try {
-            await onRegister({ email, name, age: parseInt(age, 10) }, password, selectedRole);
+            await onRegister({ email, name, age: parseInt(age, 10) }, password, isGuidedRegisterMode ? undefined : selectedRole);
         } catch (err: any) {
             console.error("Error de registro:", err);
             if (err.message && err.message.toLowerCase().includes('user already registered')) {
@@ -233,32 +200,6 @@ const LoginPage: React.FC<LoginPageProps> = (props) => {
         }
     }
     setLoading(false);
-  };
-
-  const handleGoogleLogin = async () => {
-    if (mode === 'register' && !isGuidedRegisterMode && !roleSelectedForSocial) {
-      setError('Por favor, selecciona si eres Inquilino o Propietario antes de continuar.');
-      return;
-    }
-    
-    setLoading(true);
-    // FIX: The `data` property is valid for passing user metadata with OAuth in
-    // recent versions of `supabase-js`, but the TypeScript types in this project
-    // may be outdated. Casting to `any` to bypass the type check and allow
-    // the 'role' to be passed to the user creation trigger.
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        data: {
-          role: selectedRole,
-        },
-      } as any,
-    });
-
-    if (error) {
-      setError(`Error al iniciar sesión con Google: ${error.message}`);
-      setLoading(false);
-    }
   };
 
   const getSubtitle = () => {
@@ -348,7 +289,7 @@ const LoginPage: React.FC<LoginPageProps> = (props) => {
                 </p>
             )}
             <div className="grid grid-cols-2 gap-3">
-              <button type="button" onClick={handleGoogleLogin} disabled={mode === 'register' && !isGuidedRegisterMode && !roleSelectedForSocial} className="flex items-center justify-center gap-3 w-full bg-white/10 hover:bg-white/20 text-white font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+              <button type="button" disabled={mode === 'register' && !isGuidedRegisterMode && !roleSelectedForSocial} className="flex items-center justify-center gap-3 w-full bg-white/10 hover:bg-white/20 text-white font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                 <GoogleIcon className="w-5 h-5" /><span>Google</span>
               </button>
                <button type="button" disabled={mode === 'register' && !isGuidedRegisterMode && !roleSelectedForSocial} className="flex items-center justify-center gap-3 w-full bg-white/10 hover:bg-white/20 text-white font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">

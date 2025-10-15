@@ -15,8 +15,8 @@ type AdminTab = 'dashboard' | 'users' | 'properties' | 'blog' | 'settings';
 type NavItem = {
     id: AdminTab;
     label: string;
-    // FIX: Changed JSX.Element to React.ReactNode to resolve "Cannot find namespace 'JSX'" error.
-    icon: React.ReactNode;
+    // FIX: Replaced JSX.Element with React.ReactElement to resolve namespace error.
+    icon: React.ReactElement;
     count?: number;
 };
 

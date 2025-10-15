@@ -35,15 +35,15 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ user, onLogout, onAcc
                 <UserCircleIcon className="w-8 h-8 text-white/50" />
             </div>
         )}
-        <span className="hidden sm:inline font-semibold text-sm text-white">{user.name}</span>
+        <span className="hidden sm:inline font-semibold text-sm">{user.name}</span>
         <ChevronDownIcon className={`w-4 h-4 text-white/70 transition-transform hidden sm:inline ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       {isOpen && (
-        <div className="absolute top-full right-0 mt-2 w-56 bg-slate-800/90 backdrop-blur-xl border border-white/20 rounded-xl shadow-lg z-50 overflow-hidden animate-fade-in-down">
-          <div className="p-3 border-b border-white/10">
-            <p className="font-semibold text-sm truncate text-white">{user.name}</p>
-            <p className="text-xs text-white/70 capitalize">{user.role.toLowerCase()}</p>
+        <div className="absolute top-full right-0 mt-2 w-56 bg-slate-100/80 backdrop-blur-xl border border-white/30 rounded-xl shadow-lg z-50 overflow-hidden animate-fade-in-down">
+          <div className="p-3 border-b border-black/10">
+            <p className="font-semibold text-sm truncate text-gray-900">{user.name}</p>
+            <p className="text-xs text-gray-600 capitalize">{user.role.toLowerCase()}</p>
           </div>
           <div className="p-2">
             <button
@@ -51,9 +51,9 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ user, onLogout, onAcc
                 onAccountSettings();
                 setIsOpen(false);
               }}
-              className="w-full flex items-center gap-3 px-3 py-2 text-sm text-left text-white/90 rounded-md hover:bg-white/10 transition-colors"
+              className="w-full flex items-center gap-3 px-3 py-2 text-sm text-left text-gray-800 rounded-md hover:bg-black/5 transition-colors"
             >
-              <PencilIcon className="w-5 h-5 text-white/60" />
+              <PencilIcon className="w-5 h-5 text-gray-500" />
               <span>Ajustes de Cuenta</span>
             </button>
             <button
@@ -61,7 +61,7 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ user, onLogout, onAcc
                 onLogout();
                 setIsOpen(false);
               }}
-              className="w-full flex items-center gap-3 px-3 py-2 text-sm text-left text-red-400 rounded-md hover:bg-red-500/20 transition-colors"
+              className="w-full flex items-center gap-3 px-3 py-2 text-sm text-left text-red-600 rounded-md hover:bg-red-100 transition-colors"
             >
               <LogoutIcon className="w-5 h-5" />
               <span>Cerrar Sesión</span>
